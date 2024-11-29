@@ -36,5 +36,5 @@ the latest release for your platform.
 ### Docker Image
 
 ```shell
-docker run -p 3000:3000 ghcr.io/ellgreen/thoughts:latest
+docker run -p 3000:3000 -v $PWD/data:/data ghcr.io/ellgreen/thoughts:latest
 ```

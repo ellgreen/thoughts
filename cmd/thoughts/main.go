@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 
 	"github.com/ellgreen/thoughts/cmd/thoughts/session"
 	"github.com/ellgreen/thoughts/migrations"
@@ -18,11 +19,13 @@ import (
 )
 
 var (
-	addr           = flag.String("addr", "localhost:3000", "Address to listen on")
-	uiURL          = flag.String("ui-url", "http://localhost:5173", "UI URL - only available in development")
-	databasePath   = flag.String("database", "./data/thoughts.sqlite", "Path to the database file")
-	sessionKeyPath = flag.String("session-key", "./data/session.key", "Path to the session key file")
-	verbose        = flag.Bool("v", false, "Log level")
+	addr    = flag.String("addr", "localhost:3000", "Address to listen on")
+	verbose = flag.Bool("v", false, "Log level")
+	uiURL   = flag.String("ui-url", "http://localhost:5173", "UI URL - only available in development")
+
+	dataPath       = flag.String("data", "./data", "Path to the data directory")
+	databaseFile   = flag.String("database", "thoughts.sqlite", "The database file name")
+	sessionKeyFile = flag.String("session-key", "session.key", "The session key file name")
 
 	db *sqlx.DB
 )
@@ -44,7 +47,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	sessionProvider, err := session.LoadSessionProvider(*sessionKeyPath)
+	sessionKeyPath := filepath.Join(*dataPath, *sessionKeyFile)
+	sessionProvider, err := session.LoadSessionProvider(sessionKeyPath)
 	if err != nil {
 		slog.Error("failed to load session provider", "err", err)
 		os.Exit(1)
@@ -73,7 +77,8 @@ func main() {
 }
 
 func initialiseDatabase() error {
-	dsn := fmt.Sprintf("file:%s?_foreign_keys=on&_journal_mode=WAL", *databasePath)
+	databasePath := filepath.Join(*dataPath, *databaseFile)
+	dsn := fmt.Sprintf("file:%s?_foreign_keys=on&_journal_mode=WAL", databasePath)
 
 	var err error
 	db, err = sqlx.Open("sqlite", dsn)
