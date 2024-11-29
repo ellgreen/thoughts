@@ -16,12 +16,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import useTemplates from "@/hooks/use-templates";
 import { api } from "@/lib/api";
 import { Route as RetrosRoute } from "@/routes/_auth.retros.$retroId";
 import { Retro } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Trash } from "lucide-react";
 import {
   FieldValues,
   useFieldArray,
@@ -103,14 +104,18 @@ export default function Creator({ className }: { className?: string }) {
 }
 
 function Columns() {
-  const { fields, append } = useFieldArray({ name: "columns" });
+  const { fields, append, remove } = useFieldArray({ name: "columns" });
 
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Columns</h3>
 
       {fields.map((field, index) => (
-        <ColumnInput key={field.id} index={index} />
+        <ColumnInput
+          key={field.id}
+          index={index}
+          onRemove={() => remove(index)}
+        />
       ))}
 
       <FormField name="columns" render={() => <FormMessage />} />
@@ -130,11 +135,17 @@ function Columns() {
   );
 }
 
-function ColumnInput({ index }: { index: number }) {
+function ColumnInput({
+  index,
+  onRemove,
+}: {
+  index: number;
+  onRemove: () => void;
+}) {
   const { control } = useFormContext();
 
   return (
-    <div className="p-2 space-y-4 rounded-md border">
+    <div className="group relative p-3 space-y-4 rounded-md border">
       <FormField
         control={control}
         name={`columns.${index}.title`}
@@ -162,39 +173,22 @@ function ColumnInput({ index }: { index: number }) {
           </FormItem>
         )}
       />
+
+      <Button
+        className="absolute opacity-0 group-hover:opacity-100 -top-6 -right-3 transition-all duration-75"
+        type="button"
+        variant="destructive"
+        size="sm"
+        onClick={onRemove}
+      >
+        <Trash />
+      </Button>
     </div>
   );
 }
 
-const templates = [
-  {
-    title: "Mad, Sad, Glad",
-    columns: [
-      { title: "Mad", description: "What made you mad?" },
-      { title: "Sad", description: "What made you sad?" },
-      { title: "Glad", description: "What made you glad?" },
-    ],
-  },
-  {
-    title: "Start, Stop, Continue",
-    columns: [
-      { title: "Start", description: "What should we start doing?" },
-      { title: "Stop", description: "What should we stop doing?" },
-      { title: "Continue", description: "What should we continue doing?" },
-    ],
-  },
-  {
-    title: "Liked, Learned, Lacked, Longed For",
-    columns: [
-      { title: "Liked", description: "What did you like?" },
-      { title: "Learned", description: "What did you learn?" },
-      { title: "Lacked", description: "What did you lack?" },
-      { title: "Longed For", description: "What did you long for?" },
-    ],
-  },
-];
-
 function FromTemplateDropDown() {
+  const templates = useTemplates();
   const { setValue } = useFormContext();
 
   return (
