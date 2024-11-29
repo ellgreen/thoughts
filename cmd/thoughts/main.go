@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -19,22 +18,20 @@ import (
 )
 
 var (
-	addr    = flag.String("addr", "localhost:3000", "Address to listen on")
-	verbose = flag.Bool("v", false, "Log level")
-	uiURL   = flag.String("ui-url", "http://localhost:5173", "UI URL - only available in development")
-
-	dataPath       = flag.String("data", "./data", "Path to the data directory")
-	databaseFile   = flag.String("database", "thoughts.sqlite", "The database file name")
-	sessionKeyFile = flag.String("session-key", "session.key", "The session key file name")
-
-	db *sqlx.DB
+	cfg *config
+	db  *sqlx.DB
 )
 
 func main() {
-	flag.Parse()
+	var err error
+	cfg, err = loadConfig()
+	if err != nil {
+		slog.Error("failed to load config", "err", err)
+		os.Exit(1)
+	}
 
 	slogLevel := slog.LevelInfo
-	if *verbose {
+	if cfg.Verbose {
 		slogLevel = slog.LevelDebug
 	}
 
@@ -47,7 +44,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	sessionKeyPath := filepath.Join(*dataPath, *sessionKeyFile)
+	sessionKeyPath := filepath.Join(cfg.DataPath, cfg.SessionKeyFile)
 	sessionProvider, err := session.LoadSessionProvider(sessionKeyPath)
 	if err != nil {
 		slog.Error("failed to load session provider", "err", err)
@@ -61,23 +58,34 @@ func main() {
 	corsCfg := cors.Default()
 	if !ui.IsBundled() {
 		corsCfg = cors.New(cors.Options{
-			AllowedOrigins:   []string{*uiURL},
+			AllowedOrigins:   []string{cfg.UIAddress},
 			AllowCredentials: true,
 		})
 	}
 
 	handler := corsCfg.Handler(router)
 
-	slog.Info("starting server", "addr", *addr)
+	if cfg.TLSCertPath != "" && cfg.TLSKeyPath != "" {
+		slog.Info("starting server (with tls)", "addr", cfg.Address)
 
-	if err := http.ListenAndServe(*addr, handler); err != nil {
+		if err := http.ListenAndServeTLS(cfg.Address, cfg.TLSCertPath, cfg.TLSKeyPath, handler); err != nil {
+			slog.Error("failed to start server", "err", err)
+			os.Exit(1)
+		}
+
+		return
+	}
+
+	slog.Info("starting server (no tls)", "addr", cfg.Address)
+
+	if err := http.ListenAndServe(cfg.Address, handler); err != nil {
 		slog.Error("failed to start server", "err", err)
 		os.Exit(1)
 	}
 }
 
 func initialiseDatabase() error {
-	databasePath := filepath.Join(*dataPath, *databaseFile)
+	databasePath := filepath.Join(cfg.DataPath, cfg.DatabaseFile)
 	dsn := fmt.Sprintf("file:%s?_foreign_keys=on&_journal_mode=WAL", databasePath)
 
 	var err error

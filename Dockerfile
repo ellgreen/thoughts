@@ -17,10 +17,16 @@ RUN wget -qO /app/thoughts.tar.gz "https://github.com/ellgreen/thoughts/releases
 # Final Image
 FROM alpine:latest
 
+ENV THOUGHTS_ADDRESS=":3000"
+ENV THOUGHTS_DATA="/data"
+
+ENV THOUGHTS_TLS_CERT_PATH=""
+ENV THOUGHTS_TLS_KEY_PATH=""
+
 COPY --from=setup /thoughts /usr/local/bin/
 
 RUN mkdir -p /data
 
 EXPOSE 3000
 
-CMD ["thoughts", "-addr", ":3000", "-data", "/data"]
+CMD ["thoughts"]

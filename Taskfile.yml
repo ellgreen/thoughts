@@ -18,12 +18,8 @@ tasks:
     cmds:
       - pnpm --prefix=ui run build
     sources:
-      - "ui/**/*.js"
-      - "ui/**/*.ts"
-      - "ui/**/*.tsx"
-      - "ui/package.json"
-      - "ui/pnpm-lock.yaml"
-      - "ui/src/index.css"
+      - "ui/*.*"
+      - "ui/src/**"
     generates:
       - "ui/dist/**"
 

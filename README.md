@@ -38,3 +38,13 @@ the latest release for your platform.
 ```shell
 docker run -p 3000:3000 -v $PWD/data:/data ghcr.io/ellgreen/thoughts:latest
 ```
+
+#### Want to terminate TLS in the container?
+
+```shell
+docker run -p 3000:3000 \
+  -v $PWD/data:/data \
+  -e THOUGHTS_TLS_CERT_PATH="/path/to/your/tls.crt" \
+  -e THOUGHTS_TLS_KEY_PATH="/path/to/your/tls.key" \
+  ghcr.io/ellgreen/thoughts:latest
+```
