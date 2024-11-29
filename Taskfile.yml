@@ -1,0 +1,66 @@
+# https://taskfile.dev
+
+version: "3"
+
+tasks:
+  dev:
+    cmds:
+      - go build -o ./tmp/ ./cmd/...
+    sources:
+      - "**/*.go"
+      - "migrations/*.sql"
+      - "go.mod"
+      - "go.sum"
+    generates:
+      - "./tmp/thoughts"
+
+  build-ui:
+    cmds:
+      - pnpm --prefix=ui run build
+    sources:
+      - "ui/**/*.js"
+      - "ui/**/*.ts"
+      - "ui/**/*.tsx"
+      - "ui/package.json"
+      - "ui/pnpm-lock.yaml"
+      - "ui/src/index.css"
+    generates:
+      - "ui/dist/**"
+
+  build:
+    deps: [build-ui]
+    cmds:
+      - go build -tags bundled -o ./build/ ./cmd/...
+    sources:
+      - "**/*.go"
+      - "ui/dist/**"
+      - "migrations/*.sql"
+      - "go.mod"
+      - "go.sum"
+    generates:
+      - "./build/thoughts"
+
+  run:
+    deps: [build]
+    cmds:
+      - ./build/thoughts
+
+  docker-build:
+    cmds:
+      - docker build -t thoughts .
+      - docker image prune -f
+
+  docker-run:
+    deps: [docker-build]
+    cmds:
+      - docker run -p 3000:3000 thoughts:latest
+
+  tools:
+    cmds:
+      - go install github.com/pressly/goose/v3/cmd/goose@latest
+      - go install github.com/goreleaser/goreleaser/v2@latest
+
+  release:
+    desc: "Test the release process"
+    cmds:
+      - goreleaser build --single-target --snapshot --clean
