@@ -61,7 +61,7 @@ type RetroCreateRequest struct {
 	Columns []struct {
 		Title       string `json:"title" validate:"required,min=2,max=255"`
 		Description string `json:"description" validate:"max=255"`
-	} `json:"columns" validate:"required,min=3,dive,required"`
+	} `json:"columns" validate:"required,min=2,dive,required"`
 }
 
 func RetroCreate(db *sqlx.DB) http.Handler {
