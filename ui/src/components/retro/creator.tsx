@@ -15,6 +15,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import useTemplates from "@/hooks/use-templates";
 import { api } from "@/lib/api";
@@ -22,13 +23,8 @@ import { Route as RetrosRoute } from "@/routes/_auth.retros.$retroId";
 import { Retro } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { ChevronDown, Trash } from "lucide-react";
-import {
-  FieldValues,
-  useFieldArray,
-  useForm,
-  useFormContext,
-} from "react-hook-form";
+import { Trash, WandSparkles } from "lucide-react";
+import { useFieldArray, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod";
 
 const schema = z.object({
@@ -42,6 +38,7 @@ const schema = z.object({
     )
     .min(2, "At least 2 columns are required")
     .max(5, "At most 5 columns are allowed"),
+  unlisted: z.boolean().optional(),
 });
 
 export default function Creator({ className }: { className?: string }) {
@@ -52,10 +49,11 @@ export default function Creator({ className }: { className?: string }) {
     defaultValues: {
       title: "",
       columns: [],
+      unlisted: false,
     },
   });
 
-  function handleSubmit(data: FieldValues) {
+  function handleSubmit(data: z.infer<typeof schema>) {
     api.post<Retro>("/api/retros", data).then((response) => {
       navigate({ to: RetrosRoute.path, params: { retroId: response.data.id } });
     });
@@ -94,6 +92,28 @@ export default function Creator({ className }: { className?: string }) {
             />
 
             <Columns />
+
+            <FormField
+              control={form.control}
+              name="unlisted"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Unlisted</FormLabel>
+                    <FormDescription>
+                      If checked, the retrospective will not be listed on the
+                      home page.
+                    </FormDescription>
+                  </div>
+                </FormItem>
+              )}
+            />
 
             <Button type="submit">Create</Button>
           </form>
@@ -196,7 +216,7 @@ function FromTemplateDropDown() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" type="button">
           From Template
-          <ChevronDown />
+          <WandSparkles />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
