@@ -1,5 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
-import { Flame, Vote } from "lucide-react";
+import { Check, Flame, Vote, X } from "lucide-react";
 import React, { Children, forwardRef } from "react";
 import { twMerge } from "tailwind-merge";
 import { Badge } from "../ui/badge";
@@ -10,17 +10,18 @@ interface NoteGroupProps extends React.HTMLAttributes<HTMLDivElement> {
     forGroup: number;
     total: number;
   };
+  authors?: string[];
 }
 
 const noteFlameThreshold = 0.11;
 
 export const NoteGroup = forwardRef<HTMLDivElement, NoteGroupProps>(
-  ({ voteCount, className, children, ...props }, ref) => {
+  ({ voteCount, authors, className, children, ...props }, ref) => {
     const hasVoteCount = voteCount !== undefined;
 
     const classes = twMerge(
-      "space-y-2 bg-accent rounded-lg transition-all duration-100",
-      hasVoteCount || Children.count(children) > 1 ? "p-1" : "p-0",
+      "space-y-1 bg-accent rounded-lg transition-all duration-100",
+      hasVoteCount || Children.count(children) > 1 ? "p-0.5" : "p-0",
       className,
     );
 
@@ -28,8 +29,21 @@ export const NoteGroup = forwardRef<HTMLDivElement, NoteGroupProps>(
       <div ref={ref} className={classes} {...props}>
         {children}
 
-        {hasVoteCount && (
-          <VoteCount forGroup={voteCount.forGroup} total={voteCount.total} />
+        {(authors || hasVoteCount) && (
+          <div className="flex items-center justify-between p-2">
+            {authors && (
+              <div className="text-sm text-muted-foreground">
+                {authors.join(", ")}
+              </div>
+            )}
+
+            {hasVoteCount && (
+              <VoteCount
+                forGroup={voteCount.forGroup}
+                total={voteCount.total}
+              />
+            )}
+          </div>
         )}
       </div>
     );
@@ -84,16 +98,19 @@ export function VotableNoteGroup({
   onVote: (value: boolean) => void;
 }) {
   return (
-    <NoteGroup className="group transition-all duration-100">
+    <NoteGroup className="group relative transition-all duration-100">
       {children}
 
-      <div className="flex justify-end">
+      <div
+        className={`absolute ${voted ? "opacity-85" : "opacity-0"} group-hover:opacity-100 top-1 right-2 flex justify-end transition-opacity duration-100`}
+      >
         <Button
           variant={voted ? "default" : "secondary"}
           size="sm"
           onClick={() => onVote(!voted)}
         >
-          <Vote />
+          {voted ? <X /> : <Check />}
+          {voted ? "Unvote" : "Vote"}
         </Button>
       </div>
     </NoteGroup>

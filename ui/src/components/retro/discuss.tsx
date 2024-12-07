@@ -82,6 +82,13 @@ export default function Discuss() {
                 forGroup: votes.find((v) => v.group_id === groupId)?.count ?? 0,
                 total: votes.reduce((acc, v) => acc + v.count, 0),
               }}
+              authors={Array.from(
+                new Set(
+                  groupNotes
+                    .map((note) => note.created_by_name)
+                    .filter((name): name is string => Boolean(name)),
+                ),
+              )}
             >
               {groupNotes.map((note) => (
                 <Note key={note.id} note={note} />

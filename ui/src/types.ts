@@ -22,6 +22,7 @@ export interface RetroColumn {
 export interface Note {
   id: string;
   created_by_me: boolean;
+  created_by_name?: string;
   column_id: string;
   group_id: string;
   content: string;

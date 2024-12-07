@@ -84,7 +84,7 @@ func (b *Broker) handleNoteUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
 
 func newNoteCreatedEvent(note *model.Note) UserDependentEvent {
 	return func(user *model.User) *Event {
-		resource := resources.NoteFromModel(note, user.ID, true)
+		resource := resources.NoteFromModel(note, nil, user.ID, true)
 		payload := resources.StructToMap(resource)
 
 		return &Event{
@@ -96,7 +96,7 @@ func newNoteCreatedEvent(note *model.Note) UserDependentEvent {
 
 func newNoteUpdatedEvent(note *model.Note, retro *model.Retro) UserDependentEvent {
 	return func(user *model.User) *Event {
-		resource := resources.NoteFromModel(note, user.ID, retro.IsBrainstorming())
+		resource := resources.NoteFromModel(note, nil, user.ID, retro.IsBrainstorming())
 		payload := resources.StructToMap(resource)
 
 		return &Event{
