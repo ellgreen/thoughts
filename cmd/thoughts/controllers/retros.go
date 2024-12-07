@@ -43,7 +43,7 @@ func RetroGet(db *sqlx.DB) http.Handler {
 
 func RetroIndex(db *sqlx.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		retros, err := dal.RetroList(r.Context(), db)
+		retros, err := dal.RetroList(r.Context(), db, false)
 		if err != nil {
 			slog.Error("problem fetching retros", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -62,6 +62,7 @@ type RetroCreateRequest struct {
 		Title       string `json:"title" validate:"required,min=2,max=255"`
 		Description string `json:"description" validate:"max=255"`
 	} `json:"columns" validate:"required,min=2,dive,required"`
+	Unlisted bool `json:"unlisted"`
 }
 
 func RetroCreate(db *sqlx.DB) http.Handler {
@@ -79,7 +80,7 @@ func RetroCreate(db *sqlx.DB) http.Handler {
 			}
 		}
 
-		retro, err := dal.RetroInsert(r.Context(), db, req.Title, cols)
+		retro, err := dal.RetroInsert(r.Context(), db, req.Title, cols, req.Unlisted)
 		if err != nil {
 			slog.Error("problem creating retro", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)

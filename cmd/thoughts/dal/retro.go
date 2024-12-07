@@ -10,9 +10,14 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func RetroList(ctx context.Context, db *sqlx.DB) ([]*model.Retro, error) {
+func RetroList(ctx context.Context, db *sqlx.DB, includeUnlisted bool) ([]*model.Retro, error) {
+	where := ""
+	if !includeUnlisted {
+		where = " where unlisted = false"
+	}
+
 	retros := make([]*model.Retro, 0)
-	if err := db.SelectContext(ctx, &retros, "select * from retros"); err != nil {
+	if err := db.SelectContext(ctx, &retros, "select * from retros"+where); err != nil {
 		return nil, fmt.Errorf("%w: failed to select retros: %w", ErrExecution, err)
 	}
 
@@ -28,21 +33,22 @@ func RetroGet(ctx context.Context, db *sqlx.DB, id uuid.UUID) (*model.Retro, err
 	return retro, nil
 }
 
-func RetroInsert(ctx context.Context, db *sqlx.DB, title string, columns model.RetroColumns) (*model.Retro, error) {
+func RetroInsert(ctx context.Context, db *sqlx.DB, title string, columns model.RetroColumns, unlisted bool) (*model.Retro, error) {
 	retro := &model.Retro{
 		ID:        uuid.New(),
 		Status:    model.RetroStatusBrainstorm,
 		Title:     title,
 		Columns:   columns.AssignIDs().ToJSON(),
+		Unlisted:  unlisted,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 
 	_, err := db.NamedExecContext(ctx, `
 		insert into retros
-		(id, status, title, columns, created_at, updated_at)
+		(id, status, title, columns, unlisted, created_at, updated_at)
 		values
-		(:id, :status, :title, :columns, :created_at, :updated_at)
+		(:id, :status, :title, :columns, :unlisted, :created_at, :updated_at)
 	`, retro)
 
 	if err != nil {

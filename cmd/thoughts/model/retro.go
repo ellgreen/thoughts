@@ -11,12 +11,13 @@ type (
 	RetroStatus string
 
 	Retro struct {
-		ID        uuid.UUID   `db:"id" json:"id"`
-		Status    RetroStatus `db:"status" json:"status"`
-		Title     string      `db:"title" json:"title"`
-		Columns   string      `db:"columns" json:"columns"`
-		CreatedAt time.Time   `db:"created_at" json:"created_at"`
-		UpdatedAt time.Time   `db:"updated_at" json:"updated_at"`
+		ID        uuid.UUID   `db:"id"`
+		Status    RetroStatus `db:"status"`
+		Title     string      `db:"title"`
+		Columns   string      `db:"columns"`
+		Unlisted  bool        `db:"unlisted"`
+		CreatedAt time.Time   `db:"created_at"`
+		UpdatedAt time.Time   `db:"updated_at"`
 	}
 
 	RetroColumn struct {
