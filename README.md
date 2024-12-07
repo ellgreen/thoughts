@@ -1,23 +1,20 @@
 # Thoughts 💭
 
-> [!WARNING]
-> This project is in Alpha stage so any feedback is greatly appreciated 🙏
-
 **Thoughts** is a simple self-hosted tool for facilitating retrospectives.
 
-- 🚦 Simple authentication, enter your name and start using the app
-- 🏗️ Create a retrospective using one of the templates provided or
+- Simple authentication, enter your name and start using the app
+- Create a retrospective using one of the templates provided or
   use your own custom columns
-- 📝 Add thoughts to the retrospective, only visible to you
-- 🔗 Group similar thoughts together
-- 🗳️ Vote on thoughts to prioritize them
-- 🗣️ Discuss thoughts with your team
-- ☑️ Add tasks to document action items
+- Add thoughts to the retrospective, only visible to you
+- Group similar thoughts together
+- Vote on thoughts to prioritize them
+- Discuss thoughts with your team
+- Add tasks to document action items
 
 > [!NOTE]
 > Thoughts has live updates so that you can ensure everyone is on the same page ⚡️
 
-![Thoughts](./.assets/discuss-2024-11-17.webp)
+![Thoughts](./.assets/discuss-2024-12-07.jpeg)
 
 ## Getting Started
 

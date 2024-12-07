@@ -43,3 +43,39 @@ func TaskList(ctx context.Context, db *sqlx.DB, retroID uuid.UUID) ([]*model.Tas
 
 	return tasks, nil
 }
+
+func TaskGet(ctx context.Context, db *sqlx.DB, id uuid.UUID) (*model.Task, error) {
+	task := &model.Task{}
+	if err := db.GetContext(ctx, task, "select * from tasks where id = ?", id); err != nil {
+		return nil, fmt.Errorf("%w: failed to get task: %w", ErrExecution, err)
+	}
+
+	return task, nil
+}
+
+func TaskUpdate(ctx context.Context, db *sqlx.DB, taskID uuid.UUID, who, what, when string) (*model.Task, error) {
+	task, err := TaskGet(ctx, db, taskID)
+	if err != nil {
+		return nil, err
+	}
+
+	task.Who = who
+	task.What = what
+	task.When = when
+	task.UpdatedAt = time.Now()
+
+	_, err = db.NamedExecContext(ctx, `
+		update tasks
+		set who = :who,
+			what = :what,
+			"when" = :when,
+			updated_at = :updated_at
+		where id = :id
+	`, task)
+
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to update task: %w", ErrExecution, err)
+	}
+
+	return task, nil
+}

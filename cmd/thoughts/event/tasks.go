@@ -38,12 +38,48 @@ func (b *Broker) handleTaskCreate(db *sqlx.DB, retroID uuid.UUID) Handler {
 	}
 }
 
+type taskUpdateRequest struct {
+	TaskID uuid.UUID `json:"id" validate:"required,uuid"`
+	Who    string    `json:"who" validate:"omitempty,min=2,max=255"`
+	What   string    `json:"what" validate:"omitempty,min=2,max=255"`
+	When   string    `json:"when" validate:"omitempty,datetime=2006-01-02T15:04:05Z"`
+}
+
+func (b *Broker) handleTaskUpdate(db *sqlx.DB) Handler {
+	return func(ctx context.Context, _ *model.User, payload Payload) error {
+		req, err := requests.FromMap[taskUpdateRequest](payload)
+		if err != nil {
+			return newErrorEvent(err.Error())
+		}
+
+		task, err := dal.TaskUpdate(ctx, db, req.TaskID, req.Who, req.What, req.When)
+		if err != nil {
+			slog.Error("problem updating task", "error", err)
+			return newErrorEvent("problem updating task")
+		}
+
+		b.dispatch(newTaskUpdatedEvent(task))
+
+		return nil
+	}
+}
+
 func newTaskCreatedEvent(task *model.Task) *Event {
 	resource := resources.TaskFromModel(task)
 	payload := resources.StructToMap(resource)
 
 	return &Event{
 		Name:    "task_created",
+		Payload: payload,
+	}
+}
+
+func newTaskUpdatedEvent(task *model.Task) *Event {
+	resource := resources.TaskFromModel(task)
+	payload := resources.StructToMap(resource)
+
+	return &Event{
+		Name:    "task_updated",
 		Payload: payload,
 	}
 }
