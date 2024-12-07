@@ -31,7 +31,7 @@ const schema = z.object({
   }),
 });
 
-interface TaskData {
+export interface TaskData {
   who: string;
   what: string;
   when: string | Date;
@@ -57,7 +57,7 @@ export default function TaskDialog({
     defaultValues: {
       who: data?.who ?? "",
       what: data?.what ?? "",
-      when: data?.when ?? "",
+      when: data ? new Date(data.when) : new Date(),
     },
   });
 

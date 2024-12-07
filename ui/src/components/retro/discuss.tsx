@@ -10,7 +10,7 @@ import { Column, Columns } from "./columns";
 import { Note } from "./note";
 import { NoteGroup } from "./note-group";
 import { Task } from "./task";
-import TaskDialog from "./task-dialog";
+import TaskDialog, { TaskData } from "./task-dialog";
 
 interface Vote {
   group_id: string;
@@ -58,8 +58,18 @@ export default function Discuss() {
 
     const event = lastJsonMessage as SocketEvent;
 
-    if (event.name === "task_created") {
-      setTasks((tasks) => [...tasks, event.payload as TaskType]);
+    switch (event.name) {
+      case "task_created":
+        setTasks((tasks) => [...tasks, event.payload as TaskType]);
+        break;
+      case "task_updated": {
+        const payload = event.payload as TaskType;
+
+        setTasks((tasks) =>
+          tasks.map((t) => (t.id === payload.id ? payload : t)),
+        );
+        break;
+      }
     }
   }, [lastJsonMessage]);
 
@@ -69,6 +79,15 @@ export default function Discuss() {
     when: Date | string;
   }) {
     dispatch(createSocketEvent("task_create", data));
+  }
+
+  function handleEditTask(id: string, data: TaskData) {
+    dispatch(
+      createSocketEvent("task_update", {
+        id,
+        ...data,
+      }),
+    );
   }
 
   return (
@@ -116,7 +135,11 @@ export default function Discuss() {
         </TaskDialog>
 
         {tasks.map((task) => (
-          <Task key={task.id} task={task} />
+          <Task
+            key={task.id}
+            task={task}
+            onEdit={(d) => handleEditTask(task.id, d)}
+          />
         ))}
       </Column>
     </Columns>

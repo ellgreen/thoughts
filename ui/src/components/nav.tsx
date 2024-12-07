@@ -27,7 +27,7 @@ export default function Nav() {
   }, [user]);
 
   return (
-    <nav className="container mx-auto py-8 flex items-center justify-between">
+    <nav className="max-w-[1600px] mx-auto p-8 flex items-center justify-between">
       <Link
         to="/"
         className="text-foreground text-lg font-extrabold tracking-tight hover:scale-105 transition-transform duration-100"
