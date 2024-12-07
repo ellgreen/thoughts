@@ -37,12 +37,21 @@ func RetroNotesIndex(db *sqlx.DB) http.Handler {
 			return
 		}
 
+		userMap, err := dal.UserMap(r.Context(), db, lo.Uniq(lo.Map(notes, func(note *model.Note, _ int) uuid.UUID {
+			return note.UserID
+		})))
+		if err != nil {
+			slog.Error("problem fetching note users", "error", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		user := auth.UserFromRequest(r)
 
 		obfuscate := retro.Status == model.RetroStatusBrainstorm
 
 		writeJSON(w, lo.Map(notes, func(note *model.Note, _ int) *resources.Note {
-			return resources.NoteFromModel(note, user.ID, obfuscate)
+			return resources.NoteFromModel(note, userMap[note.UserID], user.ID, obfuscate)
 		}))
 	})
 }

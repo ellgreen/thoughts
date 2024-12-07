@@ -40,3 +40,27 @@ func UserInsert(ctx context.Context, db *sqlx.DB, name string) (*model.User, err
 
 	return user, nil
 }
+
+func UserMap(ctx context.Context, db *sqlx.DB, ids []uuid.UUID) (map[uuid.UUID]*model.User, error) {
+	userMap := make(map[uuid.UUID]*model.User, len(ids))
+	if len(ids) == 0 {
+		return userMap, nil
+	}
+
+	query, args, err := sqlx.In("select * from users where id in (?)", ids)
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to build query: %w", ErrExecution, err)
+	}
+
+	var users []*model.User
+
+	if err := db.SelectContext(ctx, &users, db.Rebind(query), args...); err != nil {
+		return nil, fmt.Errorf("%w: failed to get users: %w", ErrExecution, err)
+	}
+
+	for _, user := range users {
+		userMap[user.ID] = user
+	}
+
+	return userMap, nil
+}
