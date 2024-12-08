@@ -29,6 +29,10 @@ export interface PayloadNoteUpdate {
   group_id?: string;
 }
 
+export interface PayloadConnectionInfo {
+  users: string[];
+}
+
 export function createSocketEvent(
   name: string,
   payload: object = {},

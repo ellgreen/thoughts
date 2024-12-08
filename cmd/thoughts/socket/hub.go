@@ -29,6 +29,7 @@ func (h *Hub) Run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			h.connectionInfoSync()
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
@@ -38,6 +39,8 @@ func (h *Hub) Run() {
 			if len(h.clients) == 0 {
 				return
 			}
+
+			h.connectionInfoSync()
 		case event := <-h.broker.Listen():
 			for client := range h.clients {
 				client.Send(event.ToJSON())
@@ -50,5 +53,22 @@ func (h *Hub) Run() {
 				}
 			}
 		}
+	}
+}
+
+func (h *Hub) userNames() []string {
+	users := make([]string, 0, len(h.clients))
+	for client := range h.clients {
+		users = append(users, client.user.Name)
+	}
+
+	return users
+}
+
+func (h *Hub) connectionInfoSync() {
+	data := event.NewConnectionInfoEvent(h.userNames()).ToJSON()
+
+	for client := range h.clients {
+		client.Send(data)
 	}
 }
