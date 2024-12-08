@@ -63,17 +63,18 @@ export default function Brainstorm() {
 
             {notes
               .filter((n) => n.column_id == column.id)
-              .map((note) =>
-                note.created_by_me ? (
-                  <DraggableNote
-                    key={note.id}
-                    note={note}
-                    onEdit={(content) => handleNoteEdit(note.id, content)}
-                  />
-                ) : (
-                  <Note key={note.id} note={note} blur />
-                ),
-              )}
+              .map((note) => (
+                <div key={note.id} className="animate-in fade-in zoom-in-110">
+                  {note.created_by_me ? (
+                    <DraggableNote
+                      note={note}
+                      onEdit={(content) => handleNoteEdit(note.id, content)}
+                    />
+                  ) : (
+                    <Note note={note} blur />
+                  )}
+                </div>
+              ))}
           </DroppableColumn>
         ))}
       </Columns>

@@ -102,7 +102,10 @@ export function VotableNoteGroup({
       {children}
 
       <div
-        className={`absolute ${voted ? "opacity-85" : "opacity-0"} group-hover:opacity-100 top-1 right-2 flex justify-end transition-opacity duration-100`}
+        data-voted={voted}
+        className={`absolute flex data-[voted=false]:hidden group-hover:flex
+          opacity-90 top-1 right-2 justify-end
+          animate-in fade-in animate-out`}
       >
         <Button
           variant={voted ? "default" : "secondary"}
