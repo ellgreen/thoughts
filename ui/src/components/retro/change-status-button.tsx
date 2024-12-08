@@ -52,7 +52,10 @@ export default function ChangeStatusButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={variant === "next" ? "outline" : "ghost"} size="sm">
+        <Button
+          variant={variant === "next" ? "default" : "secondary"}
+          size="sm"
+        >
           {variant === "prev" && <ChevronsLeft />} {buttonText}{" "}
           {variant === "next" && <ChevronsRight />}
         </Button>
