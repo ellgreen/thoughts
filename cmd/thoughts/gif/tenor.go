@@ -49,9 +49,11 @@ func (t *TenorProvider) Search(ctx context.Context, query string) ([]SearchResul
 	}
 
 	searchURL += "?" + url.Values{
-		"q":     []string{query},
-		"key":   []string{t.APIKey},
-		"limit": []string{"9"},
+		"q":             []string{query},
+		"key":           []string{t.APIKey},
+		"limit":         []string{"9"},
+		"contentfilter": []string{"medium"},
+		"media_filter":  []string{"gif,mediumgif"},
 	}.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, searchURL, nil)
