@@ -22,6 +22,7 @@ function notesReducer(notes: Note[], event: SocketEvent): Note[] {
           content: payload.content,
           column_id: payload.column_id,
           group_id: "placeholder",
+          img_url: "",
         },
       ];
     }
