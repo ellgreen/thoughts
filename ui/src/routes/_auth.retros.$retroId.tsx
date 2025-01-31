@@ -5,6 +5,7 @@ import { api } from "@/lib/api";
 import { socketURL } from "@/lib/socket";
 import { Retro } from "@/types";
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import useWebSocket from "react-use-websocket";
 
 export const Route = createFileRoute("/_auth/retros/$retroId")({
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/_auth/retros/$retroId")({
 });
 
 export default function RouteComponent() {
-  const retro = Route.useLoaderData();
+  const [retro, setRetro] = useState<Retro>(Route.useLoaderData());
 
   const socket = useWebSocket(socketURL(`/api/retros/${retro.id}/ws`).href, {
     share: true,
@@ -26,7 +27,7 @@ export default function RouteComponent() {
   });
 
   return (
-    <RetroContext.Provider value={{ retro, socket }}>
+    <RetroContext.Provider value={{ retro, setRetro, socket }}>
       <Heading variant="h1" className="mb-8">
         {retro.title}
       </Heading>

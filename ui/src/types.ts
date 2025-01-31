@@ -9,8 +9,7 @@ export interface Retro {
   status: RetroStatus;
   title: string;
   columns: RetroColumn[];
-  updated_at: string;
-  created_at: string;
+  unlisted: boolean;
 }
 
 export interface RetroColumn {

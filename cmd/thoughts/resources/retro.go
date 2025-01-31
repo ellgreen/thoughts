@@ -13,10 +13,11 @@ type RetroColumn struct {
 }
 
 type Retro struct {
-	ID      uuid.UUID      `json:"id"`
-	Title   string         `json:"title"`
-	Status  string         `json:"status"`
-	Columns []*RetroColumn `json:"columns"`
+	ID       uuid.UUID      `json:"id"`
+	Title    string         `json:"title"`
+	Status   string         `json:"status"`
+	Columns  []*RetroColumn `json:"columns"`
+	Unlisted bool           `json:"unlisted"`
 }
 
 func RetroFromModel(m *model.Retro) *Retro {
@@ -31,5 +32,6 @@ func RetroFromModel(m *model.Retro) *Retro {
 				Description: item.Description,
 			}
 		}),
+		Unlisted: m.Unlisted,
 	}
 }
