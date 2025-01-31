@@ -1,6 +1,7 @@
 package resources
 
 import (
+	"github.com/ellgreen/thoughts/cmd/thoughts/gif"
 	"github.com/ellgreen/thoughts/cmd/thoughts/model"
 	"github.com/google/uuid"
 	"github.com/samber/lo"
@@ -13,11 +14,12 @@ type RetroColumn struct {
 }
 
 type Retro struct {
-	ID       uuid.UUID      `json:"id"`
-	Title    string         `json:"title"`
-	Status   string         `json:"status"`
-	Columns  []*RetroColumn `json:"columns"`
-	Unlisted bool           `json:"unlisted"`
+	ID          uuid.UUID      `json:"id"`
+	Title       string         `json:"title"`
+	Status      string         `json:"status"`
+	Columns     []*RetroColumn `json:"columns"`
+	Unlisted    bool           `json:"unlisted"`
+	GIFsEnabled bool           `json:"gifs_enabled"`
 }
 
 func RetroFromModel(m *model.Retro) *Retro {
@@ -32,6 +34,7 @@ func RetroFromModel(m *model.Retro) *Retro {
 				Description: item.Description,
 			}
 		}),
-		Unlisted: m.Unlisted,
+		Unlisted:    m.Unlisted,
+		GIFsEnabled: gif.IsAvailable(),
 	}
 }

@@ -32,6 +32,7 @@ export interface PayloadNoteUpdate {
   content?: string;
   column_id?: string;
   group_id?: string;
+  img_url?: string;
 }
 
 export interface PayloadConnectionInfo {

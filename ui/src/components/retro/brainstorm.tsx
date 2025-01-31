@@ -10,7 +10,7 @@ import NoteDialog from "./note-dialog";
 
 export default function Brainstorm() {
   const {
-    retro: { columns },
+    retro: { columns, gifs_enabled },
   } = useRetro();
   const { notes, dispatch } = useNotes();
 
@@ -46,6 +46,24 @@ export default function Brainstorm() {
     );
   }
 
+  function handleNoteGifSelected(noteId: string, url: string) {
+    dispatch(
+      createSocketEvent("note_update", {
+        id: noteId,
+        img_url: url,
+      }),
+    );
+  }
+
+  function handleNoteGifRemoved(noteId: string) {
+    dispatch(
+      createSocketEvent("note_update", {
+        id: noteId,
+        remove_img_url: true,
+      }),
+    );
+  }
+
   return (
     <DndContext onDragEnd={handleDragEnd}>
       <Columns>
@@ -69,6 +87,16 @@ export default function Brainstorm() {
                     <DraggableNote
                       note={note}
                       onEdit={(content) => handleNoteEdit(note.id, content)}
+                      onGifSelected={
+                        gifs_enabled
+                          ? (url) => handleNoteGifSelected(note.id, url)
+                          : undefined
+                      }
+                      onGifRemoved={
+                        gifs_enabled
+                          ? () => handleNoteGifRemoved(note.id)
+                          : undefined
+                      }
                     />
                   ) : (
                     <Note note={note} blur />

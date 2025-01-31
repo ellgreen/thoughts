@@ -18,23 +18,28 @@ import {
   FormItem,
   FormMessage,
 } from "../ui/form";
-import { GiphyFetch } from "@giphy/js-fetch-api";
+import { api } from "@/lib/api";
 import { useState } from "react";
 
 const schema = z.object({
-  query: z.string().min(2).max(255),
+  query: z.string().min(2).max(32),
 });
 
-interface GIF {
-  images: {
-    downsized: {
-      url: string;
-    };
-  };
+interface SearchResult {
+  preview_url: string;
+  url: string;
 }
 
-export default function GIFDialog({ children }: { children: React.ReactNode }) {
-  const [results, setResults] = useState<GIF[]>([]);
+export default function GIFDialog({
+  children,
+  onSelect,
+}: {
+  children: React.ReactNode;
+  onSelect: (url: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const [results, setResults] = useState<SearchResult[]>([]);
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -44,18 +49,17 @@ export default function GIFDialog({ children }: { children: React.ReactNode }) {
   });
 
   function handleSubmit(data: z.infer<typeof schema>) {
-    const gf = new GiphyFetch("MVutYl7BgFftZ5zkI9z8E5AAq7qI8eZ8");
-
-    gf.search(data.query, { limit: 6, sort: "relevant", lang: "en" }).then(
-      (res) => {
-        console.log(res.data);
+    api
+      .post<SearchResult[]>("/api/gifs", {
+        q: data.query,
+      })
+      .then((res) => {
         setResults(res.data);
-      },
-    );
+      });
   }
 
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -92,7 +96,16 @@ export default function GIFDialog({ children }: { children: React.ReactNode }) {
         <ul className="grid grid-cols-3 gap-4">
           {results.map((result, i) => (
             <li key={i}>
-              <img src={result.images.downsized.url} />
+              <button
+                onClick={() => {
+                  setOpen(false);
+
+                  onSelect(result.url);
+                }}
+                className="border-2 rounded p-2 hover:border-primary hover:scale-110 transition-all duration-100"
+              >
+                <img src={result.preview_url} />
+              </button>
             </li>
           ))}
         </ul>

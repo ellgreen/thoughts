@@ -13,6 +13,7 @@ type Note struct {
 	ColumnID      uuid.UUID `json:"column_id"`
 	GroupID       uuid.UUID `json:"group_id"`
 	Content       string    `json:"content"`
+	ImgURL        string    `json:"img_url"`
 }
 
 func NoteFromModel(note *model.Note, noteUser *model.User, authUserID uuid.UUID, obfuscate bool) *Note {
@@ -35,5 +36,6 @@ func NoteFromModel(note *model.Note, noteUser *model.User, authUserID uuid.UUID,
 		ColumnID:      note.ColumnID,
 		GroupID:       note.GroupID,
 		Content:       content,
+		ImgURL:        note.ImgURL.V,
 	}
 }

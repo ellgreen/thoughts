@@ -4,7 +4,7 @@ import {
   DraggableSyntheticListeners,
   useDraggable,
 } from "@dnd-kit/core";
-import { GripVertical, Image, Pencil } from "lucide-react";
+import { GripVertical, Image, ImageOff, Pencil } from "lucide-react";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import { Button } from "../ui/button";
@@ -18,6 +18,8 @@ interface NoteProps extends React.HTMLAttributes<HTMLDivElement> {
   listeners?: DraggableSyntheticListeners;
   attributes?: DraggableAttributes;
   onEdit?: (content: string) => void;
+  onGifSelected?: (url: string) => void;
+  onGifRemoved?: () => void;
 }
 
 export const Note = React.forwardRef<HTMLDivElement, NoteProps>(
@@ -29,6 +31,8 @@ export const Note = React.forwardRef<HTMLDivElement, NoteProps>(
       listeners,
       attributes,
       onEdit,
+      onGifSelected,
+      onGifRemoved,
       className,
       ...props
     },
@@ -44,17 +48,16 @@ export const Note = React.forwardRef<HTMLDivElement, NoteProps>(
         ref={ref}
         {...props}
       >
-        <div
-          className={twMerge(
-            "flex justify-around max-h-48 rounded overflow-hidden bg-accent",
-            blur ? "blur-md" : "",
-          )}
-        >
-          <img
-            className="h-full rounded"
-            src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExeWNxOHE0bThqcXN1eXQ2MGJteXVycnk2d2VrNGg2dnlzM2xvd2twOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/duNowzaVje6Di3hnOu/giphy.webp"
-          />
-        </div>
+        {note.img_url && (
+          <div
+            className={twMerge(
+              "flex justify-around max-h-48 rounded overflow-hidden bg-accent",
+              blur ? "blur-md" : "",
+            )}
+          >
+            <img className="h-full rounded" src={note.img_url} />
+          </div>
+        )}
 
         <div className="flex items-center justify-between space-x-2">
           {showGrip && (
@@ -72,33 +75,44 @@ export const Note = React.forwardRef<HTMLDivElement, NoteProps>(
             {note.content}
           </p>
 
-          {onEdit && (
-            <>
-              <GIFDialog>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-                >
-                  <Image />
-                </Button>
-              </GIFDialog>
-
-              <NoteDialog
-                title="Edit Note"
-                description="Edit the content of the note."
-                content={note.content}
-                onContentSave={onEdit}
+          {onGifSelected && note.img_url === "" && (
+            <GIFDialog onSelect={onGifSelected}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
               >
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-                >
-                  <Pencil />
-                </Button>
-              </NoteDialog>
-            </>
+                <Image />
+              </Button>
+            </GIFDialog>
+          )}
+
+          {onGifRemoved && note.img_url !== "" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
+              onClick={onGifRemoved}
+            >
+              <ImageOff />
+            </Button>
+          )}
+
+          {onEdit && (
+            <NoteDialog
+              title="Edit Note"
+              description="Edit the content of the note."
+              content={note.content}
+              onContentSave={onEdit}
+            >
+              <Button
+                variant="ghost"
+                size="icon"
+                className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
+              >
+                <Pencil />
+              </Button>
+            </NoteDialog>
           )}
         </div>
       </div>
@@ -109,9 +123,13 @@ export const Note = React.forwardRef<HTMLDivElement, NoteProps>(
 export function DraggableNote({
   note,
   onEdit,
+  onGifSelected,
+  onGifRemoved,
 }: {
   note: NoteType;
   onEdit?: (content: string) => void;
+  onGifSelected?: (url: string) => void;
+  onGifRemoved?: () => void;
 }) {
   const { setNodeRef, transform, listeners, attributes } = useDraggable({
     id: note.id,
@@ -132,6 +150,8 @@ export function DraggableNote({
       listeners={listeners}
       attributes={attributes}
       onEdit={onEdit}
+      onGifSelected={onGifSelected}
+      onGifRemoved={onGifRemoved}
     />
   );
 }
