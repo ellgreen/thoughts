@@ -4,6 +4,7 @@ import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 
 type RetroContextType = {
   retro: Retro;
+  setRetro: (retro: Retro) => void;
   socket: WebSocketHook;
 };
 

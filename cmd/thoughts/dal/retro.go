@@ -17,7 +17,7 @@ func RetroList(ctx context.Context, db *sqlx.DB, includeUnlisted bool) ([]*model
 	}
 
 	retros := make([]*model.Retro, 0)
-	if err := db.SelectContext(ctx, &retros, "select * from retros"+where); err != nil {
+	if err := db.SelectContext(ctx, &retros, "select * from retros"+where+" order by updated_at desc limit 25"); err != nil {
 		return nil, fmt.Errorf("%w: failed to select retros: %w", ErrExecution, err)
 	}
 
@@ -53,6 +53,31 @@ func RetroInsert(ctx context.Context, db *sqlx.DB, title string, columns model.R
 
 	if err != nil {
 		return nil, fmt.Errorf("%w: failed to insert retro: %w", ErrExecution, err)
+	}
+
+	return retro, nil
+}
+
+func RetroUpdate(ctx context.Context, db *sqlx.DB, id uuid.UUID, title string, unlisted bool) (*model.Retro, error) {
+	retro, err := RetroGet(ctx, db, id)
+	if err != nil {
+		return nil, err
+	}
+
+	retro.Title = title
+	retro.Unlisted = unlisted
+	retro.UpdatedAt = time.Now()
+
+	_, err = db.NamedExecContext(ctx, `
+		update retros set
+			title = :title,
+			unlisted = :unlisted,
+			updated_at = :updated_at
+		where id = :id
+	`, retro)
+
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to update retro: %w", ErrExecution, err)
 	}
 
 	return retro, nil

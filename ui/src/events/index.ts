@@ -7,6 +7,11 @@ export interface SocketEvent {
   payload: Payload;
 }
 
+export interface PayloadRetroUpdate {
+  title: string;
+  unlisted: boolean;
+}
+
 export interface PayloadStatusUpdate {
   status: RetroStatus;
 }
