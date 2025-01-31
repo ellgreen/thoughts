@@ -37,10 +37,12 @@ func (b *Broker) handleNoteCreate(db *sqlx.DB, retroID uuid.UUID) Handler {
 }
 
 type noteUpdateRequest struct {
-	NoteID   uuid.UUID `json:"id" validate:"required,uuid"`
-	ColumnID uuid.UUID `json:"column_id" validate:"omitempty,required_with=group_id,uuid"`
-	GroupID  uuid.UUID `json:"group_id" validate:"omitempty,uuid"`
-	Content  string    `json:"content" validate:"omitempty,min=2,max=255"`
+	NoteID       uuid.UUID `json:"id" validate:"required,uuid"`
+	ColumnID     uuid.UUID `json:"column_id" validate:"omitempty,required_with=group_id,uuid"`
+	GroupID      uuid.UUID `json:"group_id" validate:"omitempty,uuid"`
+	Content      string    `json:"content" validate:"omitempty,min=2,max=255"`
+	ImgURL       string    `json:"img_url" validate:"omitempty,url"`
+	RemoveImgURL bool      `json:"remove_img_url"`
 }
 
 func (b *Broker) handleNoteUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
@@ -56,21 +58,7 @@ func (b *Broker) handleNoteUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
 			return newErrorEvent(err.Error())
 		}
 
-		note, err := dal.NoteGet(ctx, db, req.NoteID)
-		if err != nil {
-			slog.Error("problem getting note", "error", err)
-			return newErrorEvent("problem getting note")
-		}
-
-		if req.Content == "" {
-			req.Content = note.Content
-		}
-
-		if req.GroupID == uuid.Nil && req.ColumnID == uuid.Nil && req.Content == note.Content {
-			return nil
-		}
-
-		note, err = dal.NoteUpdate(ctx, db, req.NoteID, req.ColumnID, req.GroupID, req.Content)
+		note, err := dal.NoteUpdate(ctx, db, req.NoteID, req.ColumnID, req.GroupID, req.Content, req.ImgURL, req.RemoveImgURL)
 		if err != nil {
 			slog.Error("problem updating note", "error", err)
 			return newErrorEvent("problem updating note")

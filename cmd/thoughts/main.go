@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ellgreen/thoughts/cmd/thoughts/gif"
 	"github.com/ellgreen/thoughts/cmd/thoughts/session"
 	"github.com/ellgreen/thoughts/migrations"
 	"github.com/ellgreen/thoughts/ui"
@@ -53,7 +54,7 @@ func main() {
 
 	router := mux.NewRouter()
 
-	applyRoutes(router, sessionProvider)
+	applyRoutes(router, sessionProvider, gif.ResolveProvider(cfg.TenorAPIKey))
 
 	corsCfg := cors.Default()
 	if !ui.IsBundled() {

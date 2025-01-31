@@ -2,6 +2,7 @@ package dal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
@@ -59,6 +60,8 @@ func NoteUpdate(
 	columnID uuid.UUID,
 	groupID uuid.UUID,
 	content string,
+	imgURL string,
+	removeImgURL bool,
 ) (*model.Note, error) {
 	note, err := NoteGet(ctx, db, id)
 	if err != nil {
@@ -75,7 +78,21 @@ func NoteUpdate(
 		note.GroupID = uuid.New()
 	}
 
-	note.Content = content
+	if content != "" {
+		note.Content = content
+	}
+
+	if imgURL != "" {
+		note.ImgURL = sql.Null[string]{
+			V:     imgURL,
+			Valid: true,
+		}
+	} else if removeImgURL {
+		note.ImgURL = sql.Null[string]{
+			Valid: false,
+		}
+	}
+
 	note.UpdatedAt = time.Now()
 
 	_, err = db.NamedExecContext(ctx, `
@@ -84,6 +101,7 @@ func NoteUpdate(
 			column_id = :column_id,
 			group_id = :group_id,
 			content = :content,
+			img_url = :img_url,
 			updated_at = :updated_at
 		where id = :id
 	`, note)

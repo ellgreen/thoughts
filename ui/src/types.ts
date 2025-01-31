@@ -10,6 +10,7 @@ export interface Retro {
   title: string;
   columns: RetroColumn[];
   unlisted: boolean;
+  gifs_enabled: boolean;
 }
 
 export interface RetroColumn {
@@ -25,6 +26,7 @@ export interface Note {
   column_id: string;
   group_id: string;
   content: string;
+  img_url: string;
 }
 
 export interface Task {

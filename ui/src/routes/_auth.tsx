@@ -20,7 +20,7 @@ function RouteComponent() {
     <>
       <Nav />
 
-      <main className="max-w-[1600px] mx-auto px-8">
+      <main className="max-w-[1600px] mx-auto px-8 pb-8">
         <Outlet />
       </main>
     </>
