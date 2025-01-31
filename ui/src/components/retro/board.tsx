@@ -18,6 +18,7 @@ import Vote from "./vote";
 import { User, Zap } from "lucide-react";
 import { Button } from "../ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import Settings from "./settings";
 
 export default function Board() {
   const {
@@ -67,6 +68,8 @@ export default function Board() {
         <StatusIndicator status={status} />
 
         <div className="flex space-x-2">
+          <Settings />
+
           <ConnectionIndicator
             connectionInfo={connectionInfo}
             readyState={readyState}

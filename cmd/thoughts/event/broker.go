@@ -30,6 +30,7 @@ func NewBroker(db *sqlx.DB, retroID uuid.UUID) *Broker {
 		userDependentEvents: make(chan UserDependentEvent),
 	}
 
+	b.register("retro_update", b.handleRetroUpdate(db, retroID))
 	b.register("status_update", b.handleStatusUpdate(db, retroID))
 	b.register("note_create", b.handleNoteCreate(db, retroID))
 	b.register("note_update", b.handleNoteUpdate(db, retroID))
