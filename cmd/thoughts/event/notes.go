@@ -70,6 +70,28 @@ func (b *Broker) handleNoteUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
 	}
 }
 
+type noteDeleteRequest struct {
+	NoteID uuid.UUID `json:"id" validate:"required,uuid"`
+}
+
+func (b *Broker) handleNoteDelete(db *sqlx.DB) Handler {
+	return func(ctx context.Context, _ *model.User, payload Payload) error {
+		req, err := requests.FromMap[noteDeleteRequest](payload)
+		if err != nil {
+			return newErrorEvent(err.Error())
+		}
+
+		if err := dal.NoteDelete(ctx, db, req.NoteID); err != nil {
+			slog.Error("problem deleting note", "error", err)
+			return newErrorEvent("problem deleting note")
+		}
+
+		b.dispatch(newNoteDeletedEvent(req.NoteID))
+
+		return nil
+	}
+}
+
 func newNoteCreatedEvent(note *model.Note) UserDependentEvent {
 	return func(user *model.User) *Event {
 		resource := resources.NoteFromModel(note, nil, user.ID, true)
@@ -91,5 +113,12 @@ func newNoteUpdatedEvent(note *model.Note, retro *model.Retro) UserDependentEven
 			Name:    "note_updated",
 			Payload: payload,
 		}
+	}
+}
+
+func newNoteDeletedEvent(noteID uuid.UUID) *Event {
+	return &Event{
+		Name:    "note_deleted",
+		Payload: Payload{"id": noteID},
 	}
 }

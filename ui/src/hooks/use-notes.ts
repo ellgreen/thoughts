@@ -52,6 +52,14 @@ function notesReducer(notes: Note[], event: SocketEvent): Note[] {
       const payload = event.payload as Note;
       return notes.map((note) => (note.id === payload.id ? payload : note));
     }
+    case "note_delete": {
+      const payload = event.payload as { id: string };
+      return notes.filter((note) => note.id !== payload.id);
+    }
+    case "note_deleted": {
+      const payload = event.payload as { id: string };
+      return notes.filter((note) => note.id !== payload.id);
+    }
     default:
       return notes;
   }

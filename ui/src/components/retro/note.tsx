@@ -4,12 +4,13 @@ import {
   DraggableSyntheticListeners,
   useDraggable,
 } from "@dnd-kit/core";
-import { GripVertical, Image, ImageOff, Pencil } from "lucide-react";
+import { GripVertical, Image, ImageOff, Pencil, Trash2 } from "lucide-react";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import { Button } from "../ui/button";
 import NoteDialog from "./note-dialog";
 import GIFDialog from "./gif-dialog";
+import NoteDeleteDialog from "./note-delete-dialog";
 
 interface NoteProps extends React.HTMLAttributes<HTMLDivElement> {
   note: NoteType;
@@ -18,6 +19,7 @@ interface NoteProps extends React.HTMLAttributes<HTMLDivElement> {
   listeners?: DraggableSyntheticListeners;
   attributes?: DraggableAttributes;
   onEdit?: (content: string) => void;
+  onDelete?: () => void;
   onGifSelected?: (url: string) => void;
   onGifRemoved?: () => void;
 }
@@ -31,6 +33,7 @@ export const Note = React.forwardRef<HTMLDivElement, NoteProps>(
       listeners,
       attributes,
       onEdit,
+      onDelete,
       onGifSelected,
       onGifRemoved,
       className,
@@ -98,6 +101,18 @@ export const Note = React.forwardRef<HTMLDivElement, NoteProps>(
             </Button>
           )}
 
+          {onDelete && (
+            <NoteDeleteDialog onDelete={onDelete}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
+              >
+                <Trash2 />
+              </Button>
+            </NoteDeleteDialog>
+          )}
+
           {onEdit && (
             <NoteDialog
               title="Edit Note"
@@ -123,11 +138,13 @@ export const Note = React.forwardRef<HTMLDivElement, NoteProps>(
 export function DraggableNote({
   note,
   onEdit,
+  onDelete,
   onGifSelected,
   onGifRemoved,
 }: {
   note: NoteType;
   onEdit?: (content: string) => void;
+  onDelete?: () => void;
   onGifSelected?: (url: string) => void;
   onGifRemoved?: () => void;
 }) {
@@ -150,6 +167,7 @@ export function DraggableNote({
       listeners={listeners}
       attributes={attributes}
       onEdit={onEdit}
+      onDelete={onDelete}
       onGifSelected={onGifSelected}
       onGifRemoved={onGifRemoved}
     />
