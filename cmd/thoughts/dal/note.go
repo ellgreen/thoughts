@@ -113,6 +113,14 @@ func NoteUpdate(
 	return note, nil
 }
 
+func NoteDelete(ctx context.Context, db *sqlx.DB, id uuid.UUID) error {
+	if _, err := db.ExecContext(ctx, "delete from notes where id = ?", id); err != nil {
+		return fmt.Errorf("%w: failed to delete note: %w", ErrExecution, err)
+	}
+
+	return nil
+}
+
 func NoteList(
 	ctx context.Context,
 	db *sqlx.DB,

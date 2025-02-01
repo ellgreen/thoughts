@@ -46,6 +46,14 @@ export default function Brainstorm() {
     );
   }
 
+  function handleNoteDelete(noteId: string) {
+    dispatch(
+      createSocketEvent("note_delete", {
+        id: noteId,
+      }),
+    );
+  }
+
   function handleNoteGifSelected(noteId: string, url: string) {
     dispatch(
       createSocketEvent("note_update", {
@@ -87,6 +95,7 @@ export default function Brainstorm() {
                     <DraggableNote
                       note={note}
                       onEdit={(content) => handleNoteEdit(note.id, content)}
+                      onDelete={() => handleNoteDelete(note.id)}
                       onGifSelected={
                         gifs_enabled
                           ? (url) => handleNoteGifSelected(note.id, url)
