@@ -45,3 +45,14 @@ docker run -p 3000:3000 \
   -e THOUGHTS_TLS_KEY_PATH="/path/to/your/tls.key" \
   ghcr.io/ellgreen/thoughts:latest
 ```
+
+### Features
+
+#### GIF Support
+
+To enable support for gifs via Tenor, you will need to set the
+`THOUGHTS_TENOR_API_KEY` environment variable.
+
+You can follow the instructions to get an API key here:
+
+<https://developers.google.com/tenor/guides/quickstart#setup>
