@@ -58,7 +58,14 @@ func RetroInsert(ctx context.Context, db *sqlx.DB, title string, columns model.R
 	return retro, nil
 }
 
-func RetroUpdate(ctx context.Context, db *sqlx.DB, id uuid.UUID, title string, unlisted bool) (*model.Retro, error) {
+func RetroUpdate(
+	ctx context.Context,
+	db *sqlx.DB,
+	id uuid.UUID,
+	title string,
+	unlisted bool,
+	maxVotes int,
+) (*model.Retro, error) {
 	retro, err := RetroGet(ctx, db, id)
 	if err != nil {
 		return nil, err
@@ -66,12 +73,14 @@ func RetroUpdate(ctx context.Context, db *sqlx.DB, id uuid.UUID, title string, u
 
 	retro.Title = title
 	retro.Unlisted = unlisted
+	retro.MaxVotes = maxVotes
 	retro.UpdatedAt = time.Now()
 
 	_, err = db.NamedExecContext(ctx, `
 		update retros set
 			title = :title,
 			unlisted = :unlisted,
+			max_votes = :max_votes,
 			updated_at = :updated_at
 		where id = :id
 	`, retro)

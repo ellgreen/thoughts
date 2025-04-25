@@ -92,10 +92,12 @@ export function VotableNoteGroup({
   children,
   voted,
   onVote,
+  canVote,
 }: {
   children: React.ReactNode;
   voted: boolean;
   onVote: (value: boolean) => void;
+  canVote: boolean;
 }) {
   return (
     <NoteGroup className="group relative transition-all duration-100">
@@ -111,6 +113,7 @@ export function VotableNoteGroup({
           variant={voted ? "default" : "secondary"}
           size="sm"
           onClick={() => onVote(!voted)}
+          disabled={!voted && !canVote}
         >
           {voted ? <X /> : <Check />}
           {voted ? "Unvote" : "Vote"}

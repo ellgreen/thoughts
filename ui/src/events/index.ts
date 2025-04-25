@@ -10,6 +10,7 @@ export interface SocketEvent {
 export interface PayloadRetroUpdate {
   title: string;
   unlisted: boolean;
+  max_votes: number;
 }
 
 export interface PayloadStatusUpdate {

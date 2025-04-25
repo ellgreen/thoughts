@@ -10,6 +10,7 @@ export interface Retro {
   title: string;
   columns: RetroColumn[];
   unlisted: boolean;
+  max_votes: number;
   gifs_enabled: boolean;
 }
 

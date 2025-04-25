@@ -10,7 +10,11 @@ interface Vote {
   group_id: string;
 }
 
-export default function Vote() {
+export default function Vote({
+  setVotesRemaining,
+}: {
+  setVotesRemaining: (votesRemaining: number) => void;
+}) {
   const { retro } = useRetro();
   const { groupedNotes } = useNotes();
 
@@ -19,8 +23,9 @@ export default function Vote() {
   useEffect(() => {
     api.get(`/api/retros/${retro.id}/votes`).then((res) => {
       setVotes(res.data);
+      setVotesRemaining(retro.max_votes - res.data.length);
     });
-  }, [retro.id]);
+  }, [retro]);
 
   function handleVote(groupId: string, value: boolean) {
     api
@@ -28,6 +33,7 @@ export default function Vote() {
       .then((res) => {
         if (res.status === 200) {
           setVotes(res.data);
+          setVotesRemaining(retro.max_votes - res.data.length);
         }
       });
   }
@@ -41,7 +47,9 @@ export default function Vote() {
               <VotableNoteGroup
                 onVote={(value) => handleVote(groupId, value)}
                 voted={!!votes.find((vote) => vote.group_id === groupId)}
+                canVote={retro.max_votes > votes.length}
                 key={groupId}
+                /* something to make the button disabled */
               >
                 {groupNotes.map((note) => (
                   <Note key={note.id} note={note} />

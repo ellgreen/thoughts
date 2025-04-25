@@ -16,6 +16,7 @@ type (
 		Title     string      `db:"title"`
 		Columns   string      `db:"columns"`
 		Unlisted  bool        `db:"unlisted"`
+		MaxVotes  int         `db:"max_votes"`
 		CreatedAt time.Time   `db:"created_at"`
 		UpdatedAt time.Time   `db:"updated_at"`
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -33,6 +34,34 @@ func FromMap[T any](data map[string]any) (*T, error) {
 		if requestFieldType == mapValueType {
 			requestValue.Field(i).Set(reflect.ValueOf(mapValue))
 			continue
+		}
+
+		if requestFieldType.Kind() == reflect.Int {
+			switch mapValueType.Kind() {
+			case reflect.String:
+				mapStrValue, ok := mapValue.(string)
+				if !ok {
+					return nil, errors.New("invalid int - not a string")
+				}
+
+				intValue, err := strconv.Atoi(mapStrValue)
+				if err != nil {
+					return nil, errors.New("invalid int - could not parse")
+				}
+
+				requestValue.Field(i).Set(reflect.ValueOf(intValue))
+				continue
+			case reflect.Float64:
+				floatValue, ok := mapValue.(float64)
+				if !ok {
+					return nil, errors.New("invalid int - not a float64")
+				}
+
+				requestValue.Field(i).Set(reflect.ValueOf(int(floatValue)))
+				continue
+			default:
+				return nil, errors.New("invalid int - not a string or float64")
+			}
 		}
 
 		if requestFieldType == reflect.TypeOf(uuid.UUID{}) {

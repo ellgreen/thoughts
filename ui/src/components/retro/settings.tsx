@@ -31,6 +31,7 @@ import { Input } from "../ui/input";
 const schema = z.object({
   title: z.string().min(5).max(255),
   unlisted: z.boolean(),
+  max_votes: z.coerce.number().int().min(1).max(15),
 });
 
 export default function Settings() {
@@ -77,6 +78,7 @@ function SettingsDialog({
     values: {
       title: retro.title,
       unlisted: retro.unlisted,
+      max_votes: retro.max_votes,
     },
   });
 
@@ -117,8 +119,23 @@ function SettingsDialog({
                       {...field}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="max_votes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Max Votes</FormLabel>
+                  <FormControl>
+                    <Input type="number" {...field} />
+                  </FormControl>
                   <FormDescription>
-                    Give your retrospective a title
+                    The maximum number of votes each participant can cast in the
+                    voting stage.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
