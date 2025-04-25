@@ -25,7 +25,7 @@ export default function Vote({
       setVotes(res.data);
       setVotesRemaining(retro.max_votes - res.data.length);
     });
-  }, [retro]);
+  }, [retro.id, retro.max_votes]);
 
   function handleVote(groupId: string, value: boolean) {
     api
@@ -49,7 +49,6 @@ export default function Vote({
                 voted={!!votes.find((vote) => vote.group_id === groupId)}
                 canVote={retro.max_votes > votes.length}
                 key={groupId}
-                /* something to make the button disabled */
               >
                 {groupNotes.map((note) => (
                   <Note key={note.id} note={note} />
