@@ -15,6 +15,7 @@ import (
 type retroUpdateRequest struct {
 	Title    string `json:"title" validate:"required,min=5,max=255"`
 	Unlisted bool   `json:"unlisted"`
+	MaxVotes int    `json:"max_votes" validate:"required,number,min=1,max=15"`
 }
 
 func (b *Broker) handleRetroUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
@@ -24,7 +25,7 @@ func (b *Broker) handleRetroUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
 			return newErrorEvent(err.Error())
 		}
 
-		retro, err := dal.RetroUpdate(ctx, db, retroID, req.Title, req.Unlisted)
+		retro, err := dal.RetroUpdate(ctx, db, retroID, req.Title, req.Unlisted, req.MaxVotes)
 		if err != nil {
 			slog.Error("problem updating retro", "error", err)
 			return newErrorEvent("problem updating retro")

@@ -19,6 +19,7 @@ type Retro struct {
 	Status      string         `json:"status"`
 	Columns     []*RetroColumn `json:"columns"`
 	Unlisted    bool           `json:"unlisted"`
+	MaxVotes    int            `json:"max_votes"`
 	GIFsEnabled bool           `json:"gifs_enabled"`
 }
 
@@ -35,6 +36,7 @@ func RetroFromModel(m *model.Retro) *Retro {
 			}
 		}),
 		Unlisted:    m.Unlisted,
+		MaxVotes:    m.MaxVotes,
 		GIFsEnabled: gif.IsAvailable(),
 	}
 }

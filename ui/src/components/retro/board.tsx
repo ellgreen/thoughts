@@ -15,10 +15,8 @@ import Discuss from "./discuss";
 import Group from "./group";
 import StatusIndicator from "./status-indicator";
 import Vote from "./vote";
-import { User, Zap } from "lucide-react";
-import { Button } from "../ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import Settings from "./settings";
+import ConnectionIndicator from "./connection-indicator";
 
 export default function Board() {
   const {
@@ -30,6 +28,8 @@ export default function Board() {
   const [connectionInfo, setConnectionInfo] = useState<PayloadConnectionInfo>({
     users: [],
   });
+
+  const [votesRemaining, setVotesRemaining] = useState(0);
 
   useEffect(() => {
     if (!lastJsonMessage) return;
@@ -67,7 +67,13 @@ export default function Board() {
       <nav className="mb-4 flex items-center justify-between">
         <StatusIndicator status={status} />
 
-        <div className="flex space-x-2">
+        <div className="flex items-center space-x-2">
+          {status === "vote" && (
+            <div className="mr-2 text-sm text-muted-foreground">
+              {votesRemaining} votes remaining
+            </div>
+          )}
+
           <Settings />
 
           <ConnectionIndicator
@@ -80,6 +86,7 @@ export default function Board() {
             status={status}
             onStatusUpdate={handleStatusUpdate}
           />
+
           <ChangeStatusButton
             variant="next"
             status={status}
@@ -88,61 +95,25 @@ export default function Board() {
         </div>
       </nav>
 
-      <BoardForStatus status={status} />
+      <BoardForStatus status={status} setVotesRemaining={setVotesRemaining} />
     </>
   );
 }
 
-function ConnectionIndicator({
-  connectionInfo,
-  readyState,
+function BoardForStatus({
+  status,
+  setVotesRemaining,
 }: {
-  connectionInfo: PayloadConnectionInfo;
-  readyState: number;
+  status: RetroStatus;
+  setVotesRemaining: (votes: number) => void;
 }) {
-  const [state, stateClassName] = {
-    0: ["Connecting", "text-yellow-500"],
-    1: ["Connected", "text-green-500"],
-    2: ["Disconnecting", "text-yellow-500"],
-    3: ["Disconnected", "text-red-500"],
-  }[readyState] || ["Unknown", "text-red-500"];
-
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button variant="outline" size="sm">
-          <span>{state}</span>
-          <Zap className={stateClassName} />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent>
-        {connectionInfo.users.length === 0 ? (
-          <div className="text-center text-muted-foreground">
-            No users connected
-          </div>
-        ) : (
-          <ul className="grid grid-cols-2 gap-2">
-            {connectionInfo.users.map((user) => (
-              <li key={user} className="flex items-center space-x-2">
-                <User className="size-4 text-muted-foreground" />
-                <span>{user}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </PopoverContent>
-    </Popover>
-  );
-}
-
-function BoardForStatus({ status }: { status: RetroStatus }) {
   switch (status) {
     case "brainstorm":
       return <Brainstorm />;
     case "group":
       return <Group />;
     case "vote":
-      return <Vote />;
+      return <Vote setVotesRemaining={setVotesRemaining} />;
     case "discuss":
       return <Discuss />;
     default:
