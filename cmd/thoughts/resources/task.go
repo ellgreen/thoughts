@@ -6,17 +6,19 @@ import (
 )
 
 type Task struct {
-	ID   uuid.UUID `json:"id"`
-	Who  string    `json:"who"`
-	What string    `json:"what"`
-	When string    `json:"when"`
+	ID        uuid.UUID `json:"id"`
+	Who       string    `json:"who"`
+	What      string    `json:"what"`
+	When      string    `json:"when"`
+	Completed bool      `json:"completed"`
 }
 
 func TaskFromModel(model *model.Task) *Task {
 	return &Task{
-		ID:   model.ID,
-		Who:  model.Who,
-		What: model.What,
-		When: model.When,
+		ID:        model.ID,
+		Who:       model.Who,
+		What:      model.What,
+		When:      model.When,
+		Completed: model.Completed,
 	}
 }

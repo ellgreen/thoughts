@@ -37,6 +37,7 @@ func NewBroker(db *sqlx.DB, retroID uuid.UUID) *Broker {
 	b.register("note_delete", b.handleNoteDelete(db))
 	b.register("task_create", b.handleTaskCreate(db, retroID))
 	b.register("task_update", b.handleTaskUpdate(db))
+	b.register("task_complete", b.handleTaskComplete(db))
 
 	return b
 }

@@ -35,4 +35,5 @@ export interface Task {
   who: string;
   what: string;
   when: string;
+  completed: boolean;
 }

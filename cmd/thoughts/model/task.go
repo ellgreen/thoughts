@@ -12,6 +12,7 @@ type Task struct {
 	Who       string    `db:"who"`
 	What      string    `db:"what"`
 	When      string    `db:"when"`
+	Completed bool      `db:"completed"`
 	CreatedAt time.Time `db:"created_at"`
 	UpdatedAt time.Time `db:"updated_at"`
 }
