@@ -11,6 +11,7 @@ import { Note } from "./note";
 import { NoteGroup } from "./note-group";
 import { Task } from "./task";
 import TaskDialog, { TaskData } from "./task-dialog";
+import { DialogTrigger } from "../ui/dialog";
 
 interface Vote {
   group_id: string;
@@ -90,6 +91,15 @@ export default function Discuss() {
     );
   }
 
+  function handleTaskComplete(id: string, completed: boolean) {
+    dispatch(
+      createSocketEvent("task_complete", {
+        id,
+        completed,
+      }),
+    );
+  }
+
   return (
     <Columns>
       {retro.columns.map((column) => (
@@ -129,18 +139,23 @@ export default function Discuss() {
           description="Create a new task here."
           onSave={handleNewTask}
         >
-          <Button variant="default" className="w-full">
-            <Plus />
-          </Button>
+          <DialogTrigger asChild>
+            <Button variant="default" className="w-full">
+              <Plus />
+            </Button>
+          </DialogTrigger>
         </TaskDialog>
 
-        {tasks.map((task) => (
-          <Task
-            key={task.id}
-            task={task}
-            onEdit={(d) => handleEditTask(task.id, d)}
-          />
-        ))}
+        {tasks
+          .sort((a, b) => Number(a.completed) - Number(b.completed))
+          .map((task) => (
+            <Task
+              key={task.id}
+              task={task}
+              onEdit={(d) => handleEditTask(task.id, d)}
+              onComplete={(c) => handleTaskComplete(task.id, c)}
+            />
+          ))}
       </Column>
     </Columns>
   );

@@ -64,6 +64,30 @@ func (b *Broker) handleTaskUpdate(db *sqlx.DB) Handler {
 	}
 }
 
+type taskCompleteRequest struct {
+	TaskID    uuid.UUID `json:"id" validate:"required,uuid"`
+	Completed bool      `json:"completed"`
+}
+
+func (b *Broker) handleTaskComplete(db *sqlx.DB) Handler {
+	return func(ctx context.Context, _ *model.User, payload Payload) error {
+		req, err := requests.FromMap[taskCompleteRequest](payload)
+		if err != nil {
+			return newErrorEvent(err.Error())
+		}
+
+		task, err := dal.TaskUpdateComplete(ctx, db, req.TaskID, req.Completed)
+		if err != nil {
+			slog.Error("problem completing task", "error", err)
+			return newErrorEvent("problem completing task")
+		}
+
+		b.dispatch(newTaskUpdatedEvent(task))
+
+		return nil
+	}
+}
+
 func newTaskCreatedEvent(task *model.Task) *Event {
 	resource := resources.TaskFromModel(task)
 	payload := resources.StructToMap(resource)

@@ -79,3 +79,30 @@ func TaskUpdate(ctx context.Context, db *sqlx.DB, taskID uuid.UUID, who, what, w
 
 	return task, nil
 }
+
+func TaskUpdateComplete(ctx context.Context, db *sqlx.DB, taskID uuid.UUID, completed bool) (*model.Task, error) {
+	task, err := TaskGet(ctx, db, taskID)
+	if err != nil {
+		return nil, err
+	}
+
+	if task.Completed == completed {
+		return task, nil
+	}
+
+	task.Completed = completed
+	task.UpdatedAt = time.Now()
+
+	_, err = db.NamedExecContext(ctx, `
+		update tasks
+		set completed = :completed,
+			updated_at = :updated_at
+		where id = :id
+	`, task)
+
+	if err != nil {
+		return nil, fmt.Errorf("%w: failed to update task: %w", ErrExecution, err)
+	}
+
+	return task, nil
+}

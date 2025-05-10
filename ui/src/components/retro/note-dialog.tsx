@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -50,8 +50,13 @@ export default function NoteDialog({
   const handleSubmit: SubmitHandler<FieldValues> = (data) => {
     setOpen(false);
     onContentSave(data.content);
-    form.reset();
   };
+
+  useEffect(() => {
+    if (content) {
+      form.reset({ content });
+    }
+  }, [content, form]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

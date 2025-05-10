@@ -4,7 +4,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Form,
@@ -17,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { Button } from "../ui/button";
 import { DatePickerFormItem } from "../date-picker";
@@ -64,12 +63,22 @@ export default function TaskDialog({
   function handleSubmit(data: TaskData) {
     setOpen(false);
     onSave(data);
-    form.reset();
   }
+
+  useEffect(() => {
+    if (data) {
+      form.reset({
+        who: data.who,
+        what: data.what,
+        when: new Date(data.when),
+      });
+    }
+  }, [data, form]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children}
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
