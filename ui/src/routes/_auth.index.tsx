@@ -30,8 +30,8 @@ function RouteComponent() {
   const retros = Route.useLoaderData();
 
   return (
-    <div className="grid grid-cols-3 gap-6">
-      <Creator className="col-span-2" />
+    <div className="grid grid-cols-2 gap-6 items-start">
+      <Creator />
       <List retros={retros} />
     </div>
   );
