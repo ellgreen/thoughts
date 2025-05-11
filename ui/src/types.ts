@@ -12,6 +12,10 @@ export interface Retro {
   unlisted: boolean;
   max_votes: number;
   gifs_enabled: boolean;
+  created_at: string;
+  note_count: number;
+  task_count: number;
+  task_completed_count: number;
 }
 
 export interface RetroColumn {

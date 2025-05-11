@@ -11,14 +11,17 @@ type (
 	RetroStatus string
 
 	Retro struct {
-		ID        uuid.UUID   `db:"id"`
-		Status    RetroStatus `db:"status"`
-		Title     string      `db:"title"`
-		Columns   string      `db:"columns"`
-		Unlisted  bool        `db:"unlisted"`
-		MaxVotes  int         `db:"max_votes"`
-		CreatedAt time.Time   `db:"created_at"`
-		UpdatedAt time.Time   `db:"updated_at"`
+		ID                 uuid.UUID   `db:"id"`
+		Status             RetroStatus `db:"status"`
+		Title              string      `db:"title"`
+		Columns            string      `db:"columns"`
+		Unlisted           bool        `db:"unlisted"`
+		MaxVotes           int         `db:"max_votes"`
+		CreatedAt          time.Time   `db:"created_at"`
+		UpdatedAt          time.Time   `db:"updated_at"`
+		NoteCount          int         `db:"note_count"`
+		TaskCount          int         `db:"task_count"`
+		TaskCompletedCount int         `db:"task_completed_count"`
 	}
 
 	RetroColumn struct {

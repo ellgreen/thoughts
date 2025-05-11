@@ -16,8 +16,19 @@ func RetroList(ctx context.Context, db *sqlx.DB, includeUnlisted bool) ([]*model
 		where = " where unlisted = false"
 	}
 
+	sql := `
+		select
+			retros.*,
+			count(distinct notes.id) as note_count,
+			count(distinct tasks.id) as task_count,
+			count(distinct case when tasks.completed = 1 then tasks.id end) as task_completed_count
+		from retros
+			left join notes on notes.retro_id = retros.id
+			left join tasks on tasks.retro_id = retros.id
+	` + where + " group by retros.id order by retros.created_at desc limit 25"
+
 	retros := make([]*model.Retro, 0)
-	if err := db.SelectContext(ctx, &retros, "select * from retros"+where+" order by updated_at desc limit 25"); err != nil {
+	if err := db.SelectContext(ctx, &retros, sql); err != nil {
 		return nil, fmt.Errorf("%w: failed to select retros: %w", ErrExecution, err)
 	}
 

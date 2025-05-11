@@ -40,7 +40,7 @@ export default function Nav() {
           <Button variant="ghost">{user?.name}</Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent>
+        <DropdownMenuContent align="end">
           <DropdownMenuLabel>Theme</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuRadioGroup
