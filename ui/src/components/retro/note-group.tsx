@@ -13,7 +13,7 @@ interface NoteGroupProps extends React.HTMLAttributes<HTMLDivElement> {
   authors?: string[];
 }
 
-const noteFlameThreshold = 0.11;
+const noteFlameThreshold = 0.098;
 
 export const NoteGroup = forwardRef<HTMLDivElement, NoteGroupProps>(
   ({ voteCount, authors, className, children, ...props }, ref) => {
