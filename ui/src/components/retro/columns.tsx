@@ -1,6 +1,6 @@
 import * as types from "@/types";
 import { useDroppable } from "@dnd-kit/core";
-import { Children, forwardRef } from "react";
+import { Children } from "react";
 import { twMerge } from "tailwind-merge";
 import { Heading } from "../typography";
 
@@ -16,17 +16,18 @@ function Columns({ children }: { children: React.ReactNode }) {
   return <div className={`grid gap-4 ${gridCols}`}>{children}</div>;
 }
 
-const Column = forwardRef<
-  HTMLDivElement,
-  {
-    ref: React.Ref<HTMLDivElement>;
-    column: types.RetroColumn;
-    children: React.ReactNode;
-    className?: string;
-  }
->(function Column({ column, children, className }, ref) {
+const Column = function Column({
+  column,
+  children,
+  className,
+  ...props
+}: {
+  column: types.RetroColumn;
+  children: React.ReactNode;
+  className?: string;
+} & React.ComponentProps<"div">) {
   return (
-    <div ref={ref} className={twMerge("rounded-md", className)}>
+    <div className={twMerge("rounded-md", className)} {...props}>
       <div>
         <Heading variant="h2">{column.title}</Heading>
         <p className="mt-1">{column.description}</p>
@@ -35,7 +36,7 @@ const Column = forwardRef<
       <div className="mt-4 space-y-4">{children}</div>
     </div>
   );
-});
+};
 
 function DroppableColumn({
   column,

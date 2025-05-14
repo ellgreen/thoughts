@@ -1,7 +1,7 @@
 import { setStoredUser } from "@/hooks/use-auth";
-import { toast } from "@/hooks/use-toast";
 import { redirect } from "@tanstack/react-router";
 import axios from "axios";
+import { toast } from "sonner";
 
 export const api = axios.create({
   withCredentials: true,
@@ -12,9 +12,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 400) {
-      toast({
-        variant: "destructive",
-        title: "There was a problem with the request",
+      toast("There was a problem with the request", {
         description: error.response.data,
       });
 

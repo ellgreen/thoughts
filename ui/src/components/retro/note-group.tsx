@@ -1,6 +1,6 @@
 import { useDroppable } from "@dnd-kit/core";
 import { Check, Flame, Vote, X } from "lucide-react";
-import React, { Children, forwardRef } from "react";
+import React, { Children } from "react";
 import { twMerge } from "tailwind-merge";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
@@ -15,40 +15,41 @@ interface NoteGroupProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const noteFlameThreshold = 0.098;
 
-export const NoteGroup = forwardRef<HTMLDivElement, NoteGroupProps>(
-  ({ voteCount, authors, className, children, ...props }, ref) => {
-    const hasVoteCount = voteCount !== undefined;
+export const NoteGroup = ({
+  voteCount,
+  authors,
+  className,
+  children,
+  ...props
+}: NoteGroupProps & React.ComponentProps<"div">) => {
+  const hasVoteCount = voteCount !== undefined;
 
-    const classes = twMerge(
-      "space-y-1 bg-accent rounded-lg transition-all duration-100",
-      hasVoteCount || Children.count(children) > 1 ? "p-0.5" : "p-0",
-      className,
-    );
+  const classes = twMerge(
+    "space-y-1 bg-accent rounded-lg transition-all duration-100",
+    hasVoteCount || Children.count(children) > 1 ? "p-0.5" : "p-0",
+    className,
+  );
 
-    return (
-      <div ref={ref} className={classes} {...props}>
-        {children}
+  return (
+    <div className={classes} {...props}>
+      {children}
 
-        {(authors || hasVoteCount) && (
-          <div className="flex items-center justify-between p-2">
-            {authors && (
-              <div className="text-sm text-muted-foreground">
-                {authors.join(", ")}
-              </div>
-            )}
+      {(authors || hasVoteCount) && (
+        <div className="flex items-center justify-between p-2">
+          {authors && (
+            <div className="text-sm text-muted-foreground">
+              {authors.join(", ")}
+            </div>
+          )}
 
-            {hasVoteCount && (
-              <VoteCount
-                forGroup={voteCount.forGroup}
-                total={voteCount.total}
-              />
-            )}
-          </div>
-        )}
-      </div>
-    );
-  },
-);
+          {hasVoteCount && (
+            <VoteCount forGroup={voteCount.forGroup} total={voteCount.total} />
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 function VoteCount({ forGroup, total }: { forGroup: number; total: number }) {
   let [Icon, variant] = [Vote, "outline"] as [

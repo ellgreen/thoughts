@@ -1,5 +1,3 @@
-import { Cog } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,10 +7,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import useRetro from "@/hooks/use-retro";
 import {
   Form,
   FormControl,
@@ -22,10 +16,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Checkbox } from "../ui/checkbox";
 import { createSocketEvent, PayloadRetroUpdate, SocketEvent } from "@/events";
+import useRetro from "@/hooks/use-retro";
 import { Retro } from "@/types";
-import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Cog } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
+import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
 
 const schema = z.object({
@@ -40,7 +40,6 @@ export default function Settings() {
     setRetro,
     socket: { sendJsonMessage, lastJsonMessage },
   } = useRetro();
-  const { toast } = useToast();
 
   function handleSubmit(data: PayloadRetroUpdate) {
     sendJsonMessage(createSocketEvent("retro_update", data));
@@ -54,8 +53,7 @@ export default function Settings() {
     if (event.name === "retro_updated") {
       setRetro(event.payload as Retro);
 
-      toast({
-        title: "Settings updated",
+      toast("Settings updated", {
         description: "The settings for this retrospective been updated.",
       });
     }

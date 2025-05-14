@@ -6,24 +6,23 @@ import {
   SocketEvent,
 } from "@/events";
 import useRetro from "@/hooks/use-retro";
-import { useToast } from "@/hooks/use-toast";
 import { RetroStatus } from "@/types";
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import Brainstorm from "./brainstorm";
 import ChangeStatusButton from "./change-status-button";
+import ConnectionIndicator from "./connection-indicator";
 import Discuss from "./discuss";
 import Group from "./group";
+import Settings from "./settings";
 import StatusIndicator from "./status-indicator";
 import Vote from "./vote";
-import Settings from "./settings";
-import ConnectionIndicator from "./connection-indicator";
 
 export default function Board() {
   const {
     retro,
     socket: { sendJsonMessage, lastJsonMessage, readyState },
   } = useRetro();
-  const { toast } = useToast();
   const [status, setStatus] = useState<RetroStatus>(retro.status);
   const [connectionInfo, setConnectionInfo] = useState<PayloadConnectionInfo>({
     users: [],
@@ -39,9 +38,7 @@ export default function Board() {
       case "error": {
         const payload = event.payload as PayloadError;
 
-        toast({
-          variant: "destructive",
-          title: "Something went wrong",
+        toast("Something went wrong", {
           description: payload.message,
         });
 
