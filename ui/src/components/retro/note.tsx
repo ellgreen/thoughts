@@ -24,116 +24,108 @@ interface NoteProps extends React.HTMLAttributes<HTMLDivElement> {
   onGifRemoved?: () => void;
 }
 
-export const Note = React.forwardRef<HTMLDivElement, NoteProps>(
-  (
-    {
-      note,
-      showGrip,
-      blur,
-      listeners,
-      attributes,
-      onEdit,
-      onDelete,
-      onGifSelected,
-      onGifRemoved,
-      className,
-      ...props
-    },
-    ref,
-  ) => {
-    return (
-      <div
-        className={twMerge(
-          "grid gap-2 group p-2 rounded-md bg-card border",
-          className,
-          blur ? "blur-sm" : "",
-        )}
-        ref={ref}
-        {...props}
-      >
-        {note.img_url && (
-          <div
-            className={twMerge(
-              "flex justify-around max-h-48 rounded overflow-hidden bg-accent",
-              blur ? "blur-md" : "",
-            )}
-          >
-            <img className="h-full rounded" src={note.img_url} />
-          </div>
-        )}
-
-        <div className="flex items-center justify-between space-x-2">
-          {showGrip && (
-            <GripVertical
-              {...listeners}
-              {...attributes}
-              className="flex-shrink-0 text-accent-foreground
-              opacity-30 group-hover:opacity-100
-              focus:outline-none cursor-move transition-opacity duration-100"
-              size={16}
-            />
+export const Note = ({
+  note,
+  showGrip,
+  blur,
+  listeners,
+  attributes,
+  onEdit,
+  onDelete,
+  onGifSelected,
+  onGifRemoved,
+  className,
+  ...props
+}: NoteProps & React.ComponentProps<"div">) => {
+  return (
+    <div
+      className={twMerge(
+        "grid gap-2 group p-2 rounded-md bg-card border",
+        className,
+        blur ? "blur-xs" : "",
+      )}
+      {...props}
+    >
+      {note.img_url && (
+        <div
+          className={twMerge(
+            "flex justify-around max-h-48 rounded overflow-hidden bg-accent",
+            blur ? "blur-md" : "",
           )}
+        >
+          <img className="h-full rounded" src={note.img_url} />
+        </div>
+      )}
 
-          <p className="py-2 text-foreground text-wrap flex-grow">
-            {note.content}
-          </p>
+      <div className="flex items-center justify-between space-x-2">
+        {showGrip && (
+          <GripVertical
+            {...listeners}
+            {...attributes}
+            className="shrink-0 text-accent-foreground
+            opacity-30 group-hover:opacity-100
+            focus:outline-hidden cursor-move transition-opacity duration-100"
+            size={16}
+          />
+        )}
 
-          {onGifSelected && note.img_url === "" && (
-            <GIFDialog onSelect={onGifSelected}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-              >
-                <Image />
-              </Button>
-            </GIFDialog>
-          )}
+        <p className="py-2 text-foreground text-wrap grow">{note.content}</p>
 
-          {onGifRemoved && note.img_url !== "" && (
+        {onGifSelected && note.img_url === "" && (
+          <GIFDialog onSelect={onGifSelected}>
             <Button
               variant="ghost"
               size="icon"
               className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-              onClick={onGifRemoved}
             >
-              <ImageOff />
+              <Image />
             </Button>
-          )}
+          </GIFDialog>
+        )}
 
-          {onDelete && (
-            <NoteDeleteDialog onDelete={onDelete}>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-              >
-                <Trash2 />
-              </Button>
-            </NoteDeleteDialog>
-          )}
+        {onGifRemoved && note.img_url !== "" && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
+            onClick={onGifRemoved}
+          >
+            <ImageOff />
+          </Button>
+        )}
 
-          {onEdit && (
-            <NoteDialog
-              title="Edit Note"
-              description="Edit the content of the note."
-              content={note.content}
-              onContentSave={onEdit}
+        {onDelete && (
+          <NoteDeleteDialog onDelete={onDelete}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
             >
-              <Button
-                variant="ghost"
-                size="icon"
-                className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-              >
-                <Pencil />
-              </Button>
-            </NoteDialog>
-          )}
-        </div>
+              <Trash2 />
+            </Button>
+          </NoteDeleteDialog>
+        )}
+
+        {onEdit && (
+          <NoteDialog
+            title="Edit Note"
+            description="Edit the content of the note."
+            content={note.content}
+            onContentSave={onEdit}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
+            >
+              <Pencil />
+            </Button>
+          </NoteDialog>
+        )}
       </div>
-    );
-  },
-);
+    </div>
+  );
+};
 
 export function DraggableNote({
   note,

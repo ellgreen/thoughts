@@ -32,7 +32,7 @@ export function Task({
   const isOverdue = new Date(task.when) < today;
 
   return (
-    <div className="group flex items-center justify-between p-2 space-x-2 rounded-md bg-card border animate-in fade-in slide-in-from-right duration-200">
+    <div className="group flex items-center justify-between p-2 space-x-2 rounded-md bg-card border">
       <div className="p-2 w-full">
         <div className="flex items-center justify-between text-muted-foreground">
           <div className="flex items-center space-x-2">
@@ -62,7 +62,7 @@ export function Task({
           <TaskActions task={task} onEdit={onEdit} onComplete={onComplete} />
         </div>
 
-        <p className="mt-2 text-foreground text-wrap flex-grow">{task.what}</p>
+        <p className="mt-2 text-foreground text-wrap grow">{task.what}</p>
       </div>
     </div>
   );
