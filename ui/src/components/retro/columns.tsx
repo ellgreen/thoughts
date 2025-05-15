@@ -13,7 +13,11 @@ function Columns({ children }: { children: React.ReactNode }) {
     "grid-cols-6",
   ][Children.count(children) - 2];
 
-  return <div className={`grid gap-4 ${gridCols}`}>{children}</div>;
+  return (
+    <div className={`grid gap-4 min-h-[calc(100vh-260px)] ${gridCols}`}>
+      {children}
+    </div>
+  );
 }
 
 const Column = function Column({

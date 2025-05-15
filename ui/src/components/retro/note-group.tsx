@@ -101,14 +101,12 @@ export function VotableNoteGroup({
   canVote: boolean;
 }) {
   return (
-    <NoteGroup className="group relative transition-all duration-100">
-      {children}
-
+    <div className="group relative transition-all duration-100">
+      <NoteGroup>{children}</NoteGroup>
       <div
         data-voted={voted}
-        className={`absolute flex data-[voted=false]:hidden group-hover:flex
-          opacity-90 top-1 right-2 justify-end
-          animate-in fade-in animate-out`}
+        className={`absolute hidden group-hover:flex data-[voted=true]:flex
+        opacity-90 top-2 right-2 justify-end animate-in fade-in`}
       >
         <Button
           variant={voted ? "default" : "secondary"}
@@ -120,6 +118,6 @@ export function VotableNoteGroup({
           {voted ? "Unvote" : "Vote"}
         </Button>
       </div>
-    </NoteGroup>
+    </div>
   );
 }
