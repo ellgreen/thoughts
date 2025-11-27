@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/ellgreen/thoughts/cmd/thoughts/dal"
 	"github.com/ellgreen/thoughts/cmd/thoughts/model"
@@ -45,7 +46,10 @@ func (e *Exporter) ToMarkdown(ctx context.Context, retro *model.Retro) ([]byte, 
 				author = user.Name
 			}
 
-			buf.WriteString("> " + note.Content)
+			content := strings.TrimSpace(note.Content)
+			content = strings.ReplaceAll(content, "\n", "\n> ")
+
+			buf.WriteString("> " + content)
 			buf.WriteString("\n>\n")
 			buf.WriteString("> - " + author)
 			buf.WriteString("\n\n")

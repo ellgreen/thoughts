@@ -13,22 +13,29 @@ import {
 } from "../ui/dialog";
 import { useState } from "react";
 import { Textarea } from "../ui/textarea";
+import { toast } from "sonner";
 
-export default function Download() {
+export default function ShowMarkdown() {
   const { retro } = useRetro();
   const [markdown, setMarkdown] = useState<string>("");
   const [showDialog, setShowDialog] = useState<boolean>(false);
 
   function handleClick() {
-    api.get(`/api/retros/${retro.id}/markdown`).then((response) => {
-      setMarkdown(response.data);
-      setShowDialog(true);
-    });
+    api
+      .get(`/api/retros/${retro.id}/markdown`)
+      .then((response) => {
+        setMarkdown(response.data);
+        setShowDialog(true);
+      })
+      .catch(() => {
+        toast.error("Markdown export failed");
+      });
   }
 
   return (
     <Dialog open={showDialog} onOpenChange={setShowDialog}>
       <Button
+        aria-label="Show markdown"
         onClick={handleClick}
         variant="outline"
         size="sm"
@@ -45,7 +52,8 @@ export default function Download() {
         </DialogHeader>
 
         <Textarea
-          readOnly={true}
+          aria-label="Markdown content"
+          readOnly
           value={markdown}
           className="h-full min-h-[20vh] overflow-auto"
         />

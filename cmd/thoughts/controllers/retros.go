@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -125,14 +124,4 @@ func RetroMarkdown(db *sqlx.DB) http.Handler {
 		w.Header().Add("Content-Type", "text/markdown; charset=utf-8")
 		w.Write(markdown)
 	})
-}
-
-func writeMarkdown(w http.ResponseWriter, data any) {
-	w.Header().Add("Content-Type", "application/json")
-
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		slog.Error("problem encoding response", "error", err)
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
 }

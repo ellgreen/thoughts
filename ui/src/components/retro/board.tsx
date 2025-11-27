@@ -17,7 +17,7 @@ import Group from "./group";
 import Settings from "./settings";
 import StatusIndicator from "./status-indicator";
 import Vote from "./vote";
-import Download from "./download";
+import ShowMarkdown from "./show-markdown";
 
 export default function Board() {
   const {
@@ -72,7 +72,7 @@ export default function Board() {
             </div>
           )}
 
-          {status === "discuss" && <Download />}
+          {status === "discuss" && <ShowMarkdown />}
 
           <Settings />
 
