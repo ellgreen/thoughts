@@ -43,6 +43,7 @@ func applyRoutes(router *mux.Router, sessionProvider *session.Provider, gifProvi
 	retroRouter.Handle("/votes", controllers.VotesIndex(db)).Methods(http.MethodGet)
 	retroRouter.Handle("/votes", controllers.Vote(db)).Methods(http.MethodPost)
 	retroRouter.Handle("/tasks", controllers.TaskIndex(db)).Methods(http.MethodGet)
+	retroRouter.Handle("/markdown", controllers.RetroMarkdown(db)).Methods(http.MethodGet)
 	retroRouter.Handle("", controllers.RetroGet(db)).Methods(http.MethodGet)
 
 	router.PathPrefix("/").Handler(ui.HandlerFunc())

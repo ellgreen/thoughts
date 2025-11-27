@@ -17,6 +17,7 @@ import Group from "./group";
 import Settings from "./settings";
 import StatusIndicator from "./status-indicator";
 import Vote from "./vote";
+import ShowMarkdown from "./show-markdown";
 
 export default function Board() {
   const {
@@ -70,6 +71,8 @@ export default function Board() {
               {votesRemaining} votes remaining
             </div>
           )}
+
+          {status === "discuss" && <ShowMarkdown />}
 
           <Settings />
 
