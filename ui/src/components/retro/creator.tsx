@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,7 +16,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import useTemplates from "@/hooks/use-templates";
 import { api } from "@/lib/api";
@@ -23,9 +23,11 @@ import { Route as RetrosRoute } from "@/routes/_auth.retros.$retroId";
 import { Retro } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { Trash, WandSparkles } from "lucide-react";
+import { BookDashed, Trash } from "lucide-react";
 import { useFieldArray, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod";
+import AIRetroTemplate from "./ai-retro-template";
+import { useAuth } from "@/hooks/use-auth";
 
 const schema = z.object({
   title: z.string().min(5).max(255),
@@ -126,6 +128,8 @@ export default function Creator({ className }: { className?: string }) {
 function Columns() {
   const { fields, append, remove } = useFieldArray({ name: "columns" });
 
+  const { user } = useAuth();
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Columns</h3>
@@ -150,6 +154,8 @@ function Columns() {
         </Button>
 
         <FromTemplateDropDown />
+
+        {user?.ai_enabled && <AIRetroTemplate />}
       </div>
     </div>
   );
@@ -215,8 +221,8 @@ function FromTemplateDropDown() {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" type="button">
+          <BookDashed />
           From Template
-          <WandSparkles />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>

@@ -29,7 +29,26 @@ export default function AuthProvider({
   }, []);
 
   useEffect(() => {
-    setUser(getStoredUser());
+    const stored = getStoredUser();
+    setUser(stored);
+
+    let cancelled = false;
+
+    api
+      .get<User>("/api/auth/self")
+      .then((res) => {
+        if (!cancelled && res.status === 200) {
+          setStoredUser(res.data);
+          setUser(res.data);
+        }
+      })
+      .catch(() => {
+        // ignore; the axios interceptor already handles 401s by redirecting
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

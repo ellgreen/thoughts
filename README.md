@@ -48,6 +48,15 @@ docker run -p 3000:3000 \
 
 ### Features
 
+#### AI
+
+To enable AI features, you will need to set the `THOUGHTS_OPENAI_API_KEY`
+environment variable.
+
+You can follow the instructions to get an API key here:
+
+<https://platform.openai.com/api-keys>
+
 #### GIF Support
 
 To enable support for gifs via Tenor, you will need to set the
