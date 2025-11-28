@@ -14,6 +14,7 @@ type config struct {
 	TLSKeyPath     string `mapstructure:"tls_key_path"`
 	TLSCertPath    string `mapstructure:"tls_cert_path"`
 	TenorAPIKey    string `mapstructure:"tenor_api_key"`
+	OpenAIAPIKey   string `mapstructure:"openai_api_key"`
 }
 
 func loadConfig() (*config, error) {
@@ -28,6 +29,7 @@ func loadConfig() (*config, error) {
 	v.SetDefault("tls_key_path", "")
 	v.SetDefault("tls_cert_path", "")
 	v.SetDefault("tenor_api_key", "")
+	v.SetDefault("openai_api_key", "")
 
 	v.SetEnvPrefix("thoughts")
 	v.AutomaticEnv()

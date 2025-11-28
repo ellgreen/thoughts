@@ -10,13 +10,15 @@ export interface AuthContext {
 
 export const AuthContext = createContext<AuthContext | null>(null);
 
-const keyName = "thoughts.auth.user.name";
+const nameKeyName = "thoughts.auth.user.name";
+const aiKeyName = "thoughts.auth.user.ai_enabled";
 
 export function getStoredUser(): User | null {
-  const name = localStorage.getItem(keyName);
+  const name = localStorage.getItem(nameKeyName);
+  const ai_enabled = JSON.parse(localStorage.getItem(aiKeyName) ?? "false");
 
   if (name) {
-    return { name };
+    return { name, ai_enabled };
   }
 
   return null;
@@ -24,9 +26,11 @@ export function getStoredUser(): User | null {
 
 export function setStoredUser(user: User | null) {
   if (user) {
-    localStorage.setItem(keyName, user.name);
+    localStorage.setItem(nameKeyName, user.name);
+    localStorage.setItem(aiKeyName, JSON.stringify(user.ai_enabled));
   } else {
-    localStorage.removeItem(keyName);
+    localStorage.removeItem(nameKeyName);
+    localStorage.removeItem(aiKeyName);
   }
 }
 

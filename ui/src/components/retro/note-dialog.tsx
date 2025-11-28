@@ -77,7 +77,7 @@ export default function NoteDialog({
                   <FormLabel>Note</FormLabel>
 
                   <FormControl>
-                    <Input className="w-full" {...field} />
+                    <Input className="w-full" autoComplete="off" {...field} />
                   </FormControl>
 
                   <FormDescription>Press enter to submit</FormDescription>

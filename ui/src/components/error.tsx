@@ -11,7 +11,7 @@ import {
 export function Error() {
   return (
     <div className="h-screen flex items-center justify-center">
-      <Card>
+      <Card className="min-w-md">
         <CardHeader>
           <CardTitle>That's unexpected.</CardTitle>
           <CardDescription>
@@ -32,7 +32,7 @@ export function Error() {
 export function NotFoundError() {
   return (
     <div className="h-screen flex items-center justify-center">
-      <Card>
+      <Card className="min-w-md">
         <CardHeader>
           <CardTitle>We can't find what you are looking for.</CardTitle>
         </CardHeader>

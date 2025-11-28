@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/ellgreen/thoughts/cmd/thoughts/ai"
 	"github.com/ellgreen/thoughts/cmd/thoughts/auth"
 	"github.com/ellgreen/thoughts/cmd/thoughts/controllers"
 	"github.com/ellgreen/thoughts/cmd/thoughts/gif"
@@ -16,7 +17,12 @@ import (
 
 const uuidRegex = `[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`
 
-func applyRoutes(router *mux.Router, sessionProvider *session.Provider, gifProvider gif.Provider) {
+func applyRoutes(
+	router *mux.Router,
+	sessionProvider *session.Provider,
+	aiModel ai.Model,
+	gifProvider gif.Provider,
+) {
 	router.Use(handlers.RecoveryHandler())
 
 	apiRouter := router.PathPrefix("/api").Subrouter()
@@ -30,6 +36,9 @@ func applyRoutes(router *mux.Router, sessionProvider *session.Provider, gifProvi
 	authRouter.Handle("/auth/logout", controllers.AuthLogout(sessionProvider)).Methods(http.MethodPost)
 
 	authRouter.Handle("/gifs", controllers.GifSearch(gifProvider)).Methods(http.MethodPost)
+
+	aiRouter := authRouter.PathPrefix("/ai").Subrouter()
+	aiRouter.Handle("/retro-template", controllers.AIRetroTemplate(aiModel)).Methods(http.MethodPost)
 
 	retrosRouter := authRouter.PathPrefix("/retros").Subrouter()
 

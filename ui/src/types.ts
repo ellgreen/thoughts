@@ -1,5 +1,6 @@
 export interface User {
   name: string;
+  ai_enabled: boolean;
 }
 
 export type RetroStatus = "brainstorm" | "group" | "vote" | "discuss";
@@ -40,4 +41,12 @@ export interface Task {
   what: string;
   when: string;
   completed: boolean;
+}
+
+export interface AIRetroTemplateResponse {
+  theme: string;
+  columns: {
+    title: string;
+    description: string;
+  }[];
 }
