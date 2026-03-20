@@ -10,7 +10,7 @@ import (
 )
 
 type PromptRequest struct {
-	Prompt string `json:"prompt" validate:"required,min=2,max=32"`
+	Prompt string `json:"prompt" validate:"required,min=2,max=128"`
 }
 
 func AIRetroTemplate(aiModel ai.Model) http.Handler {

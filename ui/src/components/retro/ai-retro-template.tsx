@@ -27,7 +27,7 @@ const aiTemplateSchema = z.object({
   prompt: z
     .string()
     .min(4, "Please enter a prompt")
-    .max(32, "Prompt is too long (max 32 characters)")
+    .max(128, "Prompt is too long (max 128 characters)")
     .transform((value) => value.trim()),
 });
 

@@ -35,8 +35,8 @@ const AuthRetrosRetroIdRoute = AuthRetrosRetroIdRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/login': typeof LoginRoute
   '/': typeof AuthIndexRoute
+  '/login': typeof LoginRoute
   '/retros/$retroId': typeof AuthRetrosRetroIdRoute
 }
 export interface FileRoutesByTo {
@@ -53,7 +53,7 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/login' | '/' | '/retros/$retroId'
+  fullPaths: '/' | '/login' | '/retros/$retroId'
   fileRoutesByTo: FileRoutesByTo
   to: '/login' | '/' | '/retros/$retroId'
   id: '__root__' | '/_auth' | '/login' | '/_auth/' | '/_auth/retros/$retroId'
@@ -76,7 +76,7 @@ declare module '@tanstack/react-router' {
     '/_auth': {
       id: '/_auth'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
