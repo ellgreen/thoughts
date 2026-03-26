@@ -14,7 +14,7 @@ function Columns({ children }: { children: React.ReactNode }) {
   ][Children.count(children) - 2];
 
   return (
-    <div className={`grid gap-4 min-h-[calc(100vh-260px)] ${gridCols}`}>
+    <div className={`grid gap-4 ${gridCols}`}>
       {children}
     </div>
   );
@@ -32,12 +32,11 @@ const Column = function Column({
 } & React.ComponentProps<"div">) {
   return (
     <div className={twMerge("rounded-md", className)} {...props}>
-      <div>
+      <div className="pb-2">
         <Heading variant="h2">{column.title}</Heading>
-        <p className="mt-1">{column.description}</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">{column.description}</p>
       </div>
-
-      <div className="mt-4 space-y-4">{children}</div>
+      <div className="mt-2 space-y-4">{children}</div>
     </div>
   );
 };

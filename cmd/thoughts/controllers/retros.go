@@ -63,7 +63,8 @@ type RetroCreateRequest struct {
 		Title       string `json:"title" validate:"required,min=2,max=255"`
 		Description string `json:"description" validate:"max=255"`
 	} `json:"columns" validate:"required,min=2,dive,required"`
-	Unlisted bool `json:"unlisted"`
+	Unlisted bool     `json:"unlisted"`
+	Tags     []string `json:"tags" validate:"omitempty,max=10,dive,min=1,max=50"`
 }
 
 func RetroCreate(db *sqlx.DB) http.Handler {
@@ -86,6 +87,15 @@ func RetroCreate(db *sqlx.DB) http.Handler {
 			slog.Error("problem creating retro", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
+		}
+
+		if len(req.Tags) > 0 {
+			if err := dal.RetroTagsSet(r.Context(), db, retro.ID, req.Tags); err != nil {
+				slog.Error("problem setting tags for retro", "error", err)
+				w.WriteHeader(http.StatusInternalServerError)
+				return
+			}
+			retro.Tags = req.Tags
 		}
 
 		w.WriteHeader(http.StatusCreated)

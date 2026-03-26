@@ -66,6 +66,8 @@ func main() {
 	if !ui.IsBundled() {
 		corsCfg = cors.New(cors.Options{
 			AllowedOrigins:   []string{cfg.UIAddress},
+			AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+			AllowedHeaders:   []string{"Authorization", "Content-Type"},
 			AllowCredentials: true,
 		})
 	}

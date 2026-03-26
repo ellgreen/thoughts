@@ -28,6 +28,7 @@ import { useFieldArray, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod";
 import AIRetroTemplate from "./ai-retro-template";
 import { useAuth } from "@/hooks/use-auth";
+import TagInput from "./tag-input";
 
 const schema = z.object({
   title: z.string().min(5).max(255),
@@ -41,6 +42,7 @@ const schema = z.object({
     .min(2, "At least 2 columns are required")
     .max(5, "At most 5 columns are allowed"),
   unlisted: z.boolean().optional(),
+  tags: z.array(z.string().min(1).max(50)).max(10).optional(),
 });
 
 export default function Creator({ className }: { className?: string }) {
@@ -52,6 +54,7 @@ export default function Creator({ className }: { className?: string }) {
       title: "",
       columns: [],
       unlisted: false,
+      tags: [],
     },
   });
 
@@ -113,6 +116,27 @@ export default function Creator({ className }: { className?: string }) {
                       home page.
                     </FormDescription>
                   </div>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tags</FormLabel>
+                  <FormControl>
+                    <TagInput
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      placeholder="team-name, project-name"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Tag retros to group them by team or project. Press Enter or comma to add.
+                  </FormDescription>
+                  <FormMessage />
                 </FormItem>
               )}
             />

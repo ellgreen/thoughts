@@ -33,7 +33,7 @@ export default function StatusIndicator({ status }: { status: RetroStatus }) {
               className={[
                 "flex items-center gap-1.5 text-sm rounded-md px-2 py-0.5 [&_svg]:size-3.5 [&_svg]:shrink-0",
                 isActive
-                  ? "bg-primary text-primary-foreground font-medium"
+                  ? "bg-muted text-foreground font-medium border border-border"
                   : isDone
                     ? "text-muted-foreground/70"
                     : "text-muted-foreground/40",

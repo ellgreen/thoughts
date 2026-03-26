@@ -1,7 +1,7 @@
 import { useAuth } from "@/hooks/use-auth";
 import useTheme, { Theme } from "@/hooks/use-theme";
 import { Link, useNavigate } from "@tanstack/react-router";
-import { LogOut } from "lucide-react";
+import { LogOut, Monitor, Moon, Sun } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "./ui/button";
 import {
@@ -22,44 +22,62 @@ export default function Nav() {
 
   useEffect(() => {
     if (user) return;
-
     navigate({ to: "/login" });
   }, [user]);
 
+  const themeIcon = theme === "dark" ? <Moon className="size-4" /> : theme === "light" ? <Sun className="size-4" /> : <Monitor className="size-4" />;
+
   return (
-    <nav className="max-w-[1600px] mx-auto p-8 flex items-center justify-between">
-      <Link
-        to="/"
-        className="text-foreground text-lg font-extrabold tracking-tight hover:scale-105 transition-transform duration-100"
-      >
-        thoughts..
-      </Link>
+    <header className="sticky top-0 z-50 bg-background/75 backdrop-blur-xl rounded-b-xl ring-1 ring-border/40 shadow-[0_4px_24px_-4px_color-mix(in_oklch,var(--primary)_12%,transparent)]">
+      <div className="max-w-[1600px] mx-auto px-8 h-12 flex items-center justify-between gap-4">
+        <Link
+          to="/"
+          className="font-bold tracking-tight hover:opacity-80 transition-opacity"
+          style={{ fontFamily: "var(--font-display)", fontSize: "1.1rem", letterSpacing: "-0.02em" }}
+        >
+          thoughts..
+        </Link>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost">{user?.name}</Button>
-        </DropdownMenuTrigger>
+        <div className="flex-1" />
 
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Theme</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuRadioGroup
-            value={theme}
-            onValueChange={(v) => setTheme(v as Theme)}
-          >
-            <DropdownMenuRadioItem value="dark">Dark</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="light">Light</DropdownMenuRadioItem>
-            <DropdownMenuRadioItem value="system">System</DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground hover:text-foreground">
+              {themeIcon}
+              <span>{user?.name}</span>
+            </Button>
+          </DropdownMenuTrigger>
 
-          <DropdownMenuSeparator />
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuLabel>Theme</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuRadioGroup
+              value={theme}
+              onValueChange={(v) => setTheme(v as Theme)}
+            >
+              <DropdownMenuRadioItem value="light">
+                <Sun className="size-4 mr-2" />
+                Light
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="dark">
+                <Moon className="size-4 mr-2" />
+                Dark
+              </DropdownMenuRadioItem>
+              <DropdownMenuRadioItem value="system">
+                <Monitor className="size-4 mr-2" />
+                System
+              </DropdownMenuRadioItem>
+            </DropdownMenuRadioGroup>
 
-          <DropdownMenuItem onClick={logout}>
-            <LogOut />
-            <span>Log out</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </nav>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={logout}>
+              <LogOut className="size-4 mr-2" />
+              Log out
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </header>
   );
 }

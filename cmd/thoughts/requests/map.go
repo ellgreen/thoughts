@@ -83,6 +83,28 @@ func FromMap[T any](data map[string]any) (*T, error) {
 			continue
 		}
 
+		if requestFieldType == reflect.TypeOf([]string{}) {
+			items, ok := mapValue.([]interface{})
+			if !ok {
+				// Already a []string (shouldn't happen via JSON but handle it)
+				if ss, ok := mapValue.([]string); ok {
+					requestValue.Field(i).Set(reflect.ValueOf(ss))
+					continue
+				}
+				return nil, errors.New("invalid []string - not an array")
+			}
+			ss := make([]string, 0, len(items))
+			for _, item := range items {
+				s, ok := item.(string)
+				if !ok {
+					return nil, errors.New("invalid []string - element is not a string")
+				}
+				ss = append(ss, s)
+			}
+			requestValue.Field(i).Set(reflect.ValueOf(ss))
+			continue
+		}
+
 		return nil, fmt.Errorf("invalid type in request: %v", requestField.Type)
 	}
 

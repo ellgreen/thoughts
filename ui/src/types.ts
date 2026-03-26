@@ -13,6 +13,7 @@ export interface Retro {
   unlisted: boolean;
   max_votes: number;
   gifs_enabled: boolean;
+  tags: string[];
   created_at: string;
   note_count: number;
   task_count: number;

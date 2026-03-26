@@ -22,6 +22,7 @@ type (
 		NoteCount          int         `db:"note_count"`
 		TaskCount          int         `db:"task_count"`
 		TaskCompletedCount int         `db:"task_completed_count"`
+		Tags               []string    `db:"-"`
 	}
 
 	RetroColumn struct {
