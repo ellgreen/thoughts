@@ -5,16 +5,19 @@ import (
 )
 
 type config struct {
-	Address        string
-	Verbose        bool
-	UIAddress      string `mapstructure:"ui_address"`
-	DataPath       string `mapstructure:"data_path"`
-	DatabaseFile   string `mapstructure:"database_file"`
-	SessionKeyFile string `mapstructure:"session_key_file"`
-	TLSKeyPath     string `mapstructure:"tls_key_path"`
-	TLSCertPath    string `mapstructure:"tls_cert_path"`
-	TenorAPIKey    string `mapstructure:"tenor_api_key"`
-	OpenAIAPIKey   string `mapstructure:"openai_api_key"`
+	Address               string
+	Verbose               bool
+	UIAddress             string `mapstructure:"ui_address"`
+	DataPath              string `mapstructure:"data_path"`
+	DatabaseFile          string `mapstructure:"database_file"`
+	SessionKeyFile        string `mapstructure:"session_key_file"`
+	TLSKeyPath            string `mapstructure:"tls_key_path"`
+	TLSCertPath           string `mapstructure:"tls_cert_path"`
+	TenorAPIKey           string `mapstructure:"tenor_api_key"`
+	OpenAIAPIKey          string `mapstructure:"openai_api_key"`
+	AzureOpenAIAPIKey     string `mapstructure:"azure_openai_api_key"`
+	AzureOpenAIEndpoint   string `mapstructure:"azure_openai_endpoint"`
+	AzureOpenAIDeployment string `mapstructure:"azure_openai_deployment"`
 }
 
 func loadConfig() (*config, error) {
@@ -30,6 +33,9 @@ func loadConfig() (*config, error) {
 	v.SetDefault("tls_cert_path", "")
 	v.SetDefault("tenor_api_key", "")
 	v.SetDefault("openai_api_key", "")
+	v.SetDefault("azure_openai_api_key", "")
+	v.SetDefault("azure_openai_endpoint", "")
+	v.SetDefault("azure_openai_deployment", "")
 
 	v.SetEnvPrefix("thoughts")
 	v.AutomaticEnv()

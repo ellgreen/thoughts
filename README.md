@@ -50,12 +50,27 @@ docker run -p 3000:3000 \
 
 #### AI
 
-To enable AI features, you will need to set the `THOUGHTS_OPENAI_API_KEY`
-environment variable.
+AI features can be enabled using either Azure OpenAI (recommended for organisations) or OpenAI.
+
+**Azure OpenAI** (recommended for organisations — data stays within your Azure tenant):
+
+Set all three of the following environment variables:
+
+- `THOUGHTS_AZURE_OPENAI_API_KEY` — your Azure OpenAI resource API key
+- `THOUGHTS_AZURE_OPENAI_ENDPOINT` — your resource endpoint (e.g. `https://your-resource.openai.azure.com`)
+- `THOUGHTS_AZURE_OPENAI_DEPLOYMENT` — the name of your model deployment (e.g. `gpt-4o-mini`)
+
+You can create an Azure OpenAI resource in the [Azure portal](https://portal.azure.com).
+
+**OpenAI** (fallback):
+
+Set the `THOUGHTS_OPENAI_API_KEY` environment variable.
 
 You can follow the instructions to get an API key here:
 
 <https://platform.openai.com/api-keys>
+
+If both are configured, Azure OpenAI takes precedence.
 
 #### GIF Support
 

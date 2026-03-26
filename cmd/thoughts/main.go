@@ -58,7 +58,12 @@ func main() {
 	applyRoutes(
 		router,
 		sessionProvider,
-		ai.ResolveModel(cfg.OpenAIAPIKey),
+		ai.ResolveModel(ai.Config{
+			OpenAIAPIKey:          cfg.OpenAIAPIKey,
+			AzureOpenAIAPIKey:     cfg.AzureOpenAIAPIKey,
+			AzureOpenAIEndpoint:   cfg.AzureOpenAIEndpoint,
+			AzureOpenAIDeployment: cfg.AzureOpenAIDeployment,
+		}),
 		gif.ResolveProvider(cfg.TenorAPIKey),
 	)
 
