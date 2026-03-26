@@ -14,7 +14,7 @@
 > [!NOTE]
 > Thoughts has live updates so that you can ensure everyone is on the same page ⚡️
 
-![Thoughts](./.assets/discuss-2024-12-07.jpeg)
+![Thoughts](./.assets/discuss-2026-03.webp)
 
 ## Getting Started
 

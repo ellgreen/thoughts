@@ -3,4 +3,4 @@ tmp/
 build/
 dist/
 .task/
-seed.py
+seed*.py
