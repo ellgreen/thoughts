@@ -95,7 +95,7 @@ function LoginForm() {
               )}
             />
 
-            <Button className="mt-8 w-full">Enter</Button>
+            <Button className="mt-4 w-full">Enter</Button>
           </form>
         </Form>
       </CardContent>

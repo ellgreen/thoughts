@@ -1,5 +1,5 @@
 import { useDroppable } from "@dnd-kit/core";
-import { Check, Flame, Vote, X } from "lucide-react";
+import { Check, Flame, TrendingUp, X } from "lucide-react";
 import React, { Children } from "react";
 import { twMerge } from "tailwind-merge";
 import { Badge } from "../ui/badge";
@@ -13,7 +13,6 @@ interface NoteGroupProps extends React.HTMLAttributes<HTMLDivElement> {
   authors?: string[];
 }
 
-const noteFlameThreshold = 0.098;
 
 export const NoteGroup = ({
   voteCount,
@@ -23,10 +22,16 @@ export const NoteGroup = ({
   ...props
 }: NoteGroupProps & React.ComponentProps<"div">) => {
   const hasVoteCount = voteCount !== undefined;
+  const childCount = Children.count(children);
+  const isGrouped = childCount > 1;
+  const hasNonZeroVotes = hasVoteCount && voteCount.forGroup > 0;
+  const showFooter = authors || hasNonZeroVotes;
 
   const classes = twMerge(
-    "space-y-1 bg-accent rounded-lg transition-all duration-100",
-    hasVoteCount || Children.count(children) > 1 ? "p-0.5" : "p-0",
+    "rounded-lg transition-all duration-100",
+    isGrouped || hasVoteCount
+      ? "bg-muted/60 border border-border/60 p-2 space-y-2"
+      : "space-y-1",
     className,
   );
 
@@ -34,15 +39,15 @@ export const NoteGroup = ({
     <div className={classes} {...props}>
       {children}
 
-      {(authors || hasVoteCount) && (
-        <div className="flex items-center justify-between p-2">
+      {showFooter && (
+        <div className="flex items-center justify-between gap-2 px-1 pt-1">
           {authors && (
-            <div className="text-sm text-muted-foreground">
+            <span className="text-xs text-muted-foreground truncate">
               {authors.join(", ")}
-            </div>
+            </span>
           )}
 
-          {hasVoteCount && (
+          {hasNonZeroVotes && (
             <VoteCount forGroup={voteCount.forGroup} total={voteCount.total} />
           )}
         </div>
@@ -51,21 +56,26 @@ export const NoteGroup = ({
   );
 };
 
+const hotThreshold = 0.098;
+
 function VoteCount({ forGroup, total }: { forGroup: number; total: number }) {
-  let [Icon, variant] = [Vote, "outline"] as [
-    React.ElementType,
-    "destructive" | "outline",
-  ];
-  if (forGroup / total >= noteFlameThreshold) {
-    [Icon, variant] = [Flame, "destructive"];
+  if (forGroup === 0 || total === 0) return null;
+
+  let Icon: React.ElementType;
+  let variant: "destructive" | "secondary";
+
+  if (forGroup / total >= hotThreshold) {
+    Icon = Flame;
+    variant = "destructive";
+  } else {
+    Icon = TrendingUp;
+    variant = "secondary";
   }
 
   return (
-    <div className="flex justify-end">
-      <Badge variant={variant}>
-        <Icon className="size-4 mr-2" /> {forGroup}
-      </Badge>
-    </div>
+    <Badge variant={variant} className="gap-1">
+      <Icon className="size-3.5" /> {forGroup}
+    </Badge>
   );
 }
 
@@ -83,7 +93,10 @@ export function DroppableNoteGroup({
   });
 
   return (
-    <NoteGroup className={isOver ? "p-2" : ""} ref={setNodeRef}>
+    <NoteGroup
+      className={isOver ? "ring-2 ring-primary/60 bg-primary/10 border-primary/40" : ""}
+      ref={setNodeRef}
+    >
       {children}
     </NoteGroup>
   );
@@ -101,21 +114,28 @@ export function VotableNoteGroup({
   canVote: boolean;
 }) {
   return (
-    <div className="group relative transition-all duration-100">
-      <NoteGroup>{children}</NoteGroup>
+    <div
+      className={twMerge(
+        "rounded-lg border transition-all duration-150",
+        voted ? "border-primary/50 bg-primary/5" : "border-border/60",
+      )}
+    >
+      <div className="p-1.5 space-y-1.5">{children}</div>
+
       <div
-        data-voted={voted}
-        className={`absolute hidden group-hover:flex data-[voted=true]:flex
-        opacity-90 top-2 right-2 justify-end animate-in fade-in`}
+        className={twMerge(
+          "flex justify-end px-2 py-1.5 border-t rounded-b-lg bg-muted/40",
+          voted ? "border-primary/20" : "border-border/40",
+        )}
       >
         <Button
-          variant={voted ? "default" : "secondary"}
+          variant={voted ? "default" : "ghost"}
           size="sm"
           onClick={() => onVote(!voted)}
           disabled={!voted && !canVote}
         >
-          {voted ? <X /> : <Check />}
-          {voted ? "Unvote" : "Vote"}
+          {voted ? <X className="size-3" /> : <Check className="size-3" />}
+          {voted ? "Remove vote" : "Vote"}
         </Button>
       </div>
     </div>

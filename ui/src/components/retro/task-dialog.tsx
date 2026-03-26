@@ -96,13 +96,10 @@ export default function TaskDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>What</FormLabel>
-
-                  <FormDescription>What needs to be done?</FormDescription>
-
                   <FormControl>
                     <Input className="w-full" {...field} />
                   </FormControl>
-
+                  <FormDescription>What needs to be done?</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -114,15 +111,12 @@ export default function TaskDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Who</FormLabel>
-
-                  <FormDescription>
-                    Who will be completing this action?
-                  </FormDescription>
-
                   <FormControl>
                     <Input className="w-full" {...field} />
                   </FormControl>
-
+                  <FormDescription>
+                    Who will be completing this action?
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -134,16 +128,13 @@ export default function TaskDialog({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>When</FormLabel>
-
-                  <FormDescription>
-                    When does this need to be done?
-                  </FormDescription>
-
                   <DatePickerFormItem
                     value={field.value}
                     onChange={field.onChange}
                   />
-
+                  <FormDescription>
+                    When does this need to be done?
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
