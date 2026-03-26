@@ -23,7 +23,7 @@ import { Route as RetrosRoute } from "@/routes/_auth.retros.$retroId";
 import { Retro } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { BookDashed, Trash } from "lucide-react";
+import { BookDashed, Trash2 } from "lucide-react";
 import { useFieldArray, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod";
 import AIRetroTemplate from "./ai-retro-template";
@@ -71,7 +71,7 @@ export default function Creator({ className }: { className?: string }) {
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-8"
+            className="space-y-6"
           >
             <FormField
               control={form.control}
@@ -127,6 +127,7 @@ export default function Creator({ className }: { className?: string }) {
 
 function Columns() {
   const { fields, append, remove } = useFieldArray({ name: "columns" });
+  const { control } = useFormContext();
 
   const { user } = useAuth();
 
@@ -142,20 +143,27 @@ function Columns() {
         />
       ))}
 
-      <FormField name="columns" render={() => <FormMessage />} />
+      <FormField control={control} name="columns" render={() => <FormMessage />} />
 
-      <div className="flex items-center space-x-2">
+      <div className="flex gap-2">
         <Button
           type="button"
           onClick={() => append({ title: "", description: "" })}
           variant="secondary"
+          className="flex-1"
         >
           Add Column
         </Button>
 
-        <FromTemplateDropDown />
+        <div className="flex-1">
+          <FromTemplateDropDown />
+        </div>
 
-        {user?.ai_enabled && <AIRetroTemplate />}
+        {user?.ai_enabled && (
+          <div className="flex-1">
+            <AIRetroTemplate />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -171,44 +179,51 @@ function ColumnInput({
   const { control } = useFormContext();
 
   return (
-    <div className="group relative p-3 space-y-4 rounded-md border">
-      <FormField
-        control={control}
-        name={`columns.${index}.title`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Title</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+    <div className="rounded-md border animate-in fade-in slide-in-from-bottom-2 duration-200">
+      <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/40">
+        <span className="text-sm font-medium text-muted-foreground">
+          Column {index + 1}
+        </span>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={onRemove}
+        >
+          <Trash2 className="size-3.5" />
+        </Button>
+      </div>
 
-      <FormField
-        control={control}
-        name={`columns.${index}.description`}
-        render={({ field }) => (
-          <FormItem>
-            <FormLabel>Description</FormLabel>
-            <FormControl>
-              <Input {...field} />
-            </FormControl>
-            <FormMessage />
-          </FormItem>
-        )}
-      />
+      <div className="p-4 space-y-4">
+        <FormField
+          control={control}
+          name={`columns.${index}.title`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Title</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <Button
-        className="absolute opacity-0 group-hover:opacity-100 -top-6 -right-3 transition-all duration-75"
-        type="button"
-        variant="destructive"
-        size="sm"
-        onClick={onRemove}
-      >
-        <Trash />
-      </Button>
+        <FormField
+          control={control}
+          name={`columns.${index}.description`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+      </div>
     </div>
   );
 }
@@ -220,12 +235,12 @@ function FromTemplateDropDown() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" type="button">
+        <Button variant="outline" type="button" className="w-full">
           <BookDashed />
           From Template
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent>
+      <DropdownMenuContent className="w-max">
         {templates.map((template) => (
           <DropdownMenuItem
             key={template.title}

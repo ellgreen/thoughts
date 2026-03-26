@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import AuthProvider from "./components/auth.tsx";
 import ThemeProvider from "./components/theme.tsx";
 import { useAuth } from "./hooks/use-auth.ts";
+import "@fontsource-variable/inter";
 import "./index.css";
 import { router } from "./router.tsx";
 

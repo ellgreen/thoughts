@@ -35,6 +35,8 @@ func applyRoutes(
 	authRouter.Handle("/auth/self", controllers.AuthSelf(sessionProvider)).Methods(http.MethodGet)
 	authRouter.Handle("/auth/logout", controllers.AuthLogout(sessionProvider)).Methods(http.MethodPost)
 
+	authRouter.Handle("/stats", controllers.StatsGet(db)).Methods(http.MethodGet)
+
 	authRouter.Handle("/gifs", controllers.GifSearch(gifProvider)).Methods(http.MethodPost)
 
 	aiRouter := authRouter.PathPrefix("/ai").Subrouter()

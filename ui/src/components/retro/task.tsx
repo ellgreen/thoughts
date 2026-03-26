@@ -1,7 +1,6 @@
 import {
   Calendar,
   Check,
-  CheckCircle,
   Ellipsis,
   Pencil,
   User,
@@ -17,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DialogTrigger } from "@/components/ui/dialog";
+import { twMerge } from "tailwind-merge";
 
 export function Task({
   task,
@@ -29,41 +29,42 @@ export function Task({
 }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const isOverdue = new Date(task.when) < today;
+  const isOverdue = !task.completed && new Date(task.when) < today;
 
   return (
-    <div className="group flex items-center justify-between p-2 space-x-2 rounded-md bg-card border">
-      <div className="p-2 w-full">
-        <div className="flex items-center justify-between text-muted-foreground">
-          <div className="flex items-center space-x-2">
-            {task.completed ? (
-              <>
-                <CheckCircle className="size-4 text-green-600 dark:text-green-500" />
-                <span className="text-sm text-green-600 dark:text-green-500">
-                  Complete
-                </span>
-              </>
-            ) : (
-              <>
-                <Calendar
-                  className={`size-4 ${isOverdue && "text-red-600 dark:text-red-500"}`}
-                />
-                <span
-                  className={`text-sm ${isOverdue ? "text-red-600 dark:text-red-500" : "text-muted-foreground"}`}
-                >
-                  {new Date(task.when).toLocaleDateString()}
-                </span>
-              </>
+    <div
+      className={twMerge(
+        "group rounded-md bg-card border p-3 transition-opacity",
+        task.completed && "opacity-60",
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground min-w-0">
+          <Calendar
+            className={twMerge(
+              "size-3.5 shrink-0",
+              isOverdue && "text-destructive/80",
             )}
-            <User className="size-4" />
-            <span className="text-sm text-muted-foreground">{task.who}</span>
-          </div>
-
-          <TaskActions task={task} onEdit={onEdit} onComplete={onComplete} />
+          />
+          <span className={isOverdue ? "text-destructive/80" : ""}>
+            {new Date(task.when).toLocaleDateString()}
+          </span>
+          <span className="text-muted-foreground/40">·</span>
+          <User className="size-3.5 shrink-0" />
+          <span className="truncate">{task.who}</span>
         </div>
 
-        <p className="mt-2 text-foreground text-wrap grow">{task.what}</p>
+        <TaskActions task={task} onEdit={onEdit} onComplete={onComplete} />
       </div>
+
+      <p
+        className={twMerge(
+          "mt-1.5 text-sm text-foreground break-words",
+          task.completed && "line-through",
+        )}
+      >
+        {task.what}
+      </p>
     </div>
   );
 }
@@ -94,7 +95,7 @@ function TaskActions({
             <Ellipsis />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="w-max">
           {task.completed ? (
             <DropdownMenuItem onClick={() => onComplete(false)}>
               <X />

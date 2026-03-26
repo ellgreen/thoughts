@@ -53,7 +53,11 @@ export default function AIRetroTemplate() {
       })
       .then((res) => {
         setValue("columns", res.data.columns);
-        toast.success(`A ${res.data.theme} retro has been generated`);
+        form.reset();
+        toast.success(`🎉 ${res.data.theme} retro generated!`, {
+          description: `${res.data.columns.length} fresh columns are ready to go 🚀`,
+          duration: 5000,
+        });
       })
       .catch(() => {
         toast.error("Failed to generate columns from AI");
@@ -67,7 +71,7 @@ export default function AIRetroTemplate() {
   return (
     <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
       <PopoverTrigger asChild>
-        <Button variant="ghost" type="button">
+        <Button variant="outline" type="button" className="w-full">
           <Sparkles />
           From AI
         </Button>

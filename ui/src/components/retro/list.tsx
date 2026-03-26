@@ -1,68 +1,89 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Route as RetrosRoute } from "@/routes/_auth.retros.$retroId";
-import { Retro } from "@/types";
+import { Retro, RetroStatus } from "@/types";
 import { Link } from "@tanstack/react-router";
-import { Badge } from "../ui/badge";
 import { CircleCheck, StickyNote } from "lucide-react";
+
+const statusLabel: Record<RetroStatus, string> = {
+  brainstorm: "Brainstorm",
+  group: "Grouping",
+  vote: "Voting",
+  discuss: "Discuss",
+};
+
+const statusVariant: Record<RetroStatus, "default" | "secondary" | "outline"> = {
+  brainstorm: "outline",
+  group: "outline",
+  vote: "secondary",
+  discuss: "default",
+};
 
 export default function List({ retros }: { retros?: Retro[] }) {
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recent Retros</CardTitle>
+        <CardDescription>Your last {retros?.length ?? 0} retrospectives</CardDescription>
       </CardHeader>
 
       <CardContent>
         {!retros || retros.length === 0 ? (
-          <p className="text-foreground">No retros found 😢</p>
+          <p className="text-muted-foreground text-sm">No retros yet 😢</p>
         ) : (
-          <ul className="space-y-2">
+          <div className="flex flex-col gap-2">
             {retros.map((retro) => (
               <RetroItem key={retro.id} retro={retro} />
             ))}
-          </ul>
+          </div>
         )}
       </CardContent>
     </Card>
   );
 }
 
-const btnClasses =
-  "ring-offset-background transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0";
-
 function RetroItem({ retro }: { retro: Retro }) {
+  const allTasksDone =
+    retro.task_count > 0 && retro.task_count === retro.task_completed_count;
+
   return (
-    <li>
+    <div className="relative">
       <Link
         to={RetrosRoute.path}
         params={{ retroId: retro.id }}
-        className={`block w-full space-y-3 p-2 rounded-lg border bg-card text-card-foreground shadow-sm
-          hover:bg-accent hover:text-accent-foreground ${btnClasses}`}
+        className="group flex flex-col gap-3 rounded-lg border bg-card p-4 hover:bg-accent hover:text-accent-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <div className="w-full flex items-center justify-between">
-          <h3>{retro.title}</h3>
-          <Badge variant="outline">
-            {new Date(retro.created_at).toLocaleDateString()}
+        {/* Title row */}
+        <div className="flex items-start justify-between gap-2">
+          <span className="font-medium leading-tight">{retro.title}</span>
+          <Badge variant={statusVariant[retro.status]} className="shrink-0 text-xs">
+            {statusLabel[retro.status]}
           </Badge>
         </div>
 
-        <ul className="w-full flex items-center space-x-4 text-sm text-muted-foreground">
-          <li className="flex items-center">
-            <StickyNote size="16" className="mr-1" /> {retro.note_count}
-          </li>
-
-          <li
-            className={`flex items-center ${retro.task_count == retro.task_completed_count ? "text-green-600 dark:text-green-500" : ""}`}
-          >
-            <CircleCheck size="16" className="mr-1" />
-            <span>
-              {retro.task_count > 0
-                ? `${retro.task_completed_count} / ${retro.task_count}`
-                : "0"}
+        {/* Footer stats + date */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1">
+              <StickyNote className="size-3.5" />
+              {retro.note_count} notes
             </span>
-          </li>
-        </ul>
+            {retro.task_count > 0 && (
+              <span className={`flex items-center gap-1 ${allTasksDone ? "font-medium" : ""}`}>
+                <CircleCheck className="size-3.5" />
+                {retro.task_completed_count}/{retro.task_count} tasks
+              </span>
+            )}
+          </div>
+          <span>{new Date(retro.created_at).toLocaleDateString()}</span>
+        </div>
       </Link>
-    </li>
+    </div>
   );
 }

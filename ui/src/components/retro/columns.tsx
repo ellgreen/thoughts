@@ -57,7 +57,7 @@ function DroppableColumn({
     <Column
       ref={setNodeRef}
       column={column}
-      className={isOver ? "outline outline-offset-2 outline-primary" : ""}
+      className={isOver ? "ring-2 ring-primary ring-offset-4 ring-offset-background bg-primary/5" : ""}
     >
       {children}
     </Column>

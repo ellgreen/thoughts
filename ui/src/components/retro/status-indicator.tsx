@@ -1,55 +1,50 @@
 import { RetroStatus } from "@/types";
-import { Brain, ChevronRight, Group, Speech, Vote } from "lucide-react";
+import { Brain, CheckCircle2, ChevronRight, Group, Speech, Vote } from "lucide-react";
+
+const stages = [
+  { status: "brainstorm" as RetroStatus, icon: Brain, label: "Brainstorm" },
+  { status: "group" as RetroStatus, icon: Group, label: "Group" },
+  { status: "vote" as RetroStatus, icon: Vote, label: "Vote" },
+  { status: "discuss" as RetroStatus, icon: Speech, label: "Discuss" },
+];
 
 export default function StatusIndicator({ status }: { status: RetroStatus }) {
-  return (
-    <ul className="flex items-center gap-2">
-      <StatusItem active={status === "brainstorm"}>
-        <Brain /> Brainstorm
-      </StatusItem>
-      <StatusItemSeparator />
-      <StatusItem active={status === "group"}>
-        <Group /> Group
-      </StatusItem>
-      <StatusItemSeparator />
-      <StatusItem active={status === "vote"}>
-        <Vote /> Vote
-      </StatusItem>
-      <StatusItemSeparator />
-      <StatusItem active={status === "discuss"}>
-        <Speech /> Discuss
-      </StatusItem>
-    </ul>
-  );
-}
-
-function StatusItem({
-  children,
-  active,
-}: {
-  children: React.ReactNode;
-  active: boolean;
-}) {
-  const activeClass = active
-    ? "text-primary font-semibold"
-    : "text-muted-foreground";
+  const currentIndex = stages.findIndex((s) => s.status === status);
 
   return (
-    <li
-      className={
-        "flex items-center gap-2 text-sm [&_svg]:size-4 [&_svg]:shrink-0 " +
-        activeClass
-      }
-    >
-      {children}
-    </li>
-  );
-}
+    <ol className="flex items-center gap-1">
+      {stages.map((stage, index) => {
+        const isDone = index < currentIndex;
+        const isActive = index === currentIndex;
+        const Icon = isDone ? CheckCircle2 : stage.icon;
 
-function StatusItemSeparator() {
-  return (
-    <li>
-      <ChevronRight className="size-4 text-muted-foreground" />
-    </li>
+        return (
+          <li key={stage.status} className="flex items-center gap-1">
+            {index > 0 && (
+              <ChevronRight
+                className={`size-3.5 mx-0.5 shrink-0 ${
+                  index <= currentIndex
+                    ? "text-muted-foreground/60"
+                    : "text-muted-foreground/30"
+                }`}
+              />
+            )}
+            <span
+              className={[
+                "flex items-center gap-1.5 text-sm rounded-md px-2 py-0.5 [&_svg]:size-3.5 [&_svg]:shrink-0",
+                isActive
+                  ? "bg-primary text-primary-foreground font-medium"
+                  : isDone
+                    ? "text-muted-foreground/70"
+                    : "text-muted-foreground/40",
+              ].join(" ")}
+            >
+              <Icon />
+              {stage.label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }

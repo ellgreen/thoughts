@@ -37,10 +37,12 @@ export const Note = ({
   className,
   ...props
 }: NoteProps & React.ComponentProps<"div">) => {
+  const hasActions = !!(onGifSelected || onGifRemoved || onDelete || onEdit);
+
   return (
     <div
       className={twMerge(
-        "grid gap-2 group p-2 rounded-md bg-card border",
+        "relative group p-2 rounded-md bg-card border",
         className,
         blur ? "blur-xs" : "",
       )}
@@ -49,7 +51,7 @@ export const Note = ({
       {note.img_url && (
         <div
           className={twMerge(
-            "flex justify-around max-h-48 rounded overflow-hidden bg-accent",
+            "flex justify-around max-h-48 rounded overflow-hidden bg-accent mb-2",
             blur ? "blur-md" : "",
           )}
         >
@@ -57,72 +59,63 @@ export const Note = ({
         </div>
       )}
 
-      <div className="flex items-center justify-between space-x-2">
+      <div className="flex items-start gap-2">
         {showGrip && (
           <GripVertical
             {...listeners}
             {...attributes}
-            className="shrink-0 text-accent-foreground
-            opacity-30 group-hover:opacity-100
-            focus:outline-hidden cursor-move transition-opacity duration-100"
+            className="shrink-0 mt-2 text-accent-foreground opacity-30 group-hover:opacity-100 focus:outline-hidden cursor-move transition-opacity duration-100"
             size={16}
           />
         )}
-
-        <p className="py-2 text-foreground text-wrap grow">{note.content}</p>
-
-        {onGifSelected && note.img_url === "" && (
-          <GIFDialog onSelect={onGifSelected}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-            >
-              <Image />
-            </Button>
-          </GIFDialog>
-        )}
-
-        {onGifRemoved && note.img_url !== "" && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-            onClick={onGifRemoved}
-          >
-            <ImageOff />
-          </Button>
-        )}
-
-        {onDelete && (
-          <NoteDeleteDialog onDelete={onDelete}>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-            >
-              <Trash2 />
-            </Button>
-          </NoteDeleteDialog>
-        )}
-
-        {onEdit && (
-          <NoteDialog
-            title="Edit Note"
-            description="Edit the content of the note."
-            content={note.content}
-            onContentSave={onEdit}
-          >
-            <Button
-              variant="ghost"
-              size="icon"
-              className="opacity-30 group-hover:opacity-100 transition-opacity duration-100"
-            >
-              <Pencil />
-            </Button>
-          </NoteDialog>
-        )}
+        <p className="py-2 text-foreground break-words min-w-0 flex-1">
+          {note.content}
+        </p>
       </div>
+
+      {hasActions && (
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-px opacity-0 group-hover:opacity-100 transition-opacity duration-100 bg-card/95 border rounded-md shadow-sm p-0.5">
+          {onGifSelected && note.img_url === "" && (
+            <GIFDialog onSelect={onGifSelected}>
+              <Button variant="ghost" size="icon" className="size-6">
+                <Image className="size-3.5" />
+              </Button>
+            </GIFDialog>
+          )}
+
+          {onGifRemoved && note.img_url !== "" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-6"
+              onClick={onGifRemoved}
+            >
+              <ImageOff className="size-3.5" />
+            </Button>
+          )}
+
+          {onDelete && (
+            <NoteDeleteDialog onDelete={onDelete}>
+              <Button variant="ghost" size="icon" className="size-6">
+                <Trash2 className="size-3.5" />
+              </Button>
+            </NoteDeleteDialog>
+          )}
+
+          {onEdit && (
+            <NoteDialog
+              title="Edit Note"
+              description="Edit the content of the note."
+              content={note.content}
+              onContentSave={onEdit}
+            >
+              <Button variant="ghost" size="icon" className="size-6">
+                <Pencil className="size-3.5" />
+              </Button>
+            </NoteDialog>
+          )}
+        </div>
+      )}
     </div>
   );
 };
