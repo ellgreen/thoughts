@@ -32,6 +32,14 @@ func RetroList(ctx context.Context, db *sqlx.DB, includeUnlisted bool) ([]*model
 		return nil, fmt.Errorf("%w: failed to select retros: %w", ErrExecution, err)
 	}
 
+	for _, retro := range retros {
+		tags, err := RetroTagsList(ctx, db, retro.ID)
+		if err != nil {
+			return nil, err
+		}
+		retro.Tags = tags
+	}
+
 	return retros, nil
 }
 
@@ -40,6 +48,12 @@ func RetroGet(ctx context.Context, db *sqlx.DB, id uuid.UUID) (*model.Retro, err
 	if err := db.GetContext(ctx, retro, "select * from retros where id = ?", id); err != nil {
 		return nil, fmt.Errorf("%w: failed to get retro: %w", ErrExecution, err)
 	}
+
+	tags, err := RetroTagsList(ctx, db, retro.ID)
+	if err != nil {
+		return nil, err
+	}
+	retro.Tags = tags
 
 	return retro, nil
 }

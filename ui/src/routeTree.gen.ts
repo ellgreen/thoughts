@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as AuthIndexRouteImport } from './routes/_auth.index'
+import { Route as AuthTagsTagRouteImport } from './routes/_auth.tags.$tag'
 import { Route as AuthRetrosRetroIdRouteImport } from './routes/_auth.retros.$retroId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -28,6 +29,11 @@ const AuthIndexRoute = AuthIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthRoute,
 } as any)
+const AuthTagsTagRoute = AuthTagsTagRouteImport.update({
+  id: '/tags/$tag',
+  path: '/tags/$tag',
+  getParentRoute: () => AuthRoute,
+} as any)
 const AuthRetrosRetroIdRoute = AuthRetrosRetroIdRouteImport.update({
   id: '/retros/$retroId',
   path: '/retros/$retroId',
@@ -38,11 +44,13 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthIndexRoute
   '/login': typeof LoginRoute
   '/retros/$retroId': typeof AuthRetrosRetroIdRoute
+  '/tags/$tag': typeof AuthTagsTagRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/': typeof AuthIndexRoute
   '/retros/$retroId': typeof AuthRetrosRetroIdRoute
+  '/tags/$tag': typeof AuthTagsTagRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -50,13 +58,20 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_auth/': typeof AuthIndexRoute
   '/_auth/retros/$retroId': typeof AuthRetrosRetroIdRoute
+  '/_auth/tags/$tag': typeof AuthTagsTagRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/retros/$retroId'
+  fullPaths: '/' | '/login' | '/retros/$retroId' | '/tags/$tag'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/' | '/retros/$retroId'
-  id: '__root__' | '/_auth' | '/login' | '/_auth/' | '/_auth/retros/$retroId'
+  to: '/login' | '/' | '/retros/$retroId' | '/tags/$tag'
+  id:
+    | '__root__'
+    | '/_auth'
+    | '/login'
+    | '/_auth/'
+    | '/_auth/retros/$retroId'
+    | '/_auth/tags/$tag'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -87,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthIndexRouteImport
       parentRoute: typeof AuthRoute
     }
+    '/_auth/tags/$tag': {
+      id: '/_auth/tags/$tag'
+      path: '/tags/$tag'
+      fullPath: '/tags/$tag'
+      preLoaderRoute: typeof AuthTagsTagRouteImport
+      parentRoute: typeof AuthRoute
+    }
     '/_auth/retros/$retroId': {
       id: '/_auth/retros/$retroId'
       path: '/retros/$retroId'
@@ -100,11 +122,13 @@ declare module '@tanstack/react-router' {
 interface AuthRouteChildren {
   AuthIndexRoute: typeof AuthIndexRoute
   AuthRetrosRetroIdRoute: typeof AuthRetrosRetroIdRoute
+  AuthTagsTagRoute: typeof AuthTagsTagRoute
 }
 
 const AuthRouteChildren: AuthRouteChildren = {
   AuthIndexRoute: AuthIndexRoute,
   AuthRetrosRetroIdRoute: AuthRetrosRetroIdRoute,
+  AuthTagsTagRoute: AuthTagsTagRoute,
 }
 
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)

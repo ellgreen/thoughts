@@ -27,11 +27,13 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { Checkbox } from "../ui/checkbox";
 import { Input } from "../ui/input";
+import TagInput from "./tag-input";
 
 const schema = z.object({
   title: z.string().min(5).max(255),
   unlisted: z.boolean(),
   max_votes: z.coerce.number().int().min(1).max(15),
+  tags: z.array(z.string().min(1).max(50)).max(10),
 });
 
 export default function Settings() {
@@ -77,6 +79,7 @@ function SettingsDialog({
       title: retro.title,
       unlisted: retro.unlisted,
       max_votes: retro.max_votes,
+      tags: retro.tags ?? [],
     },
   });
 
@@ -159,6 +162,27 @@ function SettingsDialog({
                     </FormDescription>
                   </div>
 
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="tags"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Tags</FormLabel>
+                  <FormControl>
+                    <TagInput
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder="team-name, project-name"
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Group this retro with others by team or project.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

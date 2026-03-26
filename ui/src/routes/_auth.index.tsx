@@ -10,12 +10,17 @@ export const Route = createFileRoute("/_auth/")({
   loader: async () => {
     const [retrosRes, statsRes] = await Promise.all([
       api.get<Retro[]>("/api/retros"),
-      api.get<{ retro_count: number; note_count: number; task_count: number }>("/api/stats"),
+      api.get<{ retro_count: number; note_count: number; task_count: number }>(
+        "/api/stats",
+      ),
     ]);
 
     return {
       retros: retrosRes.status === 200 ? retrosRes.data : [],
-      stats: statsRes.status === 200 ? statsRes.data : { retro_count: 0, note_count: 0, task_count: 0 },
+      stats:
+        statsRes.status === 200
+          ? statsRes.data
+          : { retro_count: 0, note_count: 0, task_count: 0 },
     };
   },
 });
@@ -24,7 +29,7 @@ function RouteComponent() {
   const { retros, stats } = Route.useLoaderData();
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-400 mx-auto px-8 space-y-6">
       <Hero stats={stats} />
 
       <div className="grid grid-cols-2 gap-6 items-start">

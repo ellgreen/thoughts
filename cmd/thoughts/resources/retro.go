@@ -23,6 +23,7 @@ type Retro struct {
 	Unlisted           bool           `json:"unlisted"`
 	MaxVotes           int            `json:"max_votes"`
 	GIFsEnabled        bool           `json:"gifs_enabled"`
+	Tags               []string       `json:"tags"`
 	CreatedAt          time.Time      `json:"created_at"`
 	NoteCount          int            `json:"note_count"`
 	TaskCount          int            `json:"task_count"`
@@ -30,6 +31,11 @@ type Retro struct {
 }
 
 func RetroFromModel(m *model.Retro) *Retro {
+	tags := m.Tags
+	if tags == nil {
+		tags = []string{}
+	}
+
 	return &Retro{
 		ID:     m.ID,
 		Title:  m.Title,
@@ -44,6 +50,7 @@ func RetroFromModel(m *model.Retro) *Retro {
 		Unlisted:           m.Unlisted,
 		MaxVotes:           m.MaxVotes,
 		GIFsEnabled:        gif.IsAvailable(),
+		Tags:               tags,
 		CreatedAt:          m.CreatedAt,
 		NoteCount:          m.NoteCount,
 		TaskCount:          m.TaskCount,

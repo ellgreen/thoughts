@@ -37,6 +37,9 @@ func applyRoutes(
 
 	authRouter.Handle("/stats", controllers.StatsGet(db)).Methods(http.MethodGet)
 
+	authRouter.Handle("/tags", controllers.TagSuggestions(db)).Methods(http.MethodGet)
+	authRouter.Handle("/tags/{tag}", controllers.TagRetros(db)).Methods(http.MethodGet)
+
 	authRouter.Handle("/gifs", controllers.GifSearch(gifProvider)).Methods(http.MethodPost)
 
 	aiRouter := authRouter.PathPrefix("/ai").Subrouter()
@@ -56,6 +59,9 @@ func applyRoutes(
 	retroRouter.Handle("/tasks", controllers.TaskIndex(db)).Methods(http.MethodGet)
 	retroRouter.Handle("/markdown", controllers.RetroMarkdown(db)).Methods(http.MethodGet)
 	retroRouter.Handle("", controllers.RetroGet(db)).Methods(http.MethodGet)
+
+	tasksRouter := authRouter.PathPrefix(fmt.Sprintf("/tasks/{taskId:%s}", uuidRegex)).Subrouter()
+	tasksRouter.Handle("/complete", controllers.TaskComplete(db)).Methods(http.MethodPatch)
 
 	router.PathPrefix("/").Handler(ui.HandlerFunc())
 }

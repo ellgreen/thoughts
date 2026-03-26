@@ -11,6 +11,7 @@ export interface PayloadRetroUpdate {
   title: string;
   unlisted: boolean;
   max_votes: number;
+  tags: string[];
 }
 
 export interface PayloadStatusUpdate {

@@ -13,9 +13,10 @@ import (
 )
 
 type retroUpdateRequest struct {
-	Title    string `json:"title" validate:"required,min=5,max=255"`
-	Unlisted bool   `json:"unlisted"`
-	MaxVotes int    `json:"max_votes" validate:"required,number,min=1,max=15"`
+	Title    string   `json:"title" validate:"required,min=5,max=255"`
+	Unlisted bool     `json:"unlisted"`
+	MaxVotes int      `json:"max_votes" validate:"required,number,min=1,max=15"`
+	Tags     []string `json:"tags" validate:"omitempty,max=10,dive,min=1,max=50"`
 }
 
 func (b *Broker) handleRetroUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
@@ -30,6 +31,12 @@ func (b *Broker) handleRetroUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
 			slog.Error("problem updating retro", "error", err)
 			return newErrorEvent("problem updating retro")
 		}
+
+		if err := dal.RetroTagsSet(ctx, db, retroID, req.Tags); err != nil {
+			slog.Error("problem updating retro tags", "error", err)
+			return newErrorEvent("problem updating retro tags")
+		}
+		retro.Tags = req.Tags
 
 		b.dispatch(newRetroUpdatedEvent(retro))
 

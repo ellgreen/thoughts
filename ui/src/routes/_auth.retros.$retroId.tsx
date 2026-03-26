@@ -1,5 +1,4 @@
 import Board from "@/components/retro/board";
-import { Heading } from "@/components/typography";
 import { RetroContext } from "@/hooks/use-retro";
 import { api } from "@/lib/api";
 import { socketURL } from "@/lib/socket";
@@ -28,11 +27,9 @@ export default function RouteComponent() {
 
   return (
     <RetroContext.Provider value={{ retro, setRetro, socket }}>
-      <Heading variant="h1" className="mb-8">
-        {retro.title}
-      </Heading>
-
-      <Board />
+      <div className="px-8">
+        <Board />
+      </div>
     </RetroContext.Provider>
   );
 }
