@@ -53,13 +53,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	if cfg.TenorAPIKey != "" {
+		slog.Warn("THOUGHTS_TENOR_API_KEY is set but the Tenor API was shut down on 2026-06-30; " +
+			"use THOUGHTS_GIF_PROVIDER and THOUGHTS_GIF_API_KEY instead")
+	}
+
+	gifProvider, err := gif.Resolve(cfg.GIFProvider, cfg.GIFAPIKey)
+	if err != nil {
+		slog.Error("failed to configure gif provider", "err", err)
+		os.Exit(1)
+	}
+
 	router := mux.NewRouter()
 
 	applyRoutes(
 		router,
 		sessionProvider,
 		ai.ResolveModel(cfg.OpenAIAPIKey),
-		gif.ResolveProvider(cfg.TenorAPIKey),
+		gifProvider,
 	)
 
 	corsCfg := cors.Default()

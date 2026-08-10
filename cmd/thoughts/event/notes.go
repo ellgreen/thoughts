@@ -50,12 +50,14 @@ func (b *Broker) handleNoteCreate(db *sqlx.DB, retroID uuid.UUID) Handler {
 }
 
 type noteUpdateRequest struct {
-	NoteID       uuid.UUID `json:"id" validate:"required,uuid"`
-	ColumnID     uuid.UUID `json:"column_id" validate:"omitempty,required_with=group_id,uuid"`
-	GroupID      uuid.UUID `json:"group_id" validate:"omitempty,uuid"`
-	Content      string    `json:"content" validate:"omitempty,min=2,max=255"`
-	ImgURL       string    `json:"img_url" validate:"omitempty,url"`
-	RemoveImgURL bool      `json:"remove_img_url"`
+	NoteID   uuid.UUID `json:"id" validate:"required,uuid"`
+	ColumnID uuid.UUID `json:"column_id" validate:"omitempty,required_with=group_id,uuid"`
+	GroupID  uuid.UUID `json:"group_id" validate:"omitempty,uuid"`
+	Content  string    `json:"content" validate:"omitempty,min=2,max=255"`
+	// Now that people can paste their own link, not just pick from a proxied
+	// provider, insist on https - a browser would block mixed content anyway.
+	ImgURL       string `json:"img_url" validate:"omitempty,url,startswith=https://,max=2048"`
+	RemoveImgURL bool   `json:"remove_img_url"`
 }
 
 func (b *Broker) handleNoteUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {

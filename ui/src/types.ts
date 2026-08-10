@@ -12,7 +12,8 @@ export interface Retro {
   columns: RetroColumn[];
   unlisted: boolean;
   max_votes: number;
-  gifs_enabled: boolean;
+  /** Whether a GIF search provider is configured. Pasting a link always works. */
+  gif_search_enabled: boolean;
   tags: string[];
   created_at: string;
   note_count: number;

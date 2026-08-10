@@ -58,7 +58,7 @@ cmd/thoughts/
 ├── session/         # Gorilla session management
 ├── auth/            # Auth middleware (checks session cookie)
 ├── ai/              # OpenAI integration via langchaingo
-└── gif/             # Tenor API integration
+└── gif/             # GIF search behind a swappable provider (Klipy, Giphy)
 ```
 
 **Request flow:** HTTP → `routes.go` → auth middleware → controller → DAL → SQLite. Real-time updates flow via `event.Broker` → WebSocket → frontend.
@@ -74,9 +74,10 @@ All config is via environment variables with the `THOUGHTS_` prefix, managed by 
 | Variable | Default | Notes |
 |---|---|---|
 | `THOUGHTS_ADDRESS` | `localhost:3000` | HTTP listen address |
-| `THOUGHTS_DATA` | `./data` | SQLite + session key location |
+| `THOUGHTS_DATA_PATH` | `./data` | SQLite + session key location |
 | `THOUGHTS_OPENAI_API_KEY` | _(unset)_ | Enables AI template generation |
-| `THOUGHTS_TENOR_API_KEY` | _(unset)_ | Enables GIF search |
+| `THOUGHTS_GIF_API_KEY` | _(unset)_ | Enables GIF search; pasting a link always works |
+| `THOUGHTS_GIF_PROVIDER` | _(auto)_ | `klipy`, `giphy` or `none` |
 | `THOUGHTS_TLS_CERT_PATH` / `THOUGHTS_TLS_KEY_PATH` | _(unset)_ | Optional TLS |
 
 ### Layered request/response pattern

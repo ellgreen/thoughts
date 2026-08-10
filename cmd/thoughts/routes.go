@@ -40,7 +40,7 @@ func applyRoutes(
 	authRouter.Handle("/tags", controllers.TagSuggestions(db)).Methods(http.MethodGet)
 	authRouter.Handle("/tags/{tag}", controllers.TagRetros(db)).Methods(http.MethodGet)
 
-	authRouter.Handle("/gifs", controllers.GifSearch(gifProvider)).Methods(http.MethodPost)
+	authRouter.Handle("/gifs", controllers.GifSearch(gifProvider)).Methods(http.MethodGet)
 
 	aiRouter := authRouter.PathPrefix("/ai").Subrouter()
 	aiRouter.Handle("/retro-template", controllers.AIRetroTemplate(aiModel)).Methods(http.MethodPost)

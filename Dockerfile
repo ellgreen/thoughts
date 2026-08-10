@@ -18,10 +18,17 @@ RUN wget -qO /app/thoughts.tar.gz "https://github.com/ellgreen/thoughts/releases
 FROM alpine:latest
 
 ENV THOUGHTS_ADDRESS=":3000"
-ENV THOUGHTS_DATA="/data"
+# The config key is data_path, so THOUGHTS_DATA was never read and the database
+# landed in the container's working directory instead of the mounted volume.
+ENV THOUGHTS_DATA_PATH="/data"
 
 ENV THOUGHTS_TLS_CERT_PATH=""
 ENV THOUGHTS_TLS_KEY_PATH=""
+
+# Optional integrations, pass with -e to enable.
+ENV THOUGHTS_GIF_PROVIDER=""
+ENV THOUGHTS_GIF_API_KEY=""
+ENV THOUGHTS_OPENAI_API_KEY=""
 
 COPY --from=setup /thoughts /usr/local/bin/
 

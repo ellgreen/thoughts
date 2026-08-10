@@ -57,11 +57,28 @@ You can follow the instructions to get an API key here:
 
 <https://platform.openai.com/api-keys>
 
-#### GIF Support
+#### Images and GIFs
 
-To enable support for gifs via Tenor, you will need to set the
-`THOUGHTS_TENOR_API_KEY` environment variable.
+Adding an image to a thought always works — paste any `https` image or GIF
+link and you get a preview before it is attached. No configuration needed.
 
-You can follow the instructions to get an API key here:
+To also get in-app GIF **search**, set `THOUGHTS_GIF_API_KEY`. The default
+provider is [Klipy](https://klipy.com/developers), which is free for life:
+a test key works immediately, and a production key (a form in their partner
+panel) lifts the rate limit.
 
-<https://developers.google.com/tenor/guides/quickstart#setup>
+```shell
+docker run -p 3000:3000 \
+  -v $PWD/data:/data \
+  -e THOUGHTS_GIF_API_KEY="your-key" \
+  ghcr.io/ellgreen/thoughts:latest
+```
+
+| Variable | Values | Default |
+| --- | --- | --- |
+| `THOUGHTS_GIF_API_KEY` | Your provider's API key | unset — search disabled |
+| `THOUGHTS_GIF_PROVIDER` | `klipy`, `giphy`, `none` | auto: `klipy` when a key is set |
+
+> [!NOTE]
+> Google shut the Tenor API down on 30 June 2026, so `THOUGHTS_TENOR_API_KEY`
+> no longer does anything. Thoughts logs a warning if it is still set.

@@ -10,7 +10,7 @@ import NoteDialog from "./note-dialog";
 
 export default function Brainstorm() {
   const {
-    retro: { columns, gifs_enabled },
+    retro: { columns },
   } = useRetro();
   const { notes, dispatch } = useNotes();
 
@@ -27,7 +27,10 @@ export default function Brainstorm() {
     const overColumnId = event.over?.id;
     const note = notes.find((n) => n.id === event.active?.id);
 
-    if (note?.column_id === overColumnId) return;
+    // Dropped outside any column, or the column vanished mid-drag.
+    if (!note || !overColumnId) return;
+
+    if (note.column_id === overColumnId) return;
 
     dispatch(
       createSocketEvent("note_update", {
@@ -96,16 +99,8 @@ export default function Brainstorm() {
                       note={note}
                       onEdit={(content) => handleNoteEdit(note.id, content)}
                       onDelete={() => handleNoteDelete(note.id)}
-                      onGifSelected={
-                        gifs_enabled
-                          ? (url) => handleNoteGifSelected(note.id, url)
-                          : undefined
-                      }
-                      onGifRemoved={
-                        gifs_enabled
-                          ? () => handleNoteGifRemoved(note.id)
-                          : undefined
-                      }
+                      onGifSelected={(url) => handleNoteGifSelected(note.id, url)}
+                      onGifRemoved={() => handleNoteGifRemoved(note.id)}
                     />
                   ) : (
                     <Note note={note} blur />
