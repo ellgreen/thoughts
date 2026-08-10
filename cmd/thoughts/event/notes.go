@@ -31,22 +31,48 @@ func (b *Broker) handleNoteCreate(db *sqlx.DB, retroID uuid.UUID) Handler {
 			return newErrorEvent(err.Error())
 		}
 
-		retro, err := dal.RetroGet(ctx, db, retroID)
+		retro, note, err := b.createNote(ctx, db, retroID, user, req)
 		if err != nil {
-			slog.Error("problem getting retro", "error", err)
-			return newErrorEvent("problem getting retro")
-		}
-
-		note, err := dal.NoteInsert(ctx, db, retroID, user.ID, req.ColumnID, req.Content)
-		if err != nil {
-			slog.Error("problem inserting note", "error", err)
-			return newErrorEvent("problem inserting note")
+			return err
 		}
 
 		b.dispatchUserDependent(newNoteCreatedEvent(note, retro, refFrom(payload)))
 
 		return nil
 	}
+}
+
+// createNote holds the columns lock so that a column cannot be deleted between
+// checking it exists and writing a note into it. Without the check a note can
+// land in a deleted column, where nothing renders it and nothing exports it,
+// while it still counts towards the retro's note total.
+func (b *Broker) createNote(
+	ctx context.Context,
+	db *sqlx.DB,
+	retroID uuid.UUID,
+	user *model.User,
+	req *noteCreateRequest,
+) (*model.Retro, *model.Note, error) {
+	b.columnsMu.Lock()
+	defer b.columnsMu.Unlock()
+
+	retro, err := dal.RetroGet(ctx, db, retroID)
+	if err != nil {
+		slog.Error("problem getting retro", "error", err)
+		return nil, nil, newErrorEvent("problem getting retro")
+	}
+
+	if retro.GetColumns().Find(req.ColumnID) == nil {
+		return nil, nil, newErrorEvent("that column no longer exists")
+	}
+
+	note, err := dal.NoteInsert(ctx, db, retroID, user.ID, req.ColumnID, req.Content)
+	if err != nil {
+		slog.Error("problem inserting note", "error", err)
+		return nil, nil, newErrorEvent("problem inserting note")
+	}
+
+	return retro, note, nil
 }
 
 type noteUpdateRequest struct {

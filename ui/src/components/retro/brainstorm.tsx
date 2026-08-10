@@ -1,4 +1,5 @@
 import { createSocketEvent } from "@/events";
+import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
@@ -13,6 +14,7 @@ export default function Brainstorm() {
     retro: { columns },
   } = useRetro();
   const { notes, dispatch } = useNotes();
+  const columnActions = useColumnActions(notes);
 
   function handleNewNote(columnId: string, content: string) {
     dispatch(
@@ -77,9 +79,16 @@ export default function Brainstorm() {
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <Columns>
+      <Columns
+        onAddColumn={columnActions.create}
+        canAddColumn={columnActions.canCreate}
+      >
         {columns.map((column) => (
-          <DroppableColumn column={column} key={column.id}>
+          <DroppableColumn
+            column={column}
+            key={column.id}
+            {...columnActions.forColumn(column)}
+          >
             <NoteDialog
               title="New Note"
               description="Create a new note."

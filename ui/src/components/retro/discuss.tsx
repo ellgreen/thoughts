@@ -1,4 +1,5 @@
 import { createSocketEvent, SocketEvent } from "@/events";
+import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
 import { api } from "@/lib/api";
@@ -23,7 +24,8 @@ export default function Discuss() {
     retro,
     socket: { lastJsonMessage },
   } = useRetro();
-  const { groupedNotes, dispatch } = useNotes();
+  const { notes, groupedNotes, dispatch } = useNotes();
+  const columnActions = useColumnActions(notes);
 
   const [votes, setVotes] = useState<Vote[]>([]);
   const [tasks, setTasks] = useState<TaskType[]>([]);
@@ -101,9 +103,18 @@ export default function Discuss() {
   }
 
   return (
-    <Columns>
+    <Columns
+      // The synthetic Tasks column below is a child but not a real column.
+      count={retro.columns.length + 1}
+      onAddColumn={columnActions.create}
+      canAddColumn={columnActions.canCreate}
+    >
       {retro.columns.map((column) => (
-        <Column column={column} key={column.id}>
+        <Column
+          column={column}
+          key={column.id}
+          {...columnActions.forColumn(column)}
+        >
           {groupedNotesForColumn(column.id).map(([groupId, groupNotes]) => (
             <NoteGroup
               key={groupId}

@@ -1,3 +1,4 @@
+import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
 import { api } from "@/lib/api";
@@ -16,7 +17,8 @@ export default function Vote({
   setVotesRemaining: (votesRemaining: number) => void;
 }) {
   const { retro } = useRetro();
-  const { groupedNotes } = useNotes();
+  const { notes, groupedNotes } = useNotes();
+  const columnActions = useColumnActions(notes);
 
   const [votes, setVotes] = useState<Vote[]>([]);
 
@@ -39,9 +41,16 @@ export default function Vote({
   }
 
   return (
-    <Columns>
+    <Columns
+      onAddColumn={columnActions.create}
+      canAddColumn={columnActions.canCreate}
+    >
       {retro.columns.map((column) => (
-        <Column key={column.id} column={column}>
+        <Column
+          key={column.id}
+          column={column}
+          {...columnActions.forColumn(column)}
+        >
           {Object.entries(groupedNotes[column.id] ?? []).map(
             ([groupId, groupNotes]) => (
               <VotableNoteGroup

@@ -47,6 +47,19 @@ export interface Ref {
   ref: string;
 }
 
+export interface PayloadColumnCreate {
+  title: string;
+  description: string;
+}
+
+export interface PayloadColumnUpdate extends PayloadColumnCreate {
+  id: string;
+}
+
+export interface PayloadColumnDelete {
+  id: string;
+}
+
 export interface PayloadConnectionInfo {
   users: string[];
 }

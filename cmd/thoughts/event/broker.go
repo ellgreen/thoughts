@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sync"
 
 	"github.com/ellgreen/thoughts/cmd/thoughts/model"
 	"github.com/google/uuid"
@@ -21,6 +22,10 @@ type Broker struct {
 	handlers            map[string]Handler
 	events              chan *Event
 	userDependentEvents chan UserDependentEvent
+
+	// Guards the read-modify-write of the retro's columns JSON blob, and the
+	// check-then-insert when a note is written into a column.
+	columnsMu sync.Mutex
 }
 
 func NewBroker(db *sqlx.DB, retroID uuid.UUID) *Broker {
@@ -32,6 +37,9 @@ func NewBroker(db *sqlx.DB, retroID uuid.UUID) *Broker {
 
 	b.register("retro_update", b.handleRetroUpdate(db, retroID))
 	b.register("status_update", b.handleStatusUpdate(db, retroID))
+	b.register("column_create", b.handleColumnCreate(db, retroID))
+	b.register("column_update", b.handleColumnUpdate(db, retroID))
+	b.register("column_delete", b.handleColumnDelete(db, retroID))
 	b.register("note_create", b.handleNoteCreate(db, retroID))
 	b.register("note_update", b.handleNoteUpdate(db, retroID))
 	b.register("note_delete", b.handleNoteDelete(db, retroID))

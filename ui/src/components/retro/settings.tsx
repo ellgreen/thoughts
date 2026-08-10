@@ -21,7 +21,7 @@ import useRetro from "@/hooks/use-retro";
 import { Retro } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Cog } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -39,11 +39,16 @@ const schema = z.object({
 export default function Settings() {
   const {
     retro,
-    setRetro,
     socket: { sendJsonMessage, lastJsonMessage },
   } = useRetro();
 
+  // retro_updated also fires for column edits and for other people's changes,
+  // so only confirm a save this dialog actually started.
+  const pendingSave = useRef(false);
+
   function handleSubmit(data: PayloadRetroUpdate) {
+    pendingSave.current = true;
+
     sendJsonMessage(createSocketEvent("retro_update", data));
   }
 
@@ -52,11 +57,11 @@ export default function Settings() {
 
     const event = lastJsonMessage as SocketEvent;
 
-    if (event.name === "retro_updated") {
-      setRetro(event.payload as Retro);
+    if (event.name === "retro_updated" && pendingSave.current) {
+      pendingSave.current = false;
 
       toast("Settings updated", {
-        description: "The settings for this retrospective been updated.",
+        description: "The settings for this retrospective have been updated.",
       });
     }
   }, [lastJsonMessage]);

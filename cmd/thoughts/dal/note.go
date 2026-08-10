@@ -121,6 +121,21 @@ func NoteDelete(ctx context.Context, db *sqlx.DB, id uuid.UUID) error {
 	return nil
 }
 
+// NoteCountForColumn reports how many notes a column holds, which is what
+// decides whether it may be deleted.
+func NoteCountForColumn(ctx context.Context, db *sqlx.DB, retroID, columnID uuid.UUID) (int, error) {
+	var count int
+
+	err := db.GetContext(ctx, &count,
+		"select count(*) from notes where retro_id = ? and column_id = ?", retroID, columnID)
+
+	if err != nil {
+		return 0, fmt.Errorf("%w: failed to count notes for column: %w", ErrExecution, err)
+	}
+
+	return count, nil
+}
+
 func NoteList(
 	ctx context.Context,
 	db *sqlx.DB,

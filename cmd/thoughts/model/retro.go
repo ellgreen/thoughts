@@ -54,6 +54,31 @@ func (r *Retro) IsBrainstorming() bool {
 	return r.Status == RetroStatusBrainstorm
 }
 
+// Find returns the column with the given id, or nil. Value receiver because
+// GetColumns hands back a value, not a pointer.
+func (rc RetroColumns) Find(id uuid.UUID) *RetroColumn {
+	for _, column := range rc {
+		if column.ID == id {
+			return column
+		}
+	}
+
+	return nil
+}
+
+// Without returns a copy with the given column removed.
+func (rc RetroColumns) Without(id uuid.UUID) RetroColumns {
+	remaining := make(RetroColumns, 0, len(rc))
+
+	for _, column := range rc {
+		if column.ID != id {
+			remaining = append(remaining, column)
+		}
+	}
+
+	return remaining
+}
+
 func (rc *RetroColumns) AssignIDs() *RetroColumns {
 	for _, c := range *rc {
 		c.ID = uuid.New()

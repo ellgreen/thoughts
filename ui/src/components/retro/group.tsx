@@ -1,4 +1,5 @@
 import { createSocketEvent } from "@/events";
+import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
 import { DndContext, DragEndEvent } from "@dnd-kit/core";
@@ -11,6 +12,7 @@ export default function Group() {
     retro: { columns },
   } = useRetro();
   const { notes, groupedNotes, dispatch } = useNotes();
+  const columnActions = useColumnActions(notes);
 
   function handleDragEnd(event: DragEndEvent) {
     const overId = event.over?.id as string | undefined;
@@ -39,9 +41,16 @@ export default function Group() {
 
   return (
     <DndContext onDragEnd={handleDragEnd}>
-      <Columns>
+      <Columns
+        onAddColumn={columnActions.create}
+        canAddColumn={columnActions.canCreate}
+      >
         {columns.map((column) => (
-          <DroppableColumn column={column} key={column.id}>
+          <DroppableColumn
+            column={column}
+            key={column.id}
+            {...columnActions.forColumn(column)}
+          >
             {Object.entries(groupedNotes[column.id] ?? []).map(
               ([groupId, groupNotes]) => (
                 <DroppableNoteGroup
