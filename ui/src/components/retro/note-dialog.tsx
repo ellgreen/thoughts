@@ -1,7 +1,9 @@
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -9,7 +11,6 @@ import {
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -77,15 +78,24 @@ export default function NoteDialog({
                   <FormLabel>Note</FormLabel>
 
                   <FormControl>
-                    <Input className="w-full" autoComplete="off" {...field} />
+                    <Input
+                      className="w-full"
+                      autoComplete="off"
+                      autoFocus
+                      {...field}
+                    />
                   </FormControl>
-
-                  <FormDescription>Press enter to submit</FormDescription>
 
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* An explicit button: the form previously relied on implicit
+                submission, which is easy to miss and easy to break. */}
+            <DialogFooter className="mt-4">
+              <Button type="submit">Save</Button>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>

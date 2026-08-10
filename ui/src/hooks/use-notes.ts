@@ -15,6 +15,9 @@ const optimisticEvents = new Set(["note_create", "note_update", "note_delete"]);
 
 interface NotesState {
   notes: Note[];
+  /** False until the first fetch lands, so the board can show skeletons
+   * instead of an empty column that is about to fill up. */
+  loaded: boolean;
   /**
    * Keyed by the ref of an unconfirmed mutation, holding what to restore if the
    * server rejects it. `null` means "this was a create, so drop the note whose
@@ -23,7 +26,7 @@ interface NotesState {
   rollbacks: Record<string, Note | null>;
 }
 
-const initialState: NotesState = { notes: [], rollbacks: {} };
+const initialState: NotesState = { notes: [], loaded: false, rollbacks: {} };
 
 function upsert(notes: Note[], note: Note): Note[] {
   return notes.some((n) => n.id === note.id)
@@ -54,7 +57,7 @@ function toNote(payload: Note & Partial<Ref>): Note {
 function notesReducer(state: NotesState, event: SocketEvent): NotesState {
   switch (event.name) {
     case "note_index": {
-      return { notes: event.payload as Note[], rollbacks: {} };
+      return { notes: event.payload as Note[], loaded: true, rollbacks: {} };
     }
 
     // Optimistic — applied locally the moment the user acts.
@@ -62,6 +65,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
       const payload = event.payload as PayloadNoteCreate & Ref;
 
       return {
+        ...state,
         notes: [
           ...state.notes,
           {
@@ -83,6 +87,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
       if (!before) return state;
 
       return {
+        ...state,
         notes: state.notes.map((note) =>
           note.id === payload.id
             ? {
@@ -108,6 +113,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
       if (!before) return state;
 
       return {
+        ...state,
         notes: state.notes.filter((note) => note.id !== payload.id),
         rollbacks: { ...state.rollbacks, [payload.ref]: before },
       };
@@ -123,6 +129,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
         : state.notes;
 
       return {
+        ...state,
         notes: upsert(notes, toNote(payload)),
         rollbacks: forget(state.rollbacks, payload.ref),
       };
@@ -132,6 +139,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
       const payload = event.payload as Note & Partial<Ref>;
 
       return {
+        ...state,
         notes: upsert(state.notes, toNote(payload)),
         rollbacks: forget(state.rollbacks, payload.ref),
       };
@@ -141,6 +149,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
       const payload = event.payload as { id: string } & Partial<Ref>;
 
       return {
+        ...state,
         notes: state.notes.filter((note) => note.id !== payload.id),
         rollbacks: forget(state.rollbacks, payload.ref),
       };
@@ -153,6 +162,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
       const before = state.rollbacks[ref];
 
       return {
+        ...state,
         notes:
           before === null
             ? state.notes.filter((note) => note.id !== ref)
@@ -229,5 +239,10 @@ export function useNotes() {
     });
   }, [retro.id]);
 
-  return { notes: state.notes, groupedNotes, dispatch: dispatchAndSend };
+  return {
+    notes: state.notes,
+    groupedNotes,
+    loaded: state.loaded,
+    dispatch: dispatchAndSend,
+  };
 }

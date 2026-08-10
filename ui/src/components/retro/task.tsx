@@ -16,6 +16,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DialogTrigger } from "@/components/ui/dialog";
+import { cardVariants, spring } from "@/lib/motion";
+import { m } from "motion/react";
 import { twMerge } from "tailwind-merge";
 
 export function Task({
@@ -32,10 +34,16 @@ export function Task({
   const isOverdue = !task.completed && new Date(task.when) < today;
 
   return (
-    <div
+    <m.div
+      layout="position"
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={spring}
       className={twMerge(
-        "group rounded-md bg-card border p-3 transition-opacity",
-        task.completed && "opacity-60",
+        "group rounded-lg bg-surface-raised p-3 ring-1 ring-border/70 transition-opacity",
+        task.completed && "opacity-55",
       )}
     >
       <div className="flex items-start justify-between gap-2">
@@ -65,7 +73,7 @@ export function Task({
       >
         {task.what}
       </p>
-    </div>
+    </m.div>
   );
 }
 

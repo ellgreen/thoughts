@@ -1,9 +1,18 @@
+import { spring } from "@/lib/motion";
 import {
-  ZapIcon,
-  UsersIcon,
+  animate,
+  m,
+  useInView,
+  useMotionValue,
+  useTransform,
+} from "motion/react";
+import { useEffect, useRef } from "react";
+import {
+  CheckSquareIcon,
   FileDownIcon,
   SparklesIcon,
-  CheckSquareIcon,
+  UsersIcon,
+  ZapIcon,
 } from "lucide-react";
 
 interface HeroStats {
@@ -20,48 +29,70 @@ const features = [
   { icon: FileDownIcon, label: "Markdown export" },
 ];
 
-export default function Hero({ stats }: { stats: HeroStats }) {
-  return (
-    <div className="relative overflow-hidden rounded-xl border bg-card px-8 py-8">
-      {/* Wispy background orbs */}
-      <div className="pointer-events-none absolute -top-20 -left-20 size-72 rounded-full bg-violet-500/10 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-20 -right-10 size-64 rounded-full bg-primary/15 blur-3xl" />
-      <div className="pointer-events-none absolute top-0 right-1/4 size-56 rounded-full bg-sky-400/10 blur-2xl" />
-      <div className="pointer-events-none absolute bottom-0 left-1/3 size-40 rounded-full bg-rose-400/8 blur-2xl" />
+const stats = [
+  { key: "retro_count", label: "retrospectives", accent: "var(--chart-1)" },
+  { key: "note_count", label: "thoughts", accent: "var(--chart-2)" },
+  { key: "task_count", label: "actions", accent: "var(--chart-4)" },
+] as const;
 
-      <div className="relative flex items-center justify-between gap-10">
-        {/* Left: tagline + features */}
+export default function Hero({ stats: values }: { stats: HeroStats }) {
+  return (
+    <div className="relative overflow-hidden rounded-2xl bg-surface px-6 py-7 ring-1 ring-border/60 sm:px-8">
+      {/* Wispy background orbs, drifting slowly enough to read as ambient. */}
+      <m.div
+        aria-hidden
+        className="pointer-events-none absolute -top-24 -left-20 size-72 rounded-full bg-[var(--chart-1)]/15 blur-3xl"
+        animate={{ x: [0, 24, 0], y: [0, 14, 0] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <m.div
+        aria-hidden
+        className="pointer-events-none absolute -right-16 -bottom-24 size-64 rounded-full bg-[var(--chart-2)]/15 blur-3xl"
+        animate={{ x: [0, -20, 0], y: [0, -16, 0] }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <m.div
+        aria-hidden
+        className="pointer-events-none absolute top-0 right-1/4 size-56 rounded-full bg-[var(--chart-4)]/10 blur-3xl"
+        animate={{ x: [0, 16, 0], y: [0, 20, 0] }}
+        transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
+      />
+
+      <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-4">
-          <p className="text-sm text-muted-foreground max-w-xs">
-            A simple tool for running better retrospectives with your team.
-          </p>
+          <h1
+            className="text-2xl font-bold tracking-tight sm:text-3xl"
+            style={{ fontFamily: "var(--font-display)", letterSpacing: "-0.02em" }}
+          >
+            Better retrospectives,
+            <span className="text-muted-foreground"> together.</span>
+          </h1>
+
           <div className="flex flex-wrap gap-x-5 gap-y-2">
-            {features.map(({ icon: Icon, label }) => (
-              <span key={label} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {features.map(({ icon: Icon, label }, i) => (
+              <m.span
+                key={label}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ ...spring, delay: 0.05 + i * 0.04 }}
+                className="flex items-center gap-1.5 text-xs text-muted-foreground"
+              >
                 <Icon className="size-3 opacity-70" />
                 {label}
-              </span>
+              </m.span>
             ))}
           </div>
         </div>
 
-        {/* Right: stats */}
-        <div className="flex items-center gap-8 shrink-0">
-          <Stat
-            value={stats.retro_count}
-            label="retrospectives"
-            gradient="from-violet-400 to-primary"
-          />
-          <Stat
-            value={stats.note_count}
-            label="notes"
-            gradient="from-sky-400 to-primary"
-          />
-          <Stat
-            value={stats.task_count}
-            label="tasks"
-            gradient="from-rose-400 to-primary"
-          />
+        <div className="flex shrink-0 items-center gap-8">
+          {stats.map((stat) => (
+            <Stat
+              key={stat.key}
+              value={values[stat.key]}
+              label={stat.label}
+              accent={stat.accent}
+            />
+          ))}
         </div>
       </div>
     </div>
@@ -71,19 +102,34 @@ export default function Hero({ stats }: { stats: HeroStats }) {
 function Stat({
   value,
   label,
-  gradient,
+  accent,
 }: {
   value: number;
   label: string;
-  gradient: string;
+  accent: string;
 }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true });
+
+  const count = useMotionValue(0);
+  const rounded = useTransform(count, (v) => Math.round(v).toLocaleString());
+
+  useEffect(() => {
+    if (!inView) return;
+
+    const controls = animate(count, value, { duration: 0.9, ease: "easeOut" });
+
+    return () => controls.stop();
+  }, [inView, value, count]);
+
   return (
-    <div className="flex flex-col items-center gap-1 text-center">
-      <div
-        className={`text-4xl font-black tracking-tight tabular-nums bg-linear-to-br ${gradient} bg-clip-text text-transparent`}
+    <div ref={ref} className="flex flex-col items-center gap-1 text-center">
+      <m.div
+        className="text-3xl font-black tracking-tight tabular-nums sm:text-4xl"
+        style={{ color: accent }}
       >
-        {value}
-      </div>
+        {rounded}
+      </m.div>
       <div className="text-xs text-muted-foreground">{label}</div>
     </div>
   );

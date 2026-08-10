@@ -5,6 +5,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ColumnActions } from "@/hooks/use-columns";
+import { accentStyle } from "@/lib/column-accent";
 import * as types from "@/types";
 import { useDroppable } from "@dnd-kit/core";
 import { Pencil, Plus, Trash2 } from "lucide-react";
@@ -14,12 +15,15 @@ import { Heading } from "../typography";
 import ColumnDeleteDialog from "./column-delete-dialog";
 import ColumnDialog, { ColumnData } from "./column-dialog";
 
+// Literal strings so Tailwind's scanner finds them. Only applied from `lg`:
+// below that the board is a horizontal snap-scroller, which beats crushing
+// five columns into a phone.
 const gridColumns = [
-  "grid-cols-2",
-  "grid-cols-3",
-  "grid-cols-4",
-  "grid-cols-5",
-  "grid-cols-6",
+  "lg:grid-cols-2",
+  "lg:grid-cols-3",
+  "lg:grid-cols-4",
+  "lg:grid-cols-5",
+  "lg:grid-cols-6",
 ];
 
 function Columns({
@@ -63,7 +67,13 @@ function Columns({
         </div>
       )}
 
-      <div className={`grid gap-4 ${gridColumns[columnCount - 2]}`}>
+      <div
+        className={twMerge(
+          "-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-3",
+          "lg:mx-0 lg:grid lg:snap-none lg:overflow-visible lg:px-0 lg:pb-0",
+          gridColumns[columnCount - 2],
+        )}
+      >
         {children}
       </div>
     </div>
@@ -72,14 +82,18 @@ function Columns({
 
 const Column = function Column({
   column,
+  index = 0,
   children,
   className,
+  style,
   onEdit,
   onDelete,
   canDelete,
   ...props
 }: {
   column: types.RetroColumn;
+  /** Position in the board, which picks the accent colour. */
+  index?: number;
   children: React.ReactNode;
   className?: string;
 } & Partial<ColumnActions> &
@@ -89,13 +103,33 @@ const Column = function Column({
   return (
     // A named group: notes use a bare `group` for their own hover actions, and
     // a bare group here would reveal these whenever a note is hovered.
-    <div className={twMerge("group/column rounded-md", className)} {...props}>
-      <div className="flex items-start gap-2 pb-2">
+    <div
+      style={{ ...accentStyle(index), ...style }}
+      className={twMerge(
+        "group/column w-[78vw] shrink-0 snap-start rounded-xl transition-colors sm:w-[340px]",
+        "lg:w-auto lg:shrink",
+        className,
+      )}
+      {...props}
+    >
+      <div className="flex items-start gap-2">
         <div className="min-w-0 flex-1">
-          <Heading variant="h2">{column.title}</Heading>
-          <p className="mt-0.5 text-sm text-muted-foreground">
-            {column.description}
-          </p>
+          <div className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className="size-2 shrink-0 rounded-full"
+              style={{ background: "var(--accent)" }}
+            />
+            <Heading variant="h2" className="truncate text-2xl">
+              {column.title}
+            </Heading>
+          </div>
+
+          {column.description && (
+            <p className="mt-0.5 pl-4 text-sm text-muted-foreground">
+              {column.description}
+            </p>
+          )}
         </div>
 
         {hasActions && (
@@ -129,7 +163,17 @@ const Column = function Column({
         )}
       </div>
 
-      <div className="mt-2 space-y-4">{children}</div>
+      {/* Accent rule, fading out so it frames rather than boxes in. */}
+      <div
+        aria-hidden
+        className="mt-2 h-px w-full"
+        style={{
+          background:
+            "linear-gradient(to right, var(--accent), color-mix(in oklch, var(--accent) 15%, transparent))",
+        }}
+      />
+
+      <div className="mt-3 space-y-3">{children}</div>
     </div>
   );
 };
@@ -177,10 +221,12 @@ function ColumnDeleteButton({
 
 function DroppableColumn({
   column,
+  index,
   children,
   ...actions
 }: {
   column: types.RetroColumn;
+  index?: number;
   children: React.ReactNode;
 } & Partial<ColumnActions>) {
   const { setNodeRef, isOver } = useDroppable({
@@ -191,11 +237,19 @@ function DroppableColumn({
     <Column
       ref={setNodeRef}
       column={column}
-      className={
-        isOver
-          ? "ring-2 ring-primary ring-offset-4 ring-offset-background bg-primary/5"
-          : ""
-      }
+      index={index}
+      className="transition-colors duration-200"
+      style={{
+        // outline rather than ring: it can be offset off the content without
+        // taking up layout, so the board does not shift while dragging.
+        outline: isOver
+          ? "2px solid color-mix(in oklch, var(--accent) 65%, transparent)"
+          : undefined,
+        outlineOffset: "10px",
+        backgroundColor: isOver
+          ? "color-mix(in oklch, var(--accent) 7%, transparent)"
+          : undefined,
+      }}
       {...actions}
     >
       {children}

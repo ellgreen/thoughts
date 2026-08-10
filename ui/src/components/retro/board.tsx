@@ -1,3 +1,9 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+} from "@/components/ui/collapsible";
 import {
   createSocketEvent,
   PayloadConnectionInfo,
@@ -6,23 +12,21 @@ import {
   SocketEvent,
 } from "@/events";
 import useRetro from "@/hooks/use-retro";
+import { panelVariants } from "@/lib/motion";
 import { RetroStatus } from "@/types";
-import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { toast } from "sonner";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { AnimatePresence, m } from "motion/react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
 import Brainstorm from "./brainstorm";
-import ChangeStatusButton from "./change-status-button";
 import ConnectionIndicator from "./connection-indicator";
 import Discuss from "./discuss";
 import Group from "./group";
 import Settings from "./settings";
-import StatusIndicator from "./status-indicator";
-import Vote from "./vote";
 import ShowMarkdown from "./show-markdown";
+import StageRail from "./stage-rail";
+import Vote from "./vote";
 
 const stageLabel: Record<RetroStatus, string> = {
   brainstorm: "Brainstorm",
@@ -37,7 +41,9 @@ export default function Board() {
     socket: { sendJsonMessage, lastJsonMessage, readyState },
   } = useRetro();
   const [status, setStatus] = useState<RetroStatus>(retro.status);
-  const [connectionInfo, setConnectionInfo] = useState<PayloadConnectionInfo>({ users: [] });
+  const [connectionInfo, setConnectionInfo] = useState<PayloadConnectionInfo>({
+    users: [],
+  });
   const [votesRemaining, setVotesRemaining] = useState(0);
   const [expanded, setExpanded] = useState(true);
 
@@ -46,7 +52,9 @@ export default function Board() {
     const event = lastJsonMessage as SocketEvent;
     switch (event.name) {
       case "error":
-        toast("Something went wrong", { description: (event.payload as PayloadError).message });
+        toast("Something went wrong", {
+          description: (event.payload as PayloadError).message,
+        });
         return;
       case "status_updated":
         setStatus((event.payload as PayloadStatusUpdated).status);
@@ -63,58 +71,92 @@ export default function Board() {
 
   return (
     <div className="flex flex-col pt-3">
-      {/* Sticky board header */}
       <div className="sticky top-12 z-40 mb-4">
         <Collapsible open={expanded} onOpenChange={setExpanded}>
-          <div className="bg-background/80 backdrop-blur-xl rounded-xl ring-1 ring-border/40 shadow-sm">
-            {/* Compact bar — always visible */}
-            <div className="flex items-center gap-2 px-4 h-12">
-              <span className={`font-bold tracking-tight truncate flex-1 min-w-0 transition-all ${expanded ? "text-2xl" : "text-base"}`}>
+          <div className="rounded-xl bg-background/80 shadow-sm ring-1 ring-border/40 backdrop-blur-xl">
+            {/* Compact bar — always visible. Stacks on narrow screens: the
+                title and the rail cannot share 375px without one of them
+                becoming unreadable. */}
+            <div className="flex flex-col gap-1.5 px-4 py-2 sm:h-12 sm:flex-row sm:items-center sm:gap-3 sm:py-0">
+              <span
+                className={`min-w-0 flex-1 truncate font-bold tracking-tight transition-all ${
+                  expanded ? "text-lg sm:text-2xl" : "text-base"
+                }`}
+              >
                 {retro.title}
               </span>
-              {!expanded && (
-                <Badge variant="outline" className="text-xs shrink-0 hidden sm:flex">
-                  {stageLabel[status]}
-                </Badge>
-              )}
-              <ChangeStatusButton variant="prev" status={status} onStatusUpdate={handleStatusUpdate} />
-              <ChangeStatusButton variant="next" status={status} onStatusUpdate={handleStatusUpdate} />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7 shrink-0 text-muted-foreground"
-                onClick={() => setExpanded((v) => !v)}
-              >
-                {expanded ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}
-              </Button>
+
+              <div className="flex shrink-0 items-center gap-2">
+                {!expanded && (
+                  <Badge
+                    variant="outline"
+                    className="hidden shrink-0 text-xs sm:flex"
+                  >
+                    {stageLabel[status]}
+                  </Badge>
+                )}
+
+                <StageRail status={status} onStatusUpdate={handleStatusUpdate} />
+
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label={expanded ? "Collapse details" : "Expand details"}
+                  className="ml-auto size-7 shrink-0 text-muted-foreground"
+                  onClick={() => setExpanded((v) => !v)}
+                >
+                  {expanded ? (
+                    <ChevronUpIcon className="size-4" />
+                  ) : (
+                    <ChevronDownIcon className="size-4" />
+                  )}
+                </Button>
+              </div>
             </div>
 
             {/* Expanded detail row */}
             <CollapsibleContent>
-              <div className="border-t border-border/40 px-4 py-2.5 flex items-center gap-4">
-                <div className="flex items-center gap-1.5 flex-wrap min-w-0 flex-1">
+              <div className="flex items-center gap-4 border-t border-border/40 px-4 py-2.5">
+                <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
                   {retro.tags && retro.tags.length > 0 ? (
                     retro.tags.map((tag) => (
                       <Link key={tag} to="/tags/$tag" params={{ tag }}>
-                        <Badge variant="outline" className="text-xs font-normal px-1.5 py-0 h-5 hover:bg-accent transition-colors cursor-pointer">
+                        <Badge
+                          variant="outline"
+                          className="h-5 cursor-pointer px-1.5 py-0 text-xs font-normal transition-colors hover:bg-accent"
+                        >
                           #{tag}
                         </Badge>
                       </Link>
                     ))
                   ) : (
-                    <span className="text-xs text-muted-foreground/40 select-none">no tags</span>
+                    <span className="text-xs text-muted-foreground/40 select-none">
+                      no tags
+                    </span>
                   )}
                 </div>
-                <div className="shrink-0">
-                  <StatusIndicator status={status} />
-                </div>
-                <div className="flex items-center gap-2 flex-1 justify-end">
-                  {status === "vote" && (
-                    <span className="text-sm text-muted-foreground">{votesRemaining} votes left</span>
-                  )}
+
+                <div className="flex items-center gap-2">
+                  <AnimatePresence>
+                    {status === "vote" && (
+                      <m.span
+                        key="votes-remaining"
+                        initial={{ opacity: 0, x: 6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 6 }}
+                        className="text-sm text-muted-foreground tabular-nums"
+                      >
+                        {votesRemaining} votes left
+                      </m.span>
+                    )}
+                  </AnimatePresence>
+
                   {status === "discuss" && <ShowMarkdown />}
                   <Settings />
-                  <ConnectionIndicator connectionInfo={connectionInfo} readyState={readyState} />
+                  <ConnectionIndicator
+                    connectionInfo={connectionInfo}
+                    readyState={readyState}
+                  />
                 </div>
               </div>
             </CollapsibleContent>
@@ -122,7 +164,22 @@ export default function Board() {
         </Collapsible>
       </div>
 
-      <BoardForStatus status={status} setVotesRemaining={setVotesRemaining} />
+      {/* Stage content crossfades while the notes themselves morph across via
+          their shared layoutIds. */}
+      <AnimatePresence mode="wait" initial={false}>
+        <m.div
+          key={status}
+          variants={panelVariants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+        >
+          <BoardForStatus
+            status={status}
+            setVotesRemaining={setVotesRemaining}
+          />
+        </m.div>
+      </AnimatePresence>
     </div>
   );
 }

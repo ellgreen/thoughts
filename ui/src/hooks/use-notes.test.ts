@@ -31,6 +31,23 @@ describe("notesReducer", () => {
     expect(state.rollbacks).toEqual({});
   });
 
+  it("is not loaded until the first fetch lands", () => {
+    expect(initialState.loaded).toBe(false);
+
+    const state = replay({ name: "note_index", payload: [] });
+
+    expect(state.loaded).toBe(true);
+  });
+
+  it("stays loaded once notes start arriving over the socket", () => {
+    const state = replay(
+      { name: "note_index", payload: [] },
+      { name: "note_created", payload: note({ id: "n1" }) },
+    );
+
+    expect(state.loaded).toBe(true);
+  });
+
   it("shows a created note immediately, keyed by its ref", () => {
     const state = replay({
       name: "note_create",

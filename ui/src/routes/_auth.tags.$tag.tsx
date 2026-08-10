@@ -115,9 +115,9 @@ function RouteComponent() {
           {retros.length === 0 ? (
             <p className="text-sm text-muted-foreground">No retrospectives found for this tag.</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {retros.map((retro: Retro) => (
-                <RetroItem key={retro.id} retro={retro} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {retros.map((retro: Retro, i: number) => (
+                <RetroItem key={retro.id} retro={retro} index={i} />
               ))}
             </div>
           )}

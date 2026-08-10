@@ -1,6 +1,14 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,7 +31,8 @@ import { Route as RetrosRoute } from "@/routes/_auth.retros.$retroId";
 import { Retro } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { BookDashed, Trash2 } from "lucide-react";
+import { BookDashed, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useFieldArray, useForm, useFormContext } from "react-hook-form";
 import { z } from "zod";
 import AIRetroTemplate from "./ai-retro-template";
@@ -45,8 +54,9 @@ const schema = z.object({
   tags: z.array(z.string().min(1).max(50)).max(10).optional(),
 });
 
-export default function Creator({ className }: { className?: string }) {
+export default function Creator() {
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
   const form = useForm({
     resolver: zodResolver(schema),
@@ -60,17 +70,28 @@ export default function Creator({ className }: { className?: string }) {
 
   function handleSubmit(data: z.infer<typeof schema>) {
     api.post<Retro>("/api/retros", data).then((response) => {
+      setOpen(false);
       navigate({ to: RetrosRoute.path, params: { retroId: response.data.id } });
     });
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>Create a retrospective</CardTitle>
-      </CardHeader>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus />
+          New retro
+        </Button>
+      </DialogTrigger>
 
-      <CardContent>
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Create a retrospective</DialogTitle>
+          <DialogDescription>
+            Pick a template or write your own columns. You can rename them later.
+          </DialogDescription>
+        </DialogHeader>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
@@ -141,11 +162,13 @@ export default function Creator({ className }: { className?: string }) {
               )}
             />
 
-            <Button type="submit">Create</Button>
+            <DialogFooter>
+              <Button type="submit">Create retro</Button>
+            </DialogFooter>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
 

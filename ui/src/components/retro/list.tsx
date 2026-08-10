@@ -1,14 +1,10 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { accentForIndex } from "@/lib/column-accent";
+import { cardVariants, spring, stagger } from "@/lib/motion";
 import { Retro, RetroStatus } from "@/types";
-import { CircleCheck, StickyNote } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { CircleCheck, StickyNote, Telescope } from "lucide-react";
+import { AnimatePresence, m } from "motion/react";
 
 const statusLabel: Record<RetroStatus, string> = {
   brainstorm: "Brainstorm",
@@ -17,55 +13,91 @@ const statusLabel: Record<RetroStatus, string> = {
   discuss: "Discuss",
 };
 
-export default function List({ retros }: { retros?: Retro[] }) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Recent Retros</CardTitle>
-        <CardDescription>Your last {retros?.length ?? 0} retrospectives</CardDescription>
-      </CardHeader>
+// One accent per stage, so a glance down the list tells you where things are.
+const statusAccent: Record<RetroStatus, string> = {
+  brainstorm: accentForIndex(0),
+  group: accentForIndex(1),
+  vote: accentForIndex(3),
+  discuss: accentForIndex(2),
+};
 
-      <CardContent>
-        {!retros || retros.length === 0 ? (
-          <p className="text-muted-foreground text-sm">No retros yet 😢</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {retros.map((retro) => (
-              <RetroItem key={retro.id} retro={retro} />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+export default function List({ retros }: { retros?: Retro[] }) {
+  if (!retros || retros.length === 0) {
+    return (
+      <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed px-6 py-14 text-center">
+        <Telescope className="size-6 text-muted-foreground/60" />
+        <p className="font-medium">No retros yet</p>
+        <p className="max-w-xs text-sm text-muted-foreground">
+          Start one above and share the link — everyone joins by typing their
+          name.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <AnimatePresence initial={false}>
+        {retros.map((retro, i) => (
+          <RetroItem key={retro.id} retro={retro} index={i} />
+        ))}
+      </AnimatePresence>
+    </div>
   );
 }
 
-export function RetroItem({ retro }: { retro: Retro }) {
+export function RetroItem({
+  retro,
+  index = 0,
+}: {
+  retro: Retro;
+  index?: number;
+}) {
   const navigate = useNavigate();
   const allTasksDone =
     retro.task_count > 0 && retro.task_count === retro.task_completed_count;
 
+  function open() {
+    navigate({ to: "/retros/$retroId", params: { retroId: retro.id } });
+  }
+
   return (
-    <div
+    <m.div
+      layout
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={stagger(index)}
+      whileHover={{ y: -2 }}
       role="link"
       tabIndex={0}
-      onClick={() => navigate({ to: "/retros/$retroId", params: { retroId: retro.id } })}
+      onClick={open}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-          navigate({ to: "/retros/$retroId", params: { retroId: retro.id } });
+          e.preventDefault();
+          open();
         }
       }}
-      className="flex flex-col gap-3 rounded-lg border bg-card p-4 hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-xl bg-surface-raised p-4 pl-5 ring-1 ring-border/70 transition-shadow hover:shadow-[0_8px_28px_-10px_rgb(0_0_0/0.25)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
-      {/* Title + status */}
+      {/* Stage-coloured spine down the left edge. */}
+      <span
+        aria-hidden
+        className="absolute inset-y-0 left-0 w-1"
+        style={{ background: statusAccent[retro.status] }}
+      />
+
       <div className="flex items-start justify-between gap-2">
-        <span className="font-medium leading-tight">{retro.title}</span>
-        <Badge variant="outline" className="shrink-0 text-xs font-normal text-muted-foreground">
+        <span className="leading-tight font-medium">{retro.title}</span>
+        <Badge
+          variant="outline"
+          className="shrink-0 text-xs font-normal text-muted-foreground"
+        >
           {statusLabel[retro.status]}
         </Badge>
       </div>
 
-      {/* Tags */}
       {retro.tags && retro.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {retro.tags.map((tag) => (
@@ -74,7 +106,7 @@ export function RetroItem({ retro }: { retro: Retro }) {
               to="/tags/$tag"
               params={{ tag }}
               onClick={(e) => e.stopPropagation()}
-              className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               #{tag}
             </Link>
@@ -82,22 +114,25 @@ export function RetroItem({ retro }: { retro: Retro }) {
         </div>
       )}
 
-      {/* Footer */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground">
+      <div className="mt-auto flex items-center justify-between text-xs text-muted-foreground">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <StickyNote className="size-3.5" />
-            {retro.note_count} notes
+            {retro.note_count}
           </span>
           {retro.task_count > 0 && (
-            <span className={`flex items-center gap-1 ${allTasksDone ? "font-medium" : ""}`}>
+            <m.span
+              className={`flex items-center gap-1 ${allTasksDone ? "font-medium text-foreground" : ""}`}
+              animate={allTasksDone ? { scale: [1, 1.08, 1] } : {}}
+              transition={spring}
+            >
               <CircleCheck className="size-3.5" />
-              {retro.task_completed_count}/{retro.task_count} tasks
-            </span>
+              {retro.task_completed_count}/{retro.task_count}
+            </m.span>
           )}
         </div>
         <span>{new Date(retro.created_at).toLocaleDateString()}</span>
       </div>
-    </div>
+    </m.div>
   );
 }
