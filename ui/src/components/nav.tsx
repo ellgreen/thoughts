@@ -1,3 +1,4 @@
+import Container from "@/components/container";
 import { useAuth } from "@/hooks/use-auth";
 import useTheme, { Theme } from "@/hooks/use-theme";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -29,7 +30,7 @@ export default function Nav() {
 
   return (
     <header className="sticky top-0 z-50 bg-background/75 backdrop-blur-xl rounded-b-xl ring-1 ring-border/40 shadow-[0_4px_24px_-4px_color-mix(in_oklch,var(--primary)_12%,transparent)]">
-      <div className="max-w-[1600px] mx-auto px-8 h-12 flex items-center justify-between gap-4">
+      <Container className="h-12 flex items-center justify-between gap-4">
         <Link
           to="/"
           className="font-bold tracking-tight hover:opacity-80 transition-opacity"
@@ -77,7 +78,7 @@ export default function Nav() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </Container>
     </header>
   );
 }

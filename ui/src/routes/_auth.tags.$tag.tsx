@@ -1,3 +1,4 @@
+import Container from "@/components/container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +44,7 @@ function RouteComponent() {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-8 space-y-6">
+    <Container className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link to="/" className="text-muted-foreground text-sm hover:text-foreground transition-colors">
@@ -122,7 +123,7 @@ function RouteComponent() {
           )}
         </CardContent>
       </Card>
-    </div>
+    </Container>
   );
 }
 

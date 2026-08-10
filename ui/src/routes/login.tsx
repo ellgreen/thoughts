@@ -38,7 +38,7 @@ function RouteComponent() {
 }
 
 const schema = z.object({
-  name: z.string().min(2).max(20),
+  name: z.string().trim().min(2).max(32),
 });
 
 function LoginForm() {

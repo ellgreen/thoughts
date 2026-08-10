@@ -1,6 +1,8 @@
 package socket
 
 import (
+	"log/slog"
+
 	"github.com/ellgreen/thoughts/cmd/thoughts/event"
 )
 
@@ -42,18 +44,38 @@ func (h *Hub) Run() {
 
 			h.connectionInfoSync()
 		case event := <-h.broker.Listen():
-			for client := range h.clients {
-				client.Send(event.ToJSON())
-			}
+			h.broadcast(event.ToJSON())
 		case userDependentEvent := <-h.broker.ListenUserDependent():
 			for client := range h.clients {
 				evt := userDependentEvent(client.user)
-				if evt != nil {
-					client.Send(evt.ToJSON())
+				if evt == nil {
+					continue
+				}
+
+				if !client.Send(evt.ToJSON()) {
+					h.drop(client)
 				}
 			}
 		}
 	}
+}
+
+func (h *Hub) broadcast(data []byte) {
+	for client := range h.clients {
+		if !client.Send(data) {
+			h.drop(client)
+		}
+	}
+}
+
+// drop removes a client whose send buffer has filled up. Its read pump will
+// also unregister once the connection tears down; Run's unregister case
+// tolerates a client that is already gone.
+func (h *Hub) drop(client *Client) {
+	slog.Warn("dropping stalled websocket client", "user", client.user.Name)
+
+	delete(h.clients, client)
+	close(client.send)
 }
 
 func (h *Hub) userNames() []string {
@@ -66,9 +88,5 @@ func (h *Hub) userNames() []string {
 }
 
 func (h *Hub) connectionInfoSync() {
-	data := event.NewConnectionInfoEvent(h.userNames()).ToJSON()
-
-	for client := range h.clients {
-		client.Send(data)
-	}
+	h.broadcast(event.NewConnectionInfoEvent(h.userNames()).ToJSON())
 }

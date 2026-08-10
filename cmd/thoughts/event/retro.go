@@ -15,7 +15,7 @@ import (
 type retroUpdateRequest struct {
 	Title    string   `json:"title" validate:"required,min=5,max=255"`
 	Unlisted bool     `json:"unlisted"`
-	MaxVotes int      `json:"max_votes" validate:"required,number,min=1,max=15"`
+	MaxVotes int      `json:"max_votes" validate:"min=1,max=15"`
 	Tags     []string `json:"tags" validate:"omitempty,max=10,dive,min=1,max=50"`
 }
 

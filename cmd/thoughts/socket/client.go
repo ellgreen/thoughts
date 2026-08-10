@@ -21,8 +21,13 @@ const (
 	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	// Maximum message size allowed from peer. A retro_update carrying a
+	// 255 character title plus ten tags is already well over 512 bytes.
+	maxMessageSize = 4096
+
+	// Number of outbound messages buffered per client before it is considered
+	// stalled and dropped.
+	sendBufferSize = 64
 )
 
 type Client struct {
@@ -37,7 +42,7 @@ func NewClient(hub *Hub, conn *websocket.Conn, user *model.User) *Client {
 		hub:  hub,
 		conn: conn,
 		user: user,
-		send: make(chan []byte),
+		send: make(chan []byte, sendBufferSize),
 	}
 }
 
@@ -69,8 +74,17 @@ func (c *Client) ReadPump(ctx context.Context) {
 	}
 }
 
-func (c *Client) Send(message []byte) {
-	c.send <- message
+// Send queues a message for the client. It reports false when the client's
+// buffer is full, meaning its write pump has stalled. Blocking here would
+// freeze the hub, and with it every broadcast in the retro, so the caller is
+// expected to drop the client instead.
+func (c *Client) Send(message []byte) bool {
+	select {
+	case c.send <- message:
+		return true
+	default:
+		return false
+	}
 }
 
 func (c *Client) WritePump() {

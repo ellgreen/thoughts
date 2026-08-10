@@ -1,3 +1,4 @@
+import Container from "@/components/container";
 import Creator from "@/components/retro/creator";
 import Hero from "@/components/retro/hero";
 import List from "@/components/retro/list";
@@ -29,13 +30,13 @@ function RouteComponent() {
   const { retros, stats } = Route.useLoaderData();
 
   return (
-    <div className="max-w-400 mx-auto px-8 space-y-6">
+    <Container className="space-y-6">
       <Hero stats={stats} />
 
       <div className="grid grid-cols-2 gap-6 items-start">
         <Creator />
         <List retros={retros} />
       </div>
-    </div>
+    </Container>
   );
 }

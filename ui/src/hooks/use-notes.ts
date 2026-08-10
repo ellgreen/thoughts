@@ -1,67 +1,168 @@
-import { PayloadNoteCreate, PayloadNoteUpdate, SocketEvent } from "@/events";
+import {
+  PayloadError,
+  PayloadNoteCreate,
+  PayloadNoteUpdate,
+  Ref,
+  SocketEvent,
+} from "@/events";
 import { api } from "@/lib/api";
 import { Note } from "@/types";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import useRetro from "./use-retro";
 
-function notesReducer(notes: Note[], event: SocketEvent): Note[] {
+/** Events we apply locally before the server has confirmed them. */
+const optimisticEvents = new Set(["note_create", "note_update", "note_delete"]);
+
+interface NotesState {
+  notes: Note[];
+  /**
+   * Keyed by the ref of an unconfirmed mutation, holding what to restore if the
+   * server rejects it. `null` means "this was a create, so drop the note whose
+   * id is the ref".
+   */
+  rollbacks: Record<string, Note | null>;
+}
+
+const initialState: NotesState = { notes: [], rollbacks: {} };
+
+function upsert(notes: Note[], note: Note): Note[] {
+  return notes.some((n) => n.id === note.id)
+    ? notes.map((n) => (n.id === note.id ? note : n))
+    : [...notes, note];
+}
+
+function forget(
+  rollbacks: NotesState["rollbacks"],
+  ref?: string,
+): NotesState["rollbacks"] {
+  if (!ref || !(ref in rollbacks)) return rollbacks;
+
+  const next = { ...rollbacks };
+  delete next[ref];
+
+  return next;
+}
+
+/** Strips the correlation id the server echoes back alongside the note. */
+function toNote(payload: Note & Partial<Ref>): Note {
+  const note = { ...payload };
+  delete note.ref;
+
+  return note;
+}
+
+function notesReducer(state: NotesState, event: SocketEvent): NotesState {
   switch (event.name) {
-    case "error": {
-      return notes.filter((note) => note.id !== "placeholder");
-    }
     case "note_index": {
-      return event.payload as Note[];
+      return { notes: event.payload as Note[], rollbacks: {} };
     }
+
+    // Optimistic — applied locally the moment the user acts.
     case "note_create": {
-      const payload = event.payload as PayloadNoteCreate;
-      return [
-        ...notes,
-        {
-          id: "placeholder",
-          created_by_me: true,
-          content: payload.content,
-          column_id: payload.column_id,
-          group_id: "placeholder",
-          img_url: "",
-        },
-      ];
+      const payload = event.payload as PayloadNoteCreate & Ref;
+
+      return {
+        notes: [
+          ...state.notes,
+          {
+            id: payload.ref,
+            created_by_me: true,
+            content: payload.content,
+            column_id: payload.column_id,
+            group_id: payload.ref,
+            img_url: "",
+          },
+        ],
+        rollbacks: { ...state.rollbacks, [payload.ref]: null },
+      };
     }
-    case "note_created": {
-      const payload = event.payload as Note;
-      return [
-        ...notes.filter(
-          (note) => note.id !== "placeholder" && note.id !== payload.id,
-        ),
-        payload,
-      ];
-    }
+
     case "note_update": {
-      const payload = event.payload as PayloadNoteUpdate;
-      return notes.map((note) =>
-        note.id === payload.id
-          ? {
-              ...note,
-              content: payload.content ?? note.content,
-              column_id: payload.column_id ?? note.column_id,
-              group_id: payload.group_id ?? `placeholder-${note.id}`,
-            }
-          : note,
-      );
+      const payload = event.payload as PayloadNoteUpdate & Ref;
+      const before = state.notes.find((note) => note.id === payload.id);
+      if (!before) return state;
+
+      return {
+        notes: state.notes.map((note) =>
+          note.id === payload.id
+            ? {
+                ...note,
+                content: payload.content ?? note.content,
+                column_id: payload.column_id ?? note.column_id,
+                // Mirrors the server: an update without a group_id drops the
+                // note back into a group of its own.
+                group_id: payload.group_id ?? `ungrouped-${note.id}`,
+                img_url: payload.remove_img_url
+                  ? ""
+                  : (payload.img_url ?? note.img_url),
+              }
+            : note,
+        ),
+        rollbacks: { ...state.rollbacks, [payload.ref]: before },
+      };
     }
-    case "note_updated": {
-      const payload = event.payload as Note;
-      return notes.map((note) => (note.id === payload.id ? payload : note));
-    }
+
     case "note_delete": {
-      const payload = event.payload as { id: string };
-      return notes.filter((note) => note.id !== payload.id);
+      const payload = event.payload as { id: string } & Ref;
+      const before = state.notes.find((note) => note.id === payload.id);
+      if (!before) return state;
+
+      return {
+        notes: state.notes.filter((note) => note.id !== payload.id),
+        rollbacks: { ...state.rollbacks, [payload.ref]: before },
+      };
     }
+
+    // Confirmations broadcast by the server.
+    case "note_created": {
+      const payload = event.payload as Note & Partial<Ref>;
+
+      // Our own placeholder carries the ref as its id; swap it for the real note.
+      const notes = payload.ref
+        ? state.notes.filter((note) => note.id !== payload.ref)
+        : state.notes;
+
+      return {
+        notes: upsert(notes, toNote(payload)),
+        rollbacks: forget(state.rollbacks, payload.ref),
+      };
+    }
+
+    case "note_updated": {
+      const payload = event.payload as Note & Partial<Ref>;
+
+      return {
+        notes: upsert(state.notes, toNote(payload)),
+        rollbacks: forget(state.rollbacks, payload.ref),
+      };
+    }
+
     case "note_deleted": {
-      const payload = event.payload as { id: string };
-      return notes.filter((note) => note.id !== payload.id);
+      const payload = event.payload as { id: string } & Partial<Ref>;
+
+      return {
+        notes: state.notes.filter((note) => note.id !== payload.id),
+        rollbacks: forget(state.rollbacks, payload.ref),
+      };
     }
+
+    case "error": {
+      const { ref } = event.payload as PayloadError;
+      if (!ref || !(ref in state.rollbacks)) return state;
+
+      const before = state.rollbacks[ref];
+
+      return {
+        notes:
+          before === null
+            ? state.notes.filter((note) => note.id !== ref)
+            : upsert(state.notes, before),
+        rollbacks: forget(state.rollbacks, ref),
+      };
+    }
+
     default:
-      return notes;
+      return state;
   }
 }
 
@@ -89,19 +190,32 @@ function groupNotes(notes: Note[]) {
   return groups;
 }
 
+export { groupNotes, notesReducer, initialState };
+export type { NotesState };
+
 export function useNotes() {
   const {
     retro,
     socket: { lastJsonMessage, sendJsonMessage },
   } = useRetro();
-  const [notes, dispatch] = useReducer(notesReducer, []);
+  const [state, dispatch] = useReducer(notesReducer, initialState);
 
-  const groupedNotes = useMemo(() => groupNotes(notes), [notes]);
+  const groupedNotes = useMemo(() => groupNotes(state.notes), [state.notes]);
 
-  const dispatchAndSend = useCallback((event: SocketEvent) => {
-    dispatch(event);
-    sendJsonMessage(event);
-  }, []);
+  const dispatchAndSend = useCallback(
+    (event: SocketEvent) => {
+      const tracked: SocketEvent = optimisticEvents.has(event.name)
+        ? {
+            ...event,
+            payload: { ...event.payload, ref: crypto.randomUUID() },
+          }
+        : event;
+
+      dispatch(tracked);
+      sendJsonMessage(tracked);
+    },
+    [sendJsonMessage],
+  );
 
   useEffect(() => {
     if (!lastJsonMessage) return;
@@ -115,5 +229,5 @@ export function useNotes() {
     });
   }, [retro.id]);
 
-  return { notes, groupedNotes, dispatch: dispatchAndSend };
+  return { notes: state.notes, groupedNotes, dispatch: dispatchAndSend };
 }

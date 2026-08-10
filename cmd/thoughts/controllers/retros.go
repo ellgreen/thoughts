@@ -62,7 +62,7 @@ type RetroCreateRequest struct {
 	Columns []struct {
 		Title       string `json:"title" validate:"required,min=2,max=255"`
 		Description string `json:"description" validate:"max=255"`
-	} `json:"columns" validate:"required,min=2,dive,required"`
+	} `json:"columns" validate:"required,min=2,max=5,dive,required"`
 	Unlisted bool     `json:"unlisted"`
 	Tags     []string `json:"tags" validate:"omitempty,max=10,dive,min=1,max=50"`
 }

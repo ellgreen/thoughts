@@ -1,3 +1,4 @@
+import Container from "@/components/container";
 import Board from "@/components/retro/board";
 import { RetroContext } from "@/hooks/use-retro";
 import { api } from "@/lib/api";
@@ -27,9 +28,9 @@ export default function RouteComponent() {
 
   return (
     <RetroContext.Provider value={{ retro, setRetro, socket }}>
-      <div className="px-8">
+      <Container>
         <Board />
-      </div>
+      </Container>
     </RetroContext.Provider>
   );
 }

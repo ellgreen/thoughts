@@ -52,7 +52,14 @@ func applyRoutes(
 
 	retroRouter := retrosRouter.PathPrefix(fmt.Sprintf("/{id:%s}", uuidRegex)).Subrouter()
 
-	retroRouter.Handle("/ws", socket.NewRetroSocketHandler(db))
+	// The Vite dev server runs on a different origin, so it needs allowing
+	// explicitly. A bundled build is always same-origin.
+	devOrigin := ""
+	if !ui.IsBundled() {
+		devOrigin = cfg.UIAddress
+	}
+
+	retroRouter.Handle("/ws", socket.NewRetroSocketHandler(db, devOrigin))
 	retroRouter.Handle("/notes", controllers.RetroNotesIndex(db)).Methods(http.MethodGet)
 	retroRouter.Handle("/votes", controllers.VotesIndex(db)).Methods(http.MethodGet)
 	retroRouter.Handle("/votes", controllers.Vote(db)).Methods(http.MethodPost)
