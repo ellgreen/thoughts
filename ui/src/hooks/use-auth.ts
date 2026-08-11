@@ -1,10 +1,7 @@
 import { User } from "@/types";
 import { createContext, useContext } from "react";
 
-/**
- * "pending" until the server has confirmed whether the session cookie is still
- * good. Nothing may decide what to render until it resolves.
- */
+/** "pending" until the server has confirmed the cookie is still good. */
 export type AuthStatus = "pending" | "authenticated" | "anonymous";
 
 export interface AuthContext {
@@ -21,9 +18,8 @@ const nameKeyName = "thoughts.auth.user.name";
 const aiKeyName = "thoughts.auth.user.ai_enabled";
 
 /**
- * Cached so the nav can show a name on first paint. This is a convenience
- * cache, never proof of anything: the session cookie is the only credential,
- * and it can expire or be invalidated without the browser telling us.
+ * A convenience cache for first paint, never proof of anything: the session
+ * cookie is the only credential.
  */
 export function getStoredUser(): User | null {
   const name = localStorage.getItem(nameKeyName);

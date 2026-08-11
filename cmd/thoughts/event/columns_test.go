@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// currentColumns re-reads the retro so assertions see what was actually persisted.
+// currentColumns re-reads the retro, so assertions see what was persisted.
 func (h *harness) currentColumns(t *testing.T) model.RetroColumns {
 	t.Helper()
 
@@ -101,7 +101,6 @@ func TestColumnUpdateRejectsBadInput(t *testing.T) {
 			h := newHarness(t)
 
 			if _, ok := payload["id"]; !ok {
-				// Cases that are about the title still need a valid id.
 				if name != "missing id" {
 					payload["id"] = h.columns[0].ID.String()
 				}
@@ -118,7 +117,6 @@ func TestColumnDeleteRemovesAnEmptyColumn(t *testing.T) {
 	h := newHarness(t)
 	user := h.user(t, "Facilitator")
 
-	// Two columns is the floor, so add one first.
 	if err := h.handle(t, user, "column_create", map[string]any{
 		"title":       "Ideas",
 		"description": "Anything else",
@@ -206,8 +204,8 @@ func TestColumnDeleteRejectsAnUnknownColumn(t *testing.T) {
 func TestColumnDeleteRejectsTheSyntheticTasksColumn(t *testing.T) {
 	h := newHarness(t)
 
-	// The discuss stage renders a hardcoded "tasks" column that is not a real
-	// column; it must not be able to reach a handler.
+	// The discuss stage renders a hardcoded "tasks" column that must not be
+	// able to reach a handler.
 	if err := h.handle(t, h.user(t, "Facilitator"), "column_delete", map[string]any{
 		"id": "tasks",
 	}); err == nil {
@@ -299,9 +297,8 @@ func TestConcurrentColumnCreatesDoNotClobberEachOther(t *testing.T) {
 	h := newHarness(t)
 	user := h.user(t, "Facilitator")
 
-	// Columns are one JSON blob, so simultaneous edits are a read-modify-write
-	// race. Three facilitators adding a column at once must produce three
-	// columns, not one.
+	// Columns are one JSON blob, so simultaneous edits race on a
+	// read-modify-write.
 	var wg sync.WaitGroup
 
 	for i := range 3 {

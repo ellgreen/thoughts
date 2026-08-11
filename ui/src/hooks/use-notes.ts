@@ -15,13 +15,11 @@ const optimisticEvents = new Set(["note_create", "note_update", "note_delete"]);
 
 interface NotesState {
   notes: Note[];
-  /** False until the first fetch lands, so the board can show skeletons
-   * instead of an empty column that is about to fill up. */
+  /** False until the first fetch lands, so the board can show skeletons. */
   loaded: boolean;
   /**
-   * Keyed by the ref of an unconfirmed mutation, holding what to restore if the
-   * server rejects it. `null` means "this was a create, so drop the note whose
-   * id is the ref".
+   * Keyed by the ref of an unconfirmed mutation, holding what to restore if
+   * the server rejects it. `null` means it was a create, so drop the note.
    */
   rollbacks: Record<string, Note | null>;
 }
@@ -94,8 +92,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
                 ...note,
                 content: payload.content ?? note.content,
                 column_id: payload.column_id ?? note.column_id,
-                // Mirrors the server: an update without a group_id drops the
-                // note back into a group of its own.
+                // Mirrors the server: no group_id means a group of its own.
                 group_id: payload.group_id ?? `ungrouped-${note.id}`,
                 img_url: payload.remove_img_url
                   ? ""
@@ -123,7 +120,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
     case "note_created": {
       const payload = event.payload as Note & Partial<Ref>;
 
-      // Our own placeholder carries the ref as its id; swap it for the real note.
+      // Our placeholder carries the ref as its id.
       const notes = payload.ref
         ? state.notes.filter((note) => note.id !== payload.ref)
         : state.notes;

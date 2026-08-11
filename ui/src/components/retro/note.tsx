@@ -31,7 +31,6 @@ interface NoteProps {
   note: NoteType;
   showGrip?: boolean;
   blur?: boolean;
-  /** Shows who wrote it. Off during brainstorm, when notes are private. */
   showAuthor?: boolean;
   listeners?: DraggableSyntheticListeners;
   attributes?: DraggableAttributes;
@@ -39,7 +38,6 @@ interface NoteProps {
   onDelete?: () => void;
   onGifSelected?: (url: string) => void;
   onGifRemoved?: () => void;
-  /** Set only for notes sharing a group, to lift this one back out of it. */
   onUngroup?: () => void;
 }
 
@@ -65,8 +63,8 @@ export const Note = ({
   return (
     <m.div
       ref={ref}
-      // layoutId keeps the same card alive across stage changes, so notes
-      // glide into their groups instead of blinking out and back.
+      // Keeps the card alive across stage changes, so it glides into its
+      // group rather than blinking out and back.
       layoutId={note.id}
       layout="position"
       variants={cardVariants}
@@ -101,14 +99,11 @@ export const Note = ({
 };
 
 /**
- * The card as it looks under the cursor mid-drag, rendered by dnd-kit's
- * DragOverlay in a portal.
+ * The card under the cursor mid-drag.
  *
- * It has to be a plain element rather than a `Note`: motion owns the transform
- * of anything with a layoutId, so a dragged note's own transform was being
- * overwritten every frame and the card never left its slot. The overlay sits
- * outside that system entirely, and a second element sharing the layoutId
- * would fight the original for it anyway.
+ * Plain rather than a `Note`: motion owns the transform of anything with a
+ * layoutId, so dnd-kit's could never win, and a second element sharing the
+ * layoutId would fight the original for it.
  */
 export function NoteOverlay({
   note,
@@ -253,18 +248,14 @@ function NoteBody({
   );
 }
 
-/**
- * Fixed aspect box with a placeholder: the image used to pop in at its natural
- * height and shove everything below it down the page.
- */
+/** Fixed aspect box, so the image cannot shove the page around as it loads. */
 function NoteImage({ src, blur }: { src: string; blur?: boolean }) {
   const [loaded, setLoaded] = useState(false);
 
   return (
     <div
       className={twMerge(
-        // Capped as well as ratio'd: on a wide column a 16:9 box alone would
-        // let one GIF dominate the whole board.
+        // Capped as well as ratio'd, so one GIF cannot dominate the board.
         "relative mb-2 aspect-video max-h-52 overflow-hidden rounded-md bg-muted",
         blur ? "blur-md" : "",
       )}
@@ -322,11 +313,9 @@ export function DraggableNote({
 
   return (
     <Note
-      // Composed, and destructured out of the spread above rather than left in
-      // it. AnimatePresence's popLayout mode clones each child with a ref of
-      // its own to measure it, and that one used to land in the spread and
-      // overwrite dnd-kit's: with no node to measure there was nothing to
-      // show being dragged.
+      // Destructured out of the spread above, not left in it: popLayout
+      // clones each child with a ref of its own, which used to land in the
+      // spread and overwrite this one.
       ref={(node: HTMLDivElement | null) => {
         setNodeRef(node);
 
@@ -337,9 +326,7 @@ export function DraggableNote({
       showGrip
       listeners={listeners}
       attributes={attributes}
-      // The card under the cursor is the DragOverlay's; what stays behind is
-      // the gap it left, dimmed so you can see where it came from. Animated
-      // rather than classed because motion writes opacity inline.
+      // Animated rather than classed: motion writes opacity inline.
       animate={isDragging ? { opacity: 0.3, scale: 0.98 } : "animate"}
       {...actions}
     />

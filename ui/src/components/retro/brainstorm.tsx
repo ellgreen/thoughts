@@ -96,9 +96,8 @@ export default function Brainstorm() {
                 <EmptyColumn>Nothing here yet.</EmptyColumn>
               )}
 
-              {/* Not popLayout: a note moving column is one card changing
-                  place, and popLayout tears it out of the flow to animate it
-                  away while its layoutId is gliding it to the new column. */}
+              {/* Not popLayout: it tears a note out of the flow to animate
+                  it away while its layoutId is gliding it to a new column. */}
               <AnimatePresence initial={false}>
                 {columnNotes.map((note) =>
                   note.created_by_me ? (

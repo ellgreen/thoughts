@@ -14,7 +14,7 @@ export const stages = [
     status: "brainstorm",
     label: "Reflect",
     icon: PenLine,
-    /** Label for the button that moves the retro *into* this stage. */
+    /** Labels the button that moves the retro *into* this stage. */
     action: "Back to reflecting",
   },
   {
@@ -52,12 +52,10 @@ export function stageLabel(status: RetroStatus): string {
   return stages[stageIndex(status)]?.label ?? status;
 }
 
-/** The stage after this one, or undefined at the end of the retro. */
 export function nextStage(status: RetroStatus): Stage | undefined {
   return stages[stageIndex(status) + 1];
 }
 
-/** The stage before this one, or undefined at the start. */
 export function previousStage(status: RetroStatus): Stage | undefined {
   const index = stageIndex(status);
 

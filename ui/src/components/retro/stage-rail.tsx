@@ -21,12 +21,7 @@ import { ArrowRight, Check, Undo2 } from "lucide-react";
 import { m } from "motion/react";
 import { useState } from "react";
 
-/**
- * Where the retro is, and how it moves on.
- *
- * The rail itself is a read-only indicator now. Advancing used to mean knowing
- * you could click the next step, which nobody would guess: it is a button.
- */
+/** Where the retro is, and how it moves on. The rail is read-only. */
 export default function StageRail({
   status,
   onStatusUpdate,
@@ -75,8 +70,7 @@ export default function StageRail({
                   )}
                 >
                   {active && (
-                    // One shared element sliding between stages, rather than
-                    // four backgrounds fading in and out.
+                    // One element sliding between stages, not four fading.
                     <m.span
                       layoutId="stage-rail-active"
                       transition={spring}
@@ -96,7 +90,6 @@ export default function StageRail({
           })}
         </ol>
 
-        {/* Going back is deliberately quieter than going on. */}
         {previous && (
           <Tooltip>
             <TooltipTrigger asChild>

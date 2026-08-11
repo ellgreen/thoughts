@@ -42,9 +42,8 @@ export default function Group() {
     );
   }
 
-  // An empty group_id asks the server for a fresh one, which is what being in
-  // a group of your own means here. The column is left out of the payload so
-  // it keeps the one it already has.
+  // An empty group_id asks the server for a fresh one. The column is left out
+  // so the note keeps the one it has.
   function handleUngroup(noteId: string) {
     dispatch(createSocketEvent("note_update", { id: noteId, group_id: "" }));
   }
@@ -71,8 +70,7 @@ export default function Group() {
                 <EmptyColumn>No thoughts in this column.</EmptyColumn>
               )}
 
-              {/* Sync rather than popLayout, so a note being regrouped glides
-                  via its layoutId instead of being popped out of the flow. */}
+              {/* Sync rather than popLayout: see brainstorm.tsx. */}
               <AnimatePresence initial={false}>
                 {groups.map(([groupId, groupNotes]) => (
                   <DroppableNoteGroup
@@ -85,8 +83,6 @@ export default function Group() {
                         key={note.id}
                         note={note}
                         showAuthor
-                        // Only where there is a group to leave: on its own a
-                        // note is already its own group.
                         onUngroup={
                           groupNotes.length > 1
                             ? () => handleUngroup(note.id)

@@ -16,9 +16,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// NewRetroSocketHandler serves the per-retro websocket. devOrigin is an extra
-// origin to accept alongside the request's own host, used to let the Vite dev
-// server connect; it should be empty in production.
+// NewRetroSocketHandler serves the per-retro websocket. devOrigin lets the
+// Vite dev server connect and should be empty in production.
 func NewRetroSocketHandler(db *sqlx.DB, devOrigin string) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -75,10 +74,9 @@ func NewRetroSocketHandler(db *sqlx.DB, devOrigin string) http.HandlerFunc {
 	}
 }
 
-// checkOrigin rejects cross-site websocket connections. Sessions are cookie
-// based, so accepting any origin would let any page a logged-in user happens to
-// visit drive their retros. Requests with no Origin header are not browsers and
-// are allowed through.
+// checkOrigin rejects cross-site connections: sessions are cookie based, so
+// any origin would let any page a logged-in user visits drive their retros.
+// Requests with no Origin are not browsers and are allowed through.
 func checkOrigin(devOrigin string) func(*http.Request) bool {
 	return func(r *http.Request) bool {
 		origin := r.Header.Get("Origin")

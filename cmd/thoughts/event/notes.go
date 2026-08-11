@@ -14,9 +14,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Payload fields that change what a note says, as opposed to where it sits.
-// Only the author may change these. Moving a note between columns and groups
-// stays open to everyone, which is the whole point of the group stage.
+// Fields that change what a note says rather than where it sits. Only the
+// author may change these; moving a note is open to everyone.
 var noteContentFields = []string{"content", "img_url", "remove_img_url"}
 
 type noteCreateRequest struct {
@@ -42,10 +41,9 @@ func (b *Broker) handleNoteCreate(db *sqlx.DB, retroID uuid.UUID) Handler {
 	}
 }
 
-// createNote holds the columns lock so that a column cannot be deleted between
-// checking it exists and writing a note into it. Without the check a note can
-// land in a deleted column, where nothing renders it and nothing exports it,
-// while it still counts towards the retro's note total.
+// createNote holds the columns lock so a column cannot be deleted between
+// checking it exists and writing a note into it, which would leave the note
+// invisible but still counted.
 func (b *Broker) createNote(
 	ctx context.Context,
 	db *sqlx.DB,
@@ -80,8 +78,7 @@ type noteUpdateRequest struct {
 	ColumnID uuid.UUID `json:"column_id" validate:"omitempty,required_with=group_id,uuid"`
 	GroupID  uuid.UUID `json:"group_id" validate:"omitempty,uuid"`
 	Content  string    `json:"content" validate:"omitempty,min=2,max=255"`
-	// Now that people can paste their own link, not just pick from a proxied
-	// provider, insist on https - a browser would block mixed content anyway.
+	// These are user-supplied now, and a browser blocks mixed content anyway.
 	ImgURL       string `json:"img_url" validate:"omitempty,url,startswith=https://,max=2048"`
 	RemoveImgURL bool   `json:"remove_img_url"`
 }
@@ -141,9 +138,9 @@ func (b *Broker) handleNoteDelete(db *sqlx.DB, retroID uuid.UUID) Handler {
 	}
 }
 
-// authoriseNote checks that the note exists and belongs to this retro, and when
-// requireOwner is set, that the caller wrote it. Without the retro check a
-// crafted event could reach into a retro the caller is not even connected to.
+// authoriseNote checks the note belongs to this retro, and when requireOwner
+// is set, that the caller wrote it. Without the retro check a crafted event
+// reaches into retros the caller is not connected to.
 func authoriseNote(
 	ctx context.Context,
 	db *sqlx.DB,

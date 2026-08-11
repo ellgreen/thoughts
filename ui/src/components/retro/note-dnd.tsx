@@ -32,14 +32,7 @@ const collisionDetection: CollisionDetection = (args) => {
   return underPointer.length > 0 ? underPointer : rectIntersection(args);
 };
 
-/**
- * The DndContext both draggable stages share.
- *
- * It exists mainly for the DragOverlay: a note carries a `layoutId`, so motion
- * owns its transform and dnd-kit's could never win. The overlay is a portalled
- * copy that follows the cursor instead, which is what dnd-kit recommends for
- * anything animated.
- */
+/** The DndContext both draggable stages share. */
 export default function NoteDndContext({
   notes,
   showAuthor,
@@ -47,7 +40,6 @@ export default function NoteDndContext({
   children,
 }: {
   notes: Note[];
-  /** Matches the stage: authorship is hidden while brainstorming. */
   showAuthor?: boolean;
   onDragEnd: (event: DragEndEvent) => void;
   children: React.ReactNode;
@@ -55,8 +47,7 @@ export default function NoteDndContext({
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const sensors = useSensors(
-    // Without a threshold every click on the grip starts a drag, so tapping a
-    // note to open its actions would jitter the board.
+    // Without a threshold every click on the grip starts a drag.
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor),
   );
@@ -82,10 +73,8 @@ export default function NoteDndContext({
     >
       {children}
 
-      {/* No drop animation: it would fly the overlay back to the slot the note
-          started in, which is the one place it is no longer going. The note
-          itself carries a layoutId, so motion glides it into its new column
-          the moment the drop lands. */}
+      {/* The default drop animation flies the card back to the slot it
+          started in, which is the one place it is no longer going. */}
       <DragOverlay dropAnimation={null}>
         {active && <NoteOverlay note={active} showAuthor={showAuthor} />}
       </DragOverlay>

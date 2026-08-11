@@ -86,7 +86,7 @@ func GenerateRetroTemplate(ctx context.Context, model ai.Model, userPrompt strin
 		llms.WithJSONMode(),
 		llms.WithTemperature(0.9),
 		// Five columns with descriptions do not fit in 250, and a truncated
-		// response is invalid JSON, so the whole generation failed.
+		// response is invalid JSON.
 		llms.WithMaxTokens(700),
 	)
 	if err != nil {
@@ -102,9 +102,8 @@ func GenerateRetroTemplate(ctx context.Context, model ai.Model, userPrompt strin
 }
 
 // clamp brings a generated template inside what the create endpoint accepts.
-// The prompt asks for 2 to 5 columns within the length limits, but a model is
-// free to ignore that, and the failure would otherwise surface as a validation
-// error on a form the person never filled in themselves.
+// The prompt asks for this, but a model is free to ignore it, and the failure
+// would surface as a validation error on a form nobody filled in.
 func clamp(resp RetroTemplateResponse) RetroTemplateResponse {
 	if len(resp.Columns) > maxColumns {
 		resp.Columns = resp.Columns[:maxColumns]

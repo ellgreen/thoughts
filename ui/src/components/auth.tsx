@@ -13,8 +13,8 @@ export default function AuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // Seeded from the cache purely so the name is there on first paint. Status
-  // stays "pending" until the server has spoken.
+  // Seeded from the cache so the name is there on first paint. Status stays
+  // "pending" until the server has spoken.
   const [user, setUser] = useState<User | null>(getStoredUser());
   const [status, setStatus] = useState<AuthStatus>("pending");
 
@@ -33,16 +33,13 @@ export default function AuthProvider({
   }, []);
 
   const logout = useCallback(async () => {
-    // Drop the local session even if the request fails; staying "logged in"
-    // against a server that has forgotten us is the worse outcome.
+    // Drop the local session even if the request fails.
     await api.post("/api/auth/logout").catch(() => {});
 
     clearSession();
   }, [clearSession]);
 
-  // Ask the server whether the cookie is still good. Without this the router
-  // guards on a cached name, walks into the app with a dead session, and every
-  // loader comes back 401.
+  // Without this the router guards on a cached name and every loader 401s.
   useEffect(() => {
     let cancelled = false;
 
@@ -66,7 +63,6 @@ export default function AuthProvider({
     };
   }, [clearSession]);
 
-  // A session can also die mid-use. Any 401 from a real endpoint lands here.
   useEffect(() => {
     setSessionExpiredHandler(clearSession);
 

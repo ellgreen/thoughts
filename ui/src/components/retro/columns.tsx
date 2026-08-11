@@ -15,9 +15,8 @@ import { Heading } from "../typography";
 import ColumnDeleteDialog from "./column-delete-dialog";
 import ColumnDialog, { ColumnData } from "./column-dialog";
 
-// Literal strings so Tailwind's scanner finds them. Only applied from `lg`:
-// below that the board is a horizontal snap-scroller, which beats crushing
-// five columns into a phone.
+// Literal strings so Tailwind's scanner finds them. Below lg the board is a
+// horizontal snap-scroller instead.
 const gridColumns = [
   "lg:grid-cols-2",
   "lg:grid-cols-3",
@@ -38,8 +37,7 @@ function Columns({
   onAddColumn?: (data: ColumnData) => void;
   canAddColumn?: boolean;
 }) {
-  // Clamped: outside 2..6 the lookup is undefined, which used to collapse the
-  // whole board into a single column.
+  // Outside 2..6 the lookup is undefined, which collapses the whole board.
   const columnCount = Math.min(
     Math.max(count ?? Children.count(children), 2),
     6,
@@ -92,7 +90,6 @@ const Column = function Column({
   ...props
 }: {
   column: types.RetroColumn;
-  /** Position in the board, which picks the accent colour. */
   index?: number;
   children: React.ReactNode;
   className?: string;
@@ -101,8 +98,8 @@ const Column = function Column({
   const hasActions = !!(onEdit || onDelete);
 
   return (
-    // A named group: notes use a bare `group` for their own hover actions, and
-    // a bare group here would reveal these whenever a note is hovered.
+    // Named: notes use a bare `group`, which would reveal these on any note
+    // hover.
     <div
       style={{ ...accentStyle(index), ...style }}
       className={twMerge(
@@ -163,7 +160,6 @@ const Column = function Column({
         )}
       </div>
 
-      {/* Accent rule, fading out so it frames rather than boxes in. */}
       <div
         aria-hidden
         className="mt-2 h-px w-full"
@@ -208,7 +204,7 @@ function ColumnDeleteButton({
   return (
     <Tooltip>
       {/* A disabled button swallows pointer events, so the tooltip needs a
-          wrapper to hang off. */}
+          wrapper. */}
       <TooltipTrigger asChild>
         <span className="inline-flex">{button}</span>
       </TooltipTrigger>
@@ -240,8 +236,8 @@ function DroppableColumn({
       index={index}
       className="transition-colors duration-200"
       style={{
-        // outline rather than ring: it can be offset off the content without
-        // taking up layout, so the board does not shift while dragging.
+        // Outline rather than ring: offsettable without taking up layout,
+        // so the board does not shift while dragging.
         outline: isOver
           ? "2px solid color-mix(in oklch, var(--accent) 65%, transparent)"
           : undefined,

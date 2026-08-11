@@ -27,10 +27,9 @@ func Middleware(db *sqlx.DB, sp *session.Provider) mux.MiddlewareFunc {
 					return
 				}
 
-				// The single most useful thing when someone cannot stay logged
-				// in: whether the browser sent a cookie at all. None means it
-				// was never stored (wrong origin, blocked cookies); one that
-				// carries no user means it failed to decode.
+				// Whether the browser sent a cookie at all is the useful
+				// thing here: none means it was never stored, one without a
+				// user means it failed to decode.
 				rejected(r, "session carries no user", "cookie_sent", hasSessionCookie(r))
 				w.WriteHeader(http.StatusUnauthorized)
 
@@ -49,8 +48,7 @@ func Middleware(db *sqlx.DB, sp *session.Provider) mux.MiddlewareFunc {
 				slog.Error("failed to get user", "error", err)
 				w.WriteHeader(http.StatusInternalServerError)
 
-				// Without this the handler ran on with a nil user, and
-				// UserFromRequest panicked on the way through.
+				// Without this the handler runs on with a nil user.
 				return
 			}
 
@@ -61,9 +59,8 @@ func Middleware(db *sqlx.DB, sp *session.Provider) mux.MiddlewareFunc {
 	})
 }
 
-// rejected records why a request was turned away. Debug level, so it is there
-// under THOUGHTS_VERBOSE=true when someone is stuck without being noise the
-// rest of the time: every logged-out page load produces one of these.
+// rejected records why a request was turned away. Debug level: every
+// logged-out page load produces one.
 func rejected(r *http.Request, reason string, args ...any) {
 	slog.Debug(
 		"rejecting unauthenticated request",

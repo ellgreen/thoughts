@@ -98,8 +98,7 @@ export default function Creator() {
       });
   }
 
-  // Templates and AI replace the set outright: replace() regenerates the field
-  // keys, so the cards animate in as new rather than the old ones mutating.
+  // replace() regenerates the field keys, so the cards animate in as new.
   function applyColumns(next: ColumnDraft[]) {
     columns.replace(next.slice(0, maxColumns));
     form.clearErrors("columns");
@@ -371,7 +370,7 @@ function ColumnCard({
   );
 }
 
-/** Only speaks up near the limit, rather than nagging from the first keystroke. */
+/** Only speaks up near the limit. */
 function CharacterCount({ value }: { value: string }) {
   const remaining = maxDescription - value.length;
 
@@ -408,7 +407,6 @@ function EmptyColumns() {
   );
 }
 
-/** Shimmering stand-ins so the wait shows its working. */
 function GeneratingPlaceholder() {
   return (
     <m.div

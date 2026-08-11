@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	// Matches the create validator in controllers/retros.go. The upper bound
-	// also keeps the board grid within the widths it has classes for.
+	// Matches the create validator in controllers/retros.go, and the widths
+	// the board grid has classes for.
 	minColumns = 2
 	maxColumns = 5
 )
@@ -118,8 +118,7 @@ func (b *Broker) handleColumnDelete(db *sqlx.DB, retroID uuid.UUID) Handler {
 					return nil, newErrorEvent(fmt.Sprintf("a retro must have at least %d columns", minColumns))
 				}
 
-				// Deleting an empty column strands nothing: no notes means no
-				// groups, and no groups means no votes.
+				// An empty column has no groups, so no votes to strand.
 				count, err := dal.NoteCountForColumn(ctx, db, retroID, req.ColumnID)
 				if err != nil {
 					slog.Error("problem counting notes for column", "error", err)
@@ -146,12 +145,11 @@ func (b *Broker) handleColumnDelete(db *sqlx.DB, retroID uuid.UUID) Handler {
 // mutateColumns serialises the read-modify-write of the columns blob against
 // other column changes and against note creation.
 //
-// A transaction is the wrong tool here: sqlx issues a deferred BEGIN, so under
-// WAL a concurrent writer fails with SQLITE_BUSY_SNAPSHOT rather than
-// serialising. There is exactly one broker per retro and the app is single
-// process, so a mutex is both sufficient and simpler.
+// A transaction is the wrong tool: sqlx issues a deferred BEGIN, so under WAL
+// a concurrent writer fails with SQLITE_BUSY_SNAPSHOT rather than serialising.
+// One broker per retro in a single process makes a mutex sufficient.
 //
-// The caller broadcasts after this returns - dispatch reaches a client's write
+// The caller broadcasts after this returns: dispatch reaches a client's write
 // pump, and holding the lock across it would let one wedged client block every
 // column change in the retro.
 func (b *Broker) mutateColumns(

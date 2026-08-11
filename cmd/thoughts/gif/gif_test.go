@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-// Shaped from a real api.klipy.com response. The nesting is size first and
-// then format, under "file" rather than "files" - an earlier guess had it the
-// other way round, which parsed cleanly and produced nothing at all.
+// Shaped from a real api.klipy.com response: size first, then format, under
+// "file". An earlier guess had it the other way round, which parsed cleanly
+// and produced nothing at all.
 const klipyBody = `{
   "result": true,
   "data": {
@@ -71,7 +71,6 @@ func TestKlipySearchMapsResults(t *testing.T) {
 		t.Fatalf("search failed: %v", err)
 	}
 
-	// The key travels in the path, not a header or query parameter.
 	if gotPath != "/test-key/gifs/search" {
 		t.Errorf("requested %q, want /test-key/gifs/search", gotPath)
 	}
@@ -88,7 +87,6 @@ func TestKlipySearchMapsResults(t *testing.T) {
 		t.Errorf("per_page = %q, want 24", gotQuery.Get("per_page"))
 	}
 
-	// The advert with no files is skipped.
 	if len(page.Results) != 2 {
 		t.Fatalf("got %d results, want 2", len(page.Results))
 	}
@@ -107,7 +105,6 @@ func TestKlipySearchMapsResults(t *testing.T) {
 		t.Errorf("preview dimensions = %dx%d, want 240x180", first.Width, first.Height)
 	}
 
-	// Falls back through the sizes when a variant is missing.
 	second := page.Results[1]
 
 	if second.URL != "https://cdn.example/only-sm.gif" || second.PreviewURL != "https://cdn.example/only-sm.gif" {
@@ -166,10 +163,9 @@ func TestKlipySurfacesUpstreamFailures(t *testing.T) {
 	}
 }
 
-// TestKlipyLiveContract talks to the real API. Skipped unless a key is set, so
-// CI stays offline, but it is the only thing that catches the provider's shape
-// changing underneath us - a canned payload written from the docs parsed
-// perfectly and returned zero results.
+// TestKlipyLiveContract talks to the real API, skipped unless a key is set so
+// CI stays offline. It is the only thing that catches the response shape
+// changing: a canned payload written from the docs cannot.
 //
 //	THOUGHTS_GIF_API_KEY=... go test ./cmd/thoughts/gif/ -run Live
 func TestKlipyLiveContract(t *testing.T) {

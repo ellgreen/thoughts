@@ -9,8 +9,8 @@ import (
 	"strconv"
 )
 
-// KlipyProvider talks to https://klipy.com, which offers a free-for-life GIF
-// API and is the closest replacement for the retired Tenor API.
+// KlipyProvider talks to https://klipy.com, a free-for-life GIF API and the
+// closest replacement for the retired Tenor one.
 type KlipyProvider struct {
 	BaseURL string
 	APIKey  string
@@ -46,8 +46,7 @@ type (
 		Height int    `json:"height"`
 	}
 
-	// Each size carries every format. Note the nesting: size first, then
-	// format, and the field is "file" rather than "files".
+	// Size first, then format, under "file" rather than "files".
 	klipyFormats struct {
 		Gif  klipyFile `json:"gif"`
 		Webp klipyFile `json:"webp"`
@@ -77,7 +76,7 @@ type (
 func (k *KlipyProvider) fetch(ctx context.Context, path string, params url.Values, page int) (*SearchPage, error) {
 	page = normalisePage(page)
 
-	// Klipy carries the key in the path rather than a header or query param.
+	// The key goes in the path, not a header or query param.
 	endpoint, err := url.JoinPath(k.BaseURL, k.APIKey, path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build klipy url: %w", err)
@@ -128,15 +127,14 @@ func (k *KlipyProvider) fetch(ctx context.Context, path string, params url.Value
 }
 
 func (i klipyItem) toResult() (SearchResult, bool) {
-	// Medium is the sweet spot on a note card; fall back through the other
-	// sizes so an item missing one variant is still usable.
+	// Medium suits a note card; fall back so a missing variant is still usable.
 	full := firstFile(i.File.MD.Gif, i.File.HD.Gif, i.File.SM.Gif)
 	if full.URL == "" {
-		// Ads and other non-GIF items come through the same list.
+		// Ads come through the same list.
 		return SearchResult{}, false
 	}
 
-	// webp for the grid: same frames at roughly a quarter of the bytes.
+	// webp for the grid: a quarter of the bytes.
 	preview := firstFile(i.File.SM.Webp, i.File.XS.Webp, i.File.SM.Gif, full)
 
 	return SearchResult{

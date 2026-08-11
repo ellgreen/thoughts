@@ -3,24 +3,18 @@ import { useCallback, useLayoutEffect, useRef } from "react";
 import { textareaClassName } from "./textarea";
 
 /**
- * A textarea that grows with its content instead of hiding it behind a
- * scrollbar.
+ * A textarea that grows with its content.
  *
- * Sized in JS rather than with CSS `field-sizing: content`, which only Chrome
- * supports - in Safari and Firefox that leaves a fixed box, which is exactly
- * the problem this is here to solve.
- *
- * Renders its own element rather than wrapping Textarea: the ref has to reach
- * the real node to measure it.
+ * Sized in JS rather than with `field-sizing: content`, which only Chrome
+ * supports, and renders its own element so the ref reaches the real node.
  */
 export function AutoTextarea({
   className,
   value,
   onChange,
   maxHeight = 180,
-  // Pulled out of props deliberately. Callers spread a react-hook-form field
-  // here, which carries its own ref; left in the spread it would land after
-  // ours and win, leaving nothing to measure.
+  // Pulled out of props: callers spread a react-hook-form field here, whose
+  // own ref would otherwise land after ours and win.
   ref: forwardedRef,
   ...props
 }: React.ComponentProps<"textarea"> & { maxHeight?: number }) {
@@ -52,16 +46,14 @@ export function AutoTextarea({
     el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
   }, [maxHeight]);
 
-  // Layout effect so it is sized before paint. Also covers value changing from
-  // outside, such as a template or an AI generation filling the form in.
+  // Before paint, and covers value changing from outside.
   useLayoutEffect(resize, [value, resize]);
 
   return (
     <textarea
       ref={attachRef}
       data-slot="textarea"
-      // One row, so height: auto collapses to a single line and scrollHeight
-      // reports what the content actually needs.
+      // One row, so height: auto can collapse below two lines.
       rows={1}
       value={value}
       onChange={(event) => {

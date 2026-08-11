@@ -14,10 +14,8 @@ type SessionExpiredHandler = () => void;
 let onSessionExpired: SessionExpiredHandler = () => {};
 
 /**
- * Registered by the auth provider. The interceptor cannot redirect on its own:
- * a thrown router redirect is only caught inside a loader, so from a plain
- * component effect it becomes a swallowed rejection while still having wiped
- * the stored user on the way past.
+ * Registered by the auth provider. The interceptor cannot redirect itself: a
+ * thrown router redirect is only caught inside a loader.
  */
 export function setSessionExpiredHandler(handler: SessionExpiredHandler) {
   onSessionExpired = handler;
@@ -38,8 +36,6 @@ api.interceptors.response.use(
     }
 
     if (status === 401 && !authEndpoints.some((path) => url.startsWith(path))) {
-      // The cookie is gone or no longer valid. Tell the auth layer and let the
-      // router decide where to send people.
       onSessionExpired();
     }
 

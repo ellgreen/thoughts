@@ -16,7 +16,6 @@ import (
 const (
 	keyLength = 64
 
-	// Thirty days, matching what gorilla/sessions would have used.
 	sessionMaxAge = 86400 * 30
 )
 
@@ -25,14 +24,13 @@ var ErrValueNotFound = errors.New("session: value not found")
 type Provider struct {
 	store sessions.Store
 
-	// tls is set when the server terminates TLS itself. A request arriving
-	// over https through a proxy is detected per request instead.
+	// Set when the server terminates TLS itself. A proxied https request is
+	// detected per request instead.
 	tls bool
 }
 
-// LoadSessionProvider builds the cookie session store. tls says whether this
-// server terminates TLS, which decides whether the cookie may be marked
-// Secure.
+// LoadSessionProvider builds the cookie session store. tls decides whether the
+// cookie may be marked Secure.
 func LoadSessionProvider(keyPath string, tls bool) (*Provider, error) {
 	key, err := loadKey(keyPath)
 	if err != nil {
@@ -42,9 +40,8 @@ func LoadSessionProvider(keyPath string, tls bool) (*Provider, error) {
 	store := sessions.NewCookieStore(key)
 
 	// gorilla/sessions defaults to Secure with SameSite=None, so the cookie is
-	// only ever stored over https. Chrome makes an exception for
-	// http://localhost; Safari does not, which left people logged out with a
-	// login that looked like it had worked. Set the options ourselves.
+	// only ever stored over https. Chrome excepts http://localhost; Safari
+	// does not, which left people logged out after a login that looked fine.
 	store.Options = defaultOptions(tls)
 
 	return &Provider{store: store, tls: tls}, nil
@@ -52,19 +49,17 @@ func LoadSessionProvider(keyPath string, tls bool) (*Provider, error) {
 
 func defaultOptions(secure bool) *sessions.Options {
 	return &sessions.Options{
-		Path:   "/",
-		MaxAge: sessionMaxAge,
-		// The session cookie is never read from JavaScript.
+		Path:     "/",
+		MaxAge:   sessionMaxAge,
 		HttpOnly: true,
-		// Lax, not None: everything here is same-site, and None would drag the
-		// Secure requirement back in with it.
+		// Not None, which would drag the Secure requirement back in with it.
 		SameSite: http.SameSiteLaxMode,
 		Secure:   secure,
 	}
 }
 
-// optionsFor allows Secure when the request itself arrived over https, so a
-// deployment behind a TLS-terminating proxy still gets a Secure cookie.
+// optionsFor allows Secure when the request arrived over https, so a proxied
+// deployment still gets a Secure cookie.
 func (sp *Provider) optionsFor(r *http.Request) *sessions.Options {
 	return defaultOptions(sp.tls || isHTTPS(r))
 }
@@ -102,7 +97,6 @@ func loadKey(path string) ([]byte, error) {
 func (sp *Provider) Get(w http.ResponseWriter, r *http.Request) (*sessions.Session, error) {
 	sess, err := sp.store.Get(r, "session")
 	if sess != nil {
-		// Applies to this response's cookie, whatever the store was built with.
 		sess.Options = sp.optionsFor(r)
 	}
 

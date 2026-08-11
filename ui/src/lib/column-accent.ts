@@ -1,9 +1,7 @@
 /**
- * Column accents are derived from position, not stored, so no migration and no
- * change to the creation form. Five hues cover the maximum column count.
- *
- * Once notes are grouped and reordered by vote, colour is the only thing left
- * that says which column a thought came from.
+ * Derived from position rather than stored. Once notes are grouped and
+ * reordered by vote, colour is the only thing left saying which column a
+ * thought came from.
  */
 const accents = [
   "var(--chart-1)",
@@ -17,11 +15,7 @@ export function accentForIndex(index: number): string {
   return accents[((index % accents.length) + accents.length) % accents.length];
 }
 
-/**
- * CSS custom property carrying a column's accent. Set it on the column and
- * anything inside can reach it with `[color:var(--accent)]` and friends,
- * without threading a prop through every child.
- */
+/** Set on the column so children can reach it without a threaded prop. */
 export function accentStyle(index: number): React.CSSProperties {
   return { "--accent": accentForIndex(index) } as React.CSSProperties;
 }

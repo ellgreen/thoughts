@@ -19,15 +19,14 @@ interface TagInputProps {
 const maxTags = 10;
 const maxSuggestions = 8;
 
-/** What you can pick from the dropdown: an existing tag, or the one you typed. */
 interface Option {
-  /** The tag itself, already normalised. */
+  /** Already normalised. */
   value: string;
   label: string;
   isNew?: boolean;
 }
 
-/** Trim, lowercase, hyphenate. The server sees only this form. */
+/** The only form the server sees. */
 function normalise(tag: string): string {
   return tag.trim().toLowerCase().replace(/\s+/g, "-");
 }
@@ -57,8 +56,8 @@ export default function TagInput({
     .filter((s) => !value.includes(s) && (typed === "" || s.includes(typed)))
     .slice(0, maxSuggestions);
 
-  // Matches first, so Tab completes to a real tag rather than to whatever you
-  // half-typed. The freetyped option is the fallback at the end.
+  // Matches first, so Tab completes to a real tag rather than what you
+  // half-typed.
   const options: Option[] = [
     ...matches.map((tag) => ({ value: tag, label: tag })),
     ...(typed && !matches.includes(typed) && !value.includes(typed)
@@ -90,7 +89,6 @@ export default function TagInput({
     setActiveIndex((i) => {
       const next = Math.min(i, options.length - 1) + delta;
 
-      // Wraps, so holding one arrow key gets you round the whole list.
       return (next + options.length) % options.length;
     });
   }
@@ -107,9 +105,8 @@ export default function TagInput({
         move(-1);
         return;
 
-      // Tab completes the highlighted suggestion, the way autocomplete works
-      // anywhere else. With nothing typed there is nothing to complete, so it
-      // moves focus on as normal.
+      // With nothing typed there is nothing to complete, so Tab moves focus
+      // on as normal.
       case "Tab":
         if (e.shiftKey || !input.trim() || !active) return;
 
@@ -198,8 +195,8 @@ export default function TagInput({
 
       <PopoverContent
         className="w-[var(--radix-popover-trigger-width)] p-1"
-        // The input keeps focus: the list is driven from its keydown handler,
-        // and stealing focus would close the very thing being navigated.
+        // The list is driven from the input's keydown handler, so stealing
+        // focus would close the thing being navigated.
         onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={() => setOpen(false)}
       >

@@ -15,12 +15,9 @@ export interface ColumnActions {
 }
 
 /**
- * Wires the column mutation events. Columns stay server-authoritative: they
- * only ever arrive via retro_updated, so there is no optimistic state here to
- * drift out of sync.
- *
- * Takes the notes rather than calling useNotes itself: a second copy would
- * mean a second fetch and a second reducer that diverges from the board's.
+ * Columns stay server-authoritative: they only arrive via retro_updated, so
+ * there is no optimistic state to drift. Takes the notes rather than calling
+ * useNotes, which would mean a second fetch and a second reducer.
  */
 export function useColumnActions(notes: Note[]) {
   const {
@@ -54,7 +51,7 @@ export function useColumnActions(notes: Note[]) {
         ),
       onDelete: () =>
         sendJsonMessage(createSocketEvent("column_delete", { id: column.id })),
-      // Unconfirmed notes are in the list too, so a note being written right
+      // Unconfirmed notes are in the list too, so one being written right
       // now already blocks the delete.
       canDelete:
         (noteCounts[column.id] ?? 0) === 0 && columnCount > minColumns,

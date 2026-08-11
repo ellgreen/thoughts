@@ -15,11 +15,11 @@ function InnerApp() {
   const auth = useAuth();
   const lastStatus = useRef(auth.status);
 
-  // A session going stale has to re-run the route guards, otherwise whatever
-  // is on screen keeps firing requests that will only ever 401.
+  // A stale session has to re-run the route guards, or whatever is on screen
+  // keeps firing requests that will only ever 401.
   useEffect(() => {
-    // Not on the first run: the router has not been handed its context yet,
-    // so beforeLoad would read isAuthenticated off an undefined auth.
+    // Not on the first run: the router has no context yet, so beforeLoad
+    // would read isAuthenticated off an undefined auth.
     if (lastStatus.current === auth.status) return;
 
     lastStatus.current = auth.status;
@@ -41,8 +41,6 @@ function InnerApp() {
 
 function App() {
   return (
-    // reducedMotion="user" honours the OS setting everywhere at once, so no
-    // component has to remember to check it.
     <MotionConfig reducedMotion="user">
       {/* domMax rather than domAnimation: the board leans on layout and
           shared-element transitions. strict keeps us on `m.*`, so the full
