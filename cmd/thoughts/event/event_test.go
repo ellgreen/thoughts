@@ -15,8 +15,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// harness drives a broker the way the socket does, draining both outbound
-// channels so handlers never block.
 type harness struct {
 	db       *sqlx.DB
 	broker   *event.Broker
@@ -90,7 +88,6 @@ func (h *harness) handle(t *testing.T, user *model.User, name string, payload ma
 	return h.broker.Handle(context.Background(), user, bytes.NewReader(body))
 }
 
-// next waits for the next broadcast event, failing if none arrives.
 func (h *harness) next(t *testing.T) *event.Event {
 	t.Helper()
 
@@ -103,7 +100,6 @@ func (h *harness) next(t *testing.T) *event.Event {
 	}
 }
 
-// createNote runs a note_create as user and returns the persisted note id.
 func (h *harness) createNote(t *testing.T, user *model.User, content string) uuid.UUID {
 	t.Helper()
 
@@ -245,7 +241,6 @@ func TestAnyoneMayMoveANote(t *testing.T) {
 
 	noteID := h.createNote(t, author, "my own thought")
 
-	// Moving someone else's note is the point of the group stage.
 	err := h.handle(t, other, "note_update", map[string]any{
 		"id":        noteID.String(),
 		"column_id": h.columns[1].ID.String(),
@@ -375,7 +370,6 @@ func TestNotesAreOnlyObfuscatedDuringBrainstorm(t *testing.T) {
 
 	author := h.user(t, "Author")
 
-	// Brainstorm: other people see noise.
 	h.createNote(t, author, "secret thought")
 
 	if err := dal.RetroUpdateStatus(ctx, h.db, h.retro.ID, model.RetroStatusGroup); err != nil {
@@ -389,7 +383,6 @@ func TestNotesAreOnlyObfuscatedDuringBrainstorm(t *testing.T) {
 		t.Fatalf("note_create failed: %v", err)
 	}
 
-	// Past brainstorm, note_created must not scramble the content.
 	if got := h.next(t).Payload["content"]; got != "open thought" {
 		t.Errorf("expected the content in the clear after brainstorm, got %q", got)
 	}

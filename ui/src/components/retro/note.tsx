@@ -63,8 +63,6 @@ export const Note = ({
   return (
     <m.div
       ref={ref}
-      // Keeps the card alive across stage changes, so it glides into its
-      // group rather than blinking out and back.
       layoutId={note.id}
       layout="position"
       variants={cardVariants}
@@ -98,13 +96,6 @@ export const Note = ({
   );
 };
 
-/**
- * The card under the cursor mid-drag.
- *
- * Plain rather than a `Note`: motion owns the transform of anything with a
- * layoutId, so dnd-kit's could never win, and a second element sharing the
- * layoutId would fight the original for it.
- */
 export function NoteOverlay({
   note,
   showAuthor,
@@ -248,14 +239,12 @@ function NoteBody({
   );
 }
 
-/** Fixed aspect box, so the image cannot shove the page around as it loads. */
 function NoteImage({ src, blur }: { src: string; blur?: boolean }) {
   const [loaded, setLoaded] = useState(false);
 
   return (
     <div
       className={twMerge(
-        // Capped as well as ratio'd, so one GIF cannot dominate the board.
         "relative mb-2 aspect-video max-h-52 overflow-hidden rounded-md bg-muted",
         blur ? "blur-md" : "",
       )}

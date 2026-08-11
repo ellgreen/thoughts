@@ -7,7 +7,6 @@ import (
 	"time"
 )
 
-// Provider names accepted by THOUGHTS_GIF_PROVIDER.
 const (
 	ProviderKlipy = "klipy"
 	ProviderGiphy = "giphy"
@@ -17,7 +16,6 @@ const (
 // http.DefaultClient has no timeout, so a hung provider would pin a goroutine.
 var httpClient = &http.Client{Timeout: 8 * time.Second}
 
-// Whether the search tab is worth showing. Pasting a link never needs one.
 var searchAvailable bool
 
 // SearchAvailable reports whether GIF search is configured.
@@ -25,8 +23,6 @@ func SearchAvailable() bool {
 	return searchAvailable
 }
 
-// Resolve builds the configured search provider. Nil is a supported outcome:
-// the picker still lets people paste a link.
 func Resolve(name, apiKey string) (Provider, error) {
 	provider, err := build(name, apiKey)
 	if err != nil {

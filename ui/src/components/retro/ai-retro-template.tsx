@@ -19,7 +19,6 @@ const schema = z.object({
     .max(128, "That's a bit long. Keep it under 128 characters"),
 });
 
-/** Enough to show what this is for without anyone having to think. */
 const suggestions = [
   "Star Wars",
   "The Great British Bake Off",
@@ -86,7 +85,6 @@ export default function AIRetroTemplate({
 
   return (
     <div className="relative overflow-hidden rounded-xl p-px">
-      {/* Gradient edge that drifts while it thinks, and sits still otherwise. */}
       <m.div
         aria-hidden
         className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,var(--chart-1),var(--chart-2),var(--chart-4),var(--chart-1))]"
@@ -148,8 +146,6 @@ export default function AIRetroTemplate({
             {...form.register("prompt")}
           />
 
-          {/* The label swaps in place rather than crossfading: an empty button
-              mid-transition jumps the layout of the whole row. */}
           <Button
             type="button"
             onClick={submit}

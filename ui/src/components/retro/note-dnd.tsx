@@ -15,24 +15,15 @@ import {
 import { useState } from "react";
 import { NoteOverlay } from "./note";
 
-/**
- * Drop on whatever is under the cursor.
- *
- * Groups sit inside columns, and a group usually fills its column, so by area
- * alone a group always wins and a note can never be dropped back into open
- * column space to ungroup it. Asking where the pointer is answers that: it
- * lands on the group when you are over one and the column when you are not,
- * because `pointerWithin` ranks the tightest rect around the cursor first.
- *
- * Keyboard drags have no pointer, so they fall back to overlap.
- */
+// By area a group always beats the column it sits in, leaving no way to drop
+// a note into open space. pointerWithin ranks the tightest rect around the
+// cursor first; keyboard drags have no pointer and fall back to overlap.
 const collisionDetection: CollisionDetection = (args) => {
   const underPointer = pointerWithin(args);
 
   return underPointer.length > 0 ? underPointer : rectIntersection(args);
 };
 
-/** The DndContext both draggable stages share. */
 export default function NoteDndContext({
   notes,
   showAuthor,

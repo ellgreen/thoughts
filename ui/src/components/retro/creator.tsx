@@ -67,7 +67,6 @@ export default function Creator() {
   const [open, setOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
 
-  // Typed explicitly: inferring from empty defaults gives columns: never[].
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -98,7 +97,6 @@ export default function Creator() {
       });
   }
 
-  // replace() regenerates the field keys, so the cards animate in as new.
   function applyColumns(next: ColumnDraft[]) {
     columns.replace(next.slice(0, maxColumns));
     form.clearErrors("columns");
@@ -250,9 +248,6 @@ function ColumnsSection({
         />
       )}
 
-      {/* Columns you already have stay put while a generation runs: they are
-          only replaced if it succeeds, and flashing them away and back on a
-          failure would look like losing your work. */}
       <div
         className={cn(
           "space-y-2.5 transition-opacity",
@@ -310,8 +305,6 @@ function ColumnCard({
           Column {index + 1}
         </span>
 
-        {/* Always visible: a control you have to hover to discover is not one
-            you can rely on, and any column can be removed here. */}
         <Button
           type="button"
           variant="ghost"
@@ -370,7 +363,6 @@ function ColumnCard({
   );
 }
 
-/** Only speaks up near the limit. */
 function CharacterCount({ value }: { value: string }) {
   const remaining = maxDescription - value.length;
 

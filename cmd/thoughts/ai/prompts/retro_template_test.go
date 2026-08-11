@@ -24,8 +24,6 @@ func TestClampTrimsExtraColumns(t *testing.T) {
 
 	got := clamp(resp)
 
-	// The create endpoint accepts at most five, and the person never chose
-	// these columns, so a validation error would be baffling.
 	if len(got.Columns) != maxColumns {
 		t.Errorf("got %d columns, want %d", len(got.Columns), maxColumns)
 	}
@@ -79,8 +77,6 @@ func TestClampTruncatesOverlongFields(t *testing.T) {
 }
 
 func TestTruncateCountsRunesNotBytes(t *testing.T) {
-	// Titles end in an emoji by design, so cutting on bytes would leave a
-	// mangled rune at the end.
 	got := truncate(strings.Repeat("🚀", 10), 4)
 
 	if len([]rune(got)) != 4 {

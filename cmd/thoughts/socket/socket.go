@@ -16,8 +16,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// NewRetroSocketHandler serves the per-retro websocket. devOrigin lets the
-// Vite dev server connect and should be empty in production.
 func NewRetroSocketHandler(db *sqlx.DB, devOrigin string) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,

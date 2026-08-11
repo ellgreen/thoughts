@@ -18,10 +18,6 @@ export type GifSearchStatus = "idle" | "loading" | "loading-more" | "error";
 
 const debounceMs = 300;
 
-/**
- * Searches the GIF proxy, debounced and paginated. An empty query returns
- * trending, so the picker has something to show the moment it opens.
- */
 export function useGifSearch(query: string, enabled: boolean) {
   const [results, setResults] = useState<GifResult[]>([]);
   const [status, setStatus] = useState<GifSearchStatus>("idle");

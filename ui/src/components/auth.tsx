@@ -13,8 +13,6 @@ export default function AuthProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // Seeded from the cache so the name is there on first paint. Status stays
-  // "pending" until the server has spoken.
   const [user, setUser] = useState<User | null>(getStoredUser());
   const [status, setStatus] = useState<AuthStatus>("pending");
 
@@ -33,13 +31,11 @@ export default function AuthProvider({
   }, []);
 
   const logout = useCallback(async () => {
-    // Drop the local session even if the request fails.
     await api.post("/api/auth/logout").catch(() => {});
 
     clearSession();
   }, [clearSession]);
 
-  // Without this the router guards on a cached name and every loader 401s.
   useEffect(() => {
     let cancelled = false;
 

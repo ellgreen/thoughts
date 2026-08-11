@@ -10,17 +10,11 @@ import { Note } from "@/types";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import useRetro from "./use-retro";
 
-/** Events we apply locally before the server has confirmed them. */
 const optimisticEvents = new Set(["note_create", "note_update", "note_delete"]);
 
 interface NotesState {
   notes: Note[];
-  /** False until the first fetch lands, so the board can show skeletons. */
   loaded: boolean;
-  /**
-   * Keyed by the ref of an unconfirmed mutation, holding what to restore if
-   * the server rejects it. `null` means it was a create, so drop the note.
-   */
   rollbacks: Record<string, Note | null>;
 }
 
@@ -44,7 +38,6 @@ function forget(
   return next;
 }
 
-/** Strips the correlation id the server echoes back alongside the note. */
 function toNote(payload: Note & Partial<Ref>): Note {
   const note = { ...payload };
   delete note.ref;
@@ -58,7 +51,6 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
       return { notes: event.payload as Note[], loaded: true, rollbacks: {} };
     }
 
-    // Optimistic: applied locally the moment the user acts.
     case "note_create": {
       const payload = event.payload as PayloadNoteCreate & Ref;
 
@@ -92,7 +84,6 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
                 ...note,
                 content: payload.content ?? note.content,
                 column_id: payload.column_id ?? note.column_id,
-                // Mirrors the server: no group_id means a group of its own.
                 group_id: payload.group_id ?? `ungrouped-${note.id}`,
                 img_url: payload.remove_img_url
                   ? ""
@@ -116,11 +107,9 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
       };
     }
 
-    // Confirmations broadcast by the server.
     case "note_created": {
       const payload = event.payload as Note & Partial<Ref>;
 
-      // Our placeholder carries the ref as its id.
       const notes = payload.ref
         ? state.notes.filter((note) => note.id !== payload.ref)
         : state.notes;

@@ -21,7 +21,6 @@ func newProvider(t *testing.T, tls bool) *session.Provider {
 	return sp
 }
 
-// issue performs a login-shaped save and returns the cookie that came back.
 func issue(t *testing.T, sp *session.Provider, req *http.Request) *http.Cookie {
 	t.Helper()
 

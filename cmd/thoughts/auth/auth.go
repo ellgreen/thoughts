@@ -48,7 +48,6 @@ func Middleware(db *sqlx.DB, sp *session.Provider) mux.MiddlewareFunc {
 				slog.Error("failed to get user", "error", err)
 				w.WriteHeader(http.StatusInternalServerError)
 
-				// Without this the handler runs on with a nil user.
 				return
 			}
 
@@ -59,8 +58,6 @@ func Middleware(db *sqlx.DB, sp *session.Provider) mux.MiddlewareFunc {
 	})
 }
 
-// rejected records why a request was turned away. Debug level: every
-// logged-out page load produces one.
 func rejected(r *http.Request, reason string, args ...any) {
 	slog.Debug(
 		"rejecting unauthenticated request",

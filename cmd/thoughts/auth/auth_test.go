@@ -15,7 +15,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// sessionFor issues a request carrying a session cookie for the given user id.
 func sessionFor(t *testing.T, sp *session.Provider, userID uuid.UUID) *http.Request {
 	t.Helper()
 
@@ -42,7 +41,6 @@ func serve(t *testing.T, db *sqlx.DB, sp *session.Provider, req *http.Request) *
 	handler := auth.Middleware(db, sp)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reached = true
 
-		// The middleware used to fall through with a nil user here.
 		if user := auth.UserFromRequest(r); user == nil {
 			t.Error("handler reached with no user")
 		}
@@ -89,7 +87,6 @@ func TestMiddlewareRejectsASessionForAUserThatNoLongerExists(t *testing.T) {
 	db := testutil.NewDB(t)
 	sp := newProvider(t)
 
-	// The cookie still decodes, it just points at nobody.
 	code := serve(t, db, sp, sessionFor(t, sp, uuid.New())).Code
 
 	if code != http.StatusUnauthorized {
@@ -112,7 +109,6 @@ func TestMiddlewareRejectsAnUndecodableCookie(t *testing.T) {
 	db := testutil.NewDB(t)
 	sp := newProvider(t)
 
-	// What a rotated session key looks like from the browser's side.
 	other := newProvider(t)
 	req := sessionFor(t, other, uuid.New())
 
@@ -132,8 +128,6 @@ func TestMiddlewareStopsOnALookupFailure(t *testing.T) {
 
 	req := sessionFor(t, sp, user.ID)
 
-	// Any lookup failure that is not "no such row". The middleware used to
-	// write a 500 and carry on into the handler with a nil user.
 	db.Close()
 
 	if code := serve(t, db, sp, req).Code; code != http.StatusInternalServerError {

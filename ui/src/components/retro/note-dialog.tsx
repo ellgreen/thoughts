@@ -91,8 +91,6 @@ export default function NoteDialog({
               )}
             />
 
-            {/* An explicit button: the form previously relied on implicit
-                submission, which is easy to miss and easy to break. */}
             <DialogFooter className="mt-4">
               <Button type="submit">Save</Button>
             </DialogFooter>

@@ -77,30 +77,47 @@ login creates a new user row, so two people called Alex are two people, and one
 person entering their name twice gets two sessions. Do not add uniqueness to
 `users.name` or try to reuse a row by name.
 
+Migrations are append-only once merged. A migration that changes or deletes
+existing rows needs asking about first.
+
 ## Writing code here
 
 Match the surrounding code. Prefer clear naming and small functions over
 explanation.
 
-**Comment sparingly.** The bar is: would a competent reader be surprised, or
-reintroduce the problem, without this? If not, leave it out.
+### Comments
 
-Worth a comment:
+**The default is no comment.** Code that needs prose to be understood should be
+rewritten instead. Most functions, types, props and exported symbols in this
+repo have no comment, and that is correct — do not "improve" them by adding
+one.
 
-- A workaround for a library or browser quirk, naming it.
-- Why an obvious-looking alternative was rejected.
-- A constant that has to stay in step with something elsewhere.
+A comment has to earn its place by carrying information that is *not in the
+code and not inferable from it*. In practice that is almost always one of:
 
-Not worth a comment:
+- A library, browser or API quirk, named. *"popLayout clones each child with a
+  ref of its own, which used to overwrite this one."*
+- Why a reasonable-looking alternative is wrong here. *"A transaction is the
+  wrong tool: sqlx issues a deferred BEGIN, so under WAL a concurrent writer
+  fails rather than serialising."*
+- A value that must stay in step with something in another file.
 
-- Anything the code already says. No `// Set the title` above a title being set.
-- Narrating a component's structure, or restating a name in prose.
-- Justifying a design choice that no one would question.
-- Section headers inside a function.
+If you cannot state which of those a comment is, delete it.
 
-Keep them to a line or two. A doc comment on an exported symbol should say what
-it is for, not how it works. Do not add a comment to every branch of a switch,
-every prop in an interface, or every step of a sequence.
+Never write a comment that:
+
+- Restates the code, the function name, or a type name in prose.
+- Describes what a component renders or how a layout is arranged.
+- Explains a design or styling choice nobody would question.
+- Acts as a section header inside a function.
+- Says what a test is testing when the test name already says it.
+
+One or two lines. A block comment longer than three lines needs a reason to
+exist. Do not comment every branch of a switch, every field of a struct or
+interface, or every step of a sequence.
+
+When editing existing code, leave surrounding comments alone unless they are
+now wrong.
 
 ## Verifying
 

@@ -13,15 +13,10 @@ import (
 )
 
 const (
-	// Matches the create validator in controllers/retros.go, and the widths
-	// the board grid has classes for.
 	minColumns = 2
 	maxColumns = 5
 )
 
-// Columns live as a JSON blob on the retro rather than in their own table, and
-// requests.FromMap cannot decode nested structs, so each event carries one
-// column at a time.
 type (
 	columnCreateRequest struct {
 		Title       string `json:"title" validate:"required,min=2,max=255"`
@@ -118,7 +113,6 @@ func (b *Broker) handleColumnDelete(db *sqlx.DB, retroID uuid.UUID) Handler {
 					return nil, newErrorEvent(fmt.Sprintf("a retro must have at least %d columns", minColumns))
 				}
 
-				// An empty column has no groups, so no votes to strand.
 				count, err := dal.NoteCountForColumn(ctx, db, retroID, req.ColumnID)
 				if err != nil {
 					slog.Error("problem counting notes for column", "error", err)

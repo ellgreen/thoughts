@@ -9,7 +9,6 @@ import (
 )
 
 const (
-	// Mirrors the create endpoint's limits.
 	maxColumns     = 5
 	maxFieldLength = 255
 )
@@ -101,9 +100,6 @@ func GenerateRetroTemplate(ctx context.Context, model ai.Model, userPrompt strin
 	return clamp(resp), nil
 }
 
-// clamp brings a generated template inside what the create endpoint accepts.
-// The prompt asks for this, but a model is free to ignore it, and the failure
-// would surface as a validation error on a form nobody filled in.
 func clamp(resp RetroTemplateResponse) RetroTemplateResponse {
 	if len(resp.Columns) > maxColumns {
 		resp.Columns = resp.Columns[:maxColumns]

@@ -1,11 +1,6 @@
 import { cn } from "@/lib/utils";
 
-/**
- * Placeholder shown while the first fetch is in flight. Columns used to render
- * as empty for the round trip, which reads as "there is nothing here".
- */
 export function NoteSkeletons({ count = 2 }: { count?: number }) {
-  // Uneven heights so it reads as notes rather than a table.
   const heights = [64, 88, 72, 96];
 
   return (
@@ -21,7 +16,6 @@ export function NoteSkeletons({ count = 2 }: { count?: number }) {
   );
 }
 
-/** Quiet nudge for a column with nothing in it yet. */
 export function EmptyColumn({
   children,
   className,

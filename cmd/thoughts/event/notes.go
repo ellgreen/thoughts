@@ -14,8 +14,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// Fields that change what a note says rather than where it sits. Only the
-// author may change these; moving a note is open to everyone.
 var noteContentFields = []string{"content", "img_url", "remove_img_url"}
 
 type noteCreateRequest struct {
@@ -41,9 +39,6 @@ func (b *Broker) handleNoteCreate(db *sqlx.DB, retroID uuid.UUID) Handler {
 	}
 }
 
-// createNote holds the columns lock so a column cannot be deleted between
-// checking it exists and writing a note into it, which would leave the note
-// invisible but still counted.
 func (b *Broker) createNote(
 	ctx context.Context,
 	db *sqlx.DB,
@@ -138,9 +133,6 @@ func (b *Broker) handleNoteDelete(db *sqlx.DB, retroID uuid.UUID) Handler {
 	}
 }
 
-// authoriseNote checks the note belongs to this retro, and when requireOwner
-// is set, that the caller wrote it. Without the retro check a crafted event
-// reaches into retros the caller is not connected to.
 func authoriseNote(
 	ctx context.Context,
 	db *sqlx.DB,

@@ -7,7 +7,6 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { CircleCheck, StickyNote, Telescope } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
 
-// One accent per stage, so a glance down the list tells you where things are.
 const statusAccent: Record<RetroStatus, string> = {
   brainstorm: accentForIndex(0),
   group: accentForIndex(1),
@@ -75,7 +74,6 @@ export function RetroItem({
       }}
       className="group relative flex cursor-pointer flex-col gap-3 overflow-hidden rounded-xl bg-surface-raised p-4 pl-5 ring-1 ring-border/70 transition-shadow hover:shadow-[0_8px_28px_-10px_rgb(0_0_0/0.25)] focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
-      {/* Stage-coloured spine down the left edge. */}
       <span
         aria-hidden
         className="absolute inset-y-0 left-0 w-1"

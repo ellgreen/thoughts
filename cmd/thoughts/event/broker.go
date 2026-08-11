@@ -23,8 +23,6 @@ type Broker struct {
 	events              chan *Event
 	userDependentEvents chan UserDependentEvent
 
-	// Guards the read-modify-write of the retro's columns JSON blob, and the
-	// check-then-insert when a note is written into a column.
 	columnsMu sync.Mutex
 }
 
@@ -77,8 +75,6 @@ func (b *Broker) Handle(ctx context.Context, user *model.User, message io.Reader
 
 	err = handler(ctx, user, event.Payload)
 
-	// Echo the client's correlation ref back on failure so it can roll back the
-	// one optimistic update that failed rather than every in-flight one.
 	errorEvent := &ErrorEvent{}
 	if errors.As(err, &errorEvent) {
 		if ref, ok := event.Payload["ref"].(string); ok && ref != "" {

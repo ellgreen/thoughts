@@ -13,9 +13,6 @@ import (
 // use the proxy to smuggle a payload upstream.
 const maxGifQuery = 64
 
-// GifSearch proxies GIF search so the provider's API key never reaches the
-// browser. An empty query returns trending, which gives the picker something
-// to show before anyone types.
 func GifSearch(provider gif.Provider) http.Handler {
 	if provider == nil {
 		return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

@@ -40,8 +40,6 @@ func TestObfuscatePreservesShape(t *testing.T) {
 }
 
 func TestObfuscateCanEmitEveryCharacterInAClass(t *testing.T) {
-	// A rand.Intn(len-1) off-by-one used to make the last rune of each class
-	// unreachable, which is a subtle tell that text has been scrambled.
 	cases := map[string]struct {
 		input string
 		want  rune

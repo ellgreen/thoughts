@@ -15,7 +15,6 @@ function note(overrides: Partial<Note> = {}): Note {
   };
 }
 
-/** Replays a sequence of events, the way the hook does. */
 function replay(...events: SocketEvent[]): NotesState {
   return events.reduce(notesReducer, initialState);
 }

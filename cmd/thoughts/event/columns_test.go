@@ -13,7 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-// currentColumns re-reads the retro, so assertions see what was persisted.
 func (h *harness) currentColumns(t *testing.T) model.RetroColumns {
 	t.Helper()
 
@@ -58,7 +57,6 @@ func TestColumnUpdateRenamesInPlace(t *testing.T) {
 		t.Errorf("column was not updated: %+v", updated)
 	}
 
-	// The other column is untouched, and order is preserved.
 	if columns[0].ID != target {
 		t.Error("columns were reordered")
 	}

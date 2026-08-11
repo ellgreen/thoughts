@@ -78,8 +78,6 @@ function VoteCount({ forGroup, total }: { forGroup: number; total: number }) {
 
   return (
     <m.div
-      // Springs in whenever the count changes, so a vote landing is visible
-      // without anyone watching the number.
       key={`${forGroup}-${isHot}`}
       initial={{ scale: 0.7, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}

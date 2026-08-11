@@ -12,20 +12,16 @@ import (
 )
 
 const (
-	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
 
-	// Time allowed to read the next pong message from the peer.
 	pongWait = 60 * time.Second
 
-	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
 	// Maximum message size allowed from peer. A retro_update with a full
 	// title and ten tags is already well over 512 bytes.
 	maxMessageSize = 4096
 
-	// Outbound messages buffered before a client counts as stalled.
 	sendBufferSize = 64
 )
 
@@ -73,9 +69,6 @@ func (c *Client) ReadPump(ctx context.Context) {
 	}
 }
 
-// Send queues a message, reporting false when the client's buffer is full and
-// its write pump has stalled. Blocking here would freeze the hub and every
-// broadcast in the retro, so the caller drops the client instead.
 func (c *Client) Send(message []byte) bool {
 	select {
 	case c.send <- message:

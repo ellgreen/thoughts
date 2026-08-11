@@ -24,13 +24,9 @@ var ErrValueNotFound = errors.New("session: value not found")
 type Provider struct {
 	store sessions.Store
 
-	// Set when the server terminates TLS itself. A proxied https request is
-	// detected per request instead.
 	tls bool
 }
 
-// LoadSessionProvider builds the cookie session store. tls decides whether the
-// cookie may be marked Secure.
 func LoadSessionProvider(keyPath string, tls bool) (*Provider, error) {
 	key, err := loadKey(keyPath)
 	if err != nil {
@@ -58,8 +54,6 @@ func defaultOptions(secure bool) *sessions.Options {
 	}
 }
 
-// optionsFor allows Secure when the request arrived over https, so a proxied
-// deployment still gets a Secure cookie.
 func (sp *Provider) optionsFor(r *http.Request) *sessions.Options {
 	return defaultOptions(sp.tls || isHTTPS(r))
 }

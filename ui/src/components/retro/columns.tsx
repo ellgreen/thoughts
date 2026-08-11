@@ -32,12 +32,10 @@ function Columns({
   canAddColumn,
 }: {
   children: React.ReactNode;
-  /** Overrides the child count. Discuss appends a synthetic Tasks column. */
   count?: number;
   onAddColumn?: (data: ColumnData) => void;
   canAddColumn?: boolean;
 }) {
-  // Outside 2..6 the lookup is undefined, which collapses the whole board.
   const columnCount = Math.min(
     Math.max(count ?? Children.count(children), 2),
     6,
@@ -98,8 +96,6 @@ const Column = function Column({
   const hasActions = !!(onEdit || onDelete);
 
   return (
-    // Named: notes use a bare `group`, which would reveal these on any note
-    // hover.
     <div
       style={{ ...accentStyle(index), ...style }}
       className={twMerge(
@@ -203,8 +199,6 @@ function ColumnDeleteButton({
 
   return (
     <Tooltip>
-      {/* A disabled button swallows pointer events, so the tooltip needs a
-          wrapper. */}
       <TooltipTrigger asChild>
         <span className="inline-flex">{button}</span>
       </TooltipTrigger>

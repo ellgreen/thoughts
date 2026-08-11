@@ -20,13 +20,11 @@ const maxTags = 10;
 const maxSuggestions = 8;
 
 interface Option {
-  /** Already normalised. */
   value: string;
   label: string;
   isNew?: boolean;
 }
 
-/** The only form the server sees. */
 function normalise(tag: string): string {
   return tag.trim().toLowerCase().replace(/\s+/g, "-");
 }
@@ -56,8 +54,6 @@ export default function TagInput({
     .filter((s) => !value.includes(s) && (typed === "" || s.includes(typed)))
     .slice(0, maxSuggestions);
 
-  // Matches first, so Tab completes to a real tag rather than what you
-  // half-typed.
   const options: Option[] = [
     ...matches.map((tag) => ({ value: tag, label: tag })),
     ...(typed && !matches.includes(typed) && !value.includes(typed)
@@ -105,8 +101,6 @@ export default function TagInput({
         move(-1);
         return;
 
-      // With nothing typed there is nothing to complete, so Tab moves focus
-      // on as normal.
       case "Tab":
         if (e.shiftKey || !input.trim() || !active) return;
 
@@ -195,8 +189,6 @@ export default function TagInput({
 
       <PopoverContent
         className="w-[var(--radix-popover-trigger-width)] p-1"
-        // The list is driven from the input's keydown handler, so stealing
-        // focus would close the thing being navigated.
         onOpenAutoFocus={(e) => e.preventDefault()}
         onInteractOutside={() => setOpen(false)}
       >
@@ -209,7 +201,6 @@ export default function TagInput({
               aria-selected={index === activeIndex}
               onMouseEnter={() => setActiveIndex(index)}
               onMouseDown={(e) => {
-                // Before blur, so the input never loses focus to the click.
                 e.preventDefault();
                 addTag(option.value);
               }}

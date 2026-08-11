@@ -57,16 +57,12 @@ function LoginForm() {
     try {
       await login(data.name);
     } catch {
-      // Anything the server rejected outright, so it lands on the field the
-      // person can actually do something about rather than vanishing.
       form.setError("name", {
         message: "We couldn't sign you in. Please try again.",
       });
     }
   }
 
-  // Driven by the verified session, not by a cached name: landing here with a
-  // stale cache used to bounce straight back into the app and 401.
   useEffect(() => {
     if (!isAuthenticated) return;
 

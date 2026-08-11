@@ -1,7 +1,6 @@
 import { User } from "@/types";
 import { createContext, useContext } from "react";
 
-/** "pending" until the server has confirmed the cookie is still good. */
 export type AuthStatus = "pending" | "authenticated" | "anonymous";
 
 export interface AuthContext {
@@ -17,10 +16,6 @@ export const AuthContext = createContext<AuthContext | null>(null);
 const nameKeyName = "thoughts.auth.user.name";
 const aiKeyName = "thoughts.auth.user.ai_enabled";
 
-/**
- * A convenience cache for first paint, never proof of anything: the session
- * cookie is the only credential.
- */
 export function getStoredUser(): User | null {
   const name = localStorage.getItem(nameKeyName);
   const ai_enabled = JSON.parse(localStorage.getItem(aiKeyName) ?? "false");

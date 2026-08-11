@@ -1,20 +1,11 @@
 import { RetroStatus } from "@/types";
 import { Group, MessagesSquare, PenLine, Vote } from "lucide-react";
 
-/**
- * The stage names shown in the UI, in order.
- *
- * The wire values are fixed by the API; these labels are ours. "Brainstorm"
- * became "Reflect": it says what people are actually doing in that stage
- * (writing down their own thoughts, privately) rather than naming a meeting
- * format, and it does not clash with "Group" the way "Gather" would.
- */
 export const stages = [
   {
     status: "brainstorm",
     label: "Reflect",
     icon: PenLine,
-    /** Labels the button that moves the retro *into* this stage. */
     action: "Back to reflecting",
   },
   {

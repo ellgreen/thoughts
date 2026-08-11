@@ -32,7 +32,6 @@ export default function Brainstorm() {
     const overColumnId = event.over?.id;
     const note = notes.find((n) => n.id === event.active?.id);
 
-    // Dropped outside any column, or the column vanished mid-drag.
     if (!note || !overColumnId) return;
 
     if (note.column_id === overColumnId) return;

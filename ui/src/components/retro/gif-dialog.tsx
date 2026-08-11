@@ -61,8 +61,6 @@ export default function GIFDialog({
           </TabsList>
 
           <TabsContent value="search">
-            {/* Mounted only while visible so trending is not fetched for
-                someone who only ever pastes links. */}
             {gif_search_enabled && <SearchTab onSelect={handleSelect} />}
           </TabsContent>
 
@@ -186,7 +184,6 @@ function Tile({
 }
 
 function TileSkeletons() {
-  // Uneven heights so the placeholder reads as a masonry grid, not a table.
   const heights = [140, 96, 120, 108, 152, 88, 116, 132, 100];
 
   return (

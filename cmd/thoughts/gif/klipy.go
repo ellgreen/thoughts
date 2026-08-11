@@ -9,8 +9,6 @@ import (
 	"strconv"
 )
 
-// KlipyProvider talks to https://klipy.com, a free-for-life GIF API and the
-// closest replacement for the retired Tenor one.
 type KlipyProvider struct {
 	BaseURL string
 	APIKey  string
@@ -76,7 +74,6 @@ type (
 func (k *KlipyProvider) fetch(ctx context.Context, path string, params url.Values, page int) (*SearchPage, error) {
 	page = normalisePage(page)
 
-	// The key goes in the path, not a header or query param.
 	endpoint, err := url.JoinPath(k.BaseURL, k.APIKey, path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build klipy url: %w", err)
@@ -127,14 +124,11 @@ func (k *KlipyProvider) fetch(ctx context.Context, path string, params url.Value
 }
 
 func (i klipyItem) toResult() (SearchResult, bool) {
-	// Medium suits a note card; fall back so a missing variant is still usable.
 	full := firstFile(i.File.MD.Gif, i.File.HD.Gif, i.File.SM.Gif)
 	if full.URL == "" {
-		// Ads come through the same list.
 		return SearchResult{}, false
 	}
 
-	// webp for the grid: a quarter of the bytes.
 	preview := firstFile(i.File.SM.Webp, i.File.XS.Webp, i.File.SM.Gif, full)
 
 	return SearchResult{

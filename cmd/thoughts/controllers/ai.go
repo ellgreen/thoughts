@@ -11,8 +11,6 @@ import (
 	"github.com/ellgreen/thoughts/cmd/thoughts/requests"
 )
 
-// Generous enough for a slow model, short enough that a hung provider surfaces
-// as an error rather than an endless wait.
 const generateTimeout = 30 * time.Second
 
 type PromptRequest struct {
@@ -32,8 +30,6 @@ func AIRetroTemplate(aiModel ai.Model) http.Handler {
 			return
 		}
 
-		// Bounded, so a slow or unreachable provider cannot leave someone
-		// watching a spinner indefinitely.
 		ctx, cancel := context.WithTimeout(r.Context(), generateTimeout)
 		defer cancel()
 

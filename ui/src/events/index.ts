@@ -20,8 +20,6 @@ export interface PayloadStatusUpdate {
 
 export interface PayloadError {
   message: string;
-  /** Echoed back from the failed request so the client can roll back the one
-   * optimistic update that failed rather than every in-flight one. */
   ref?: string;
 }
 
@@ -41,8 +39,6 @@ export interface PayloadNoteUpdate {
   remove_img_url?: boolean;
 }
 
-/** Correlation id attached to optimistic mutations and echoed back by the
- * server on both confirmation and failure. */
 export interface Ref {
   ref: string;
 }

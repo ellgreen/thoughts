@@ -9,9 +9,6 @@ import (
 	"strconv"
 )
 
-// GiphyProvider talks to https://developers.giphy.com. Giphy no longer has a
-// free tier, so it is here for anyone who already holds a key rather than as
-// the default.
 type GiphyProvider struct {
 	BaseURL string
 	APIKey  string

@@ -6,17 +6,12 @@ export const api = axios.create({
   baseURL: import.meta.env.DEV ? "http://localhost:3000" : undefined,
 });
 
-/** Endpoints where a 401 is a normal answer, not an expired session. */
 const authEndpoints = ["/api/auth/self", "/api/auth/login"];
 
 type SessionExpiredHandler = () => void;
 
 let onSessionExpired: SessionExpiredHandler = () => {};
 
-/**
- * Registered by the auth provider. The interceptor cannot redirect itself: a
- * thrown router redirect is only caught inside a loader.
- */
 export function setSessionExpiredHandler(handler: SessionExpiredHandler) {
   onSessionExpired = handler;
 }

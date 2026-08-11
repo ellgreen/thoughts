@@ -54,8 +54,6 @@ func (r *Retro) IsBrainstorming() bool {
 	return r.Status == RetroStatusBrainstorm
 }
 
-// Find returns the column with the given id, or nil. Value receiver because
-// GetColumns hands back a value, not a pointer.
 func (rc RetroColumns) Find(id uuid.UUID) *RetroColumn {
 	for _, column := range rc {
 		if column.ID == id {

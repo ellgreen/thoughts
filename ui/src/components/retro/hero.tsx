@@ -38,7 +38,6 @@ const stats = [
 export default function Hero({ stats: values }: { stats: HeroStats }) {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-surface px-6 py-7 ring-1 ring-border/60 sm:px-8">
-      {/* Wispy background orbs, drifting slowly enough to read as ambient. */}
       <m.div
         aria-hidden
         className="pointer-events-none absolute -top-24 -left-20 size-72 rounded-full bg-[var(--chart-1)]/15 blur-3xl"

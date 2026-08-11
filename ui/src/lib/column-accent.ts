@@ -1,8 +1,3 @@
-/**
- * Derived from position rather than stored. Once notes are grouped and
- * reordered by vote, colour is the only thing left saying which column a
- * thought came from.
- */
 const accents = [
   "var(--chart-1)",
   "var(--chart-2)",
@@ -15,12 +10,10 @@ export function accentForIndex(index: number): string {
   return accents[((index % accents.length) + accents.length) % accents.length];
 }
 
-/** Set on the column so children can reach it without a threaded prop. */
 export function accentStyle(index: number): React.CSSProperties {
   return { "--accent": accentForIndex(index) } as React.CSSProperties;
 }
 
-/** Deterministic accent for a person, used for author initials. */
 export function accentForName(name: string): string {
   let hash = 0;
 

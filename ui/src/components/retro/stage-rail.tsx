@@ -21,7 +21,6 @@ import { ArrowRight, Check, Undo2 } from "lucide-react";
 import { m } from "motion/react";
 import { useState } from "react";
 
-/** Where the retro is, and how it moves on. The rail is read-only. */
 export default function StageRail({
   status,
   onStatusUpdate,
@@ -70,7 +69,6 @@ export default function StageRail({
                   )}
                 >
                   {active && (
-                    // One element sliding between stages, not four fading.
                     <m.span
                       layoutId="stage-rail-active"
                       transition={spring}

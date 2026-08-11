@@ -27,7 +27,6 @@ export default function Group() {
     let groupId = "";
 
     if (overId.includes(".")) {
-      // Dragged onto an existing group rather than empty column space.
       [columnId, groupId] = overId.split(".");
     }
 
@@ -42,8 +41,6 @@ export default function Group() {
     );
   }
 
-  // An empty group_id asks the server for a fresh one. The column is left out
-  // so the note keeps the one it has.
   function handleUngroup(noteId: string) {
     dispatch(createSocketEvent("note_update", { id: noteId, group_id: "" }));
   }
@@ -70,7 +67,6 @@ export default function Group() {
                 <EmptyColumn>No thoughts in this column.</EmptyColumn>
               )}
 
-              {/* Sync rather than popLayout: see brainstorm.tsx. */}
               <AnimatePresence initial={false}>
                 {groups.map(([groupId, groupNotes]) => (
                   <DroppableNoteGroup

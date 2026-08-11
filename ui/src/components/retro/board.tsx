@@ -68,9 +68,6 @@ export default function Board() {
       <div className="sticky top-12 z-40 mb-4">
         <Collapsible open={expanded} onOpenChange={setExpanded}>
           <div className="rounded-xl bg-background/80 shadow-sm ring-1 ring-border/40 backdrop-blur-xl">
-            {/* Compact bar, always visible. Stacks on narrow screens: the
-                title and the rail cannot share 375px without one of them
-                becoming unreadable. */}
             <div className="flex flex-col gap-1.5 px-4 py-2 sm:h-12 sm:flex-row sm:items-center sm:gap-3 sm:py-0">
               <span
                 className={`min-w-0 flex-1 truncate font-bold tracking-tight transition-all ${
@@ -158,8 +155,6 @@ export default function Board() {
         </Collapsible>
       </div>
 
-      {/* Stage content crossfades while the notes themselves morph across via
-          their shared layoutIds. */}
       <AnimatePresence mode="wait" initial={false}>
         <m.div
           key={status}

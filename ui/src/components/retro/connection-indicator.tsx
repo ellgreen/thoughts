@@ -16,7 +16,6 @@ const states: Record<number, { label: string; dot: string; live: boolean }> = {
   3: { label: "Disconnected", dot: "bg-red-500", live: false },
 };
 
-// How many avatars fit before the rest collapse into a +N.
 const maxAvatars = 3;
 
 export default function ConnectionIndicator({
@@ -42,7 +41,6 @@ export default function ConnectionIndicator({
         <Button variant="outline" size="sm" className="gap-2">
           <span className="relative flex size-2">
             {state.live && (
-              // Slow pulse: proof the socket is alive without a spinner.
               <span
                 className={`absolute inline-flex size-full animate-ping rounded-full opacity-60 ${state.dot}`}
               />

@@ -37,8 +37,6 @@ function RouteComponent() {
         <Hero stats={stats} />
       </m.div>
 
-      {/* The list leads now; creating a retro is one click behind a dialog
-          rather than a permanently open form taking half the page. */}
       <div className="flex items-center justify-between gap-4">
         <h2 className="text-lg font-semibold tracking-tight">Recent retros</h2>
         <Creator />

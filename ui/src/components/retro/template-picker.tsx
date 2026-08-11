@@ -41,13 +41,10 @@ export default function TemplatePicker({
           <DropdownMenuItem
             key={template.title}
             onClick={() => onApply(template.columns)}
-            // Items are two lines tall, so the default centring looks off.
             className="flex-col items-start gap-1.5 py-2"
           >
             <span className="font-medium">{template.title}</span>
 
-            {/* The column names, in the colours they will actually be on the
-                board - picking a template stops being a guess. */}
             <span className="flex flex-wrap gap-1">
               {template.columns.map((column, i) => (
                 <span
