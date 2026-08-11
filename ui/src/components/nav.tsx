@@ -1,9 +1,8 @@
 import Container from "@/components/container";
 import { useAuth } from "@/hooks/use-auth";
 import useTheme, { Theme } from "@/hooks/use-theme";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { LogOut, Monitor, Moon, Sun } from "lucide-react";
-import { useEffect } from "react";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -19,12 +18,6 @@ import {
 export default function Nav() {
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (user) return;
-    navigate({ to: "/login" });
-  }, [user]);
 
   const themeIcon = theme === "dark" ? <Moon className="size-4" /> : theme === "light" ? <Sun className="size-4" /> : <Monitor className="size-4" />;
 

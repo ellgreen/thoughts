@@ -40,6 +40,10 @@ func Middleware(db *sqlx.DB, sp *session.Provider) mux.MiddlewareFunc {
 
 				slog.Error("failed to get user", "error", err)
 				w.WriteHeader(http.StatusInternalServerError)
+
+				// Without this the handler ran on with a nil user, and
+				// UserFromRequest panicked on the way through.
+				return
 			}
 
 			r = RequestWithUser(r, user)

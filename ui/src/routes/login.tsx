@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { FieldValues, useForm } from "react-hook-form";
 import { z } from "zod";
@@ -42,8 +42,7 @@ const schema = z.object({
 });
 
 function LoginForm() {
-  const { user, login } = useAuth();
-  const router = useRouter();
+  const { isAuthenticated, login } = useAuth();
   const navigate = Route.useNavigate();
   const search = Route.useSearch();
 
@@ -55,18 +54,24 @@ function LoginForm() {
   });
 
   async function handleSubmit(data: FieldValues) {
-    await login(data.name);
+    try {
+      await login(data.name);
+    } catch {
+      // Anything the server rejected outright, so it lands on the field the
+      // person can actually do something about rather than vanishing.
+      form.setError("name", {
+        message: "We couldn't sign you in. Please try again.",
+      });
+    }
   }
 
+  // Driven by the verified session, not by a cached name: landing here with a
+  // stale cache used to bounce straight back into the app and 401.
   useEffect(() => {
-    if (!user) return;
+    if (!isAuthenticated) return;
 
-    router.invalidate().then(() => {
-      navigate({
-        to: search.redirect || "/",
-      });
-    });
-  }, [user]);
+    navigate({ to: search.redirect || "/" });
+  }, [isAuthenticated, navigate, search.redirect]);
 
   return (
     <Card className="w-full mx-auto max-w-sm">
@@ -95,7 +100,12 @@ function LoginForm() {
               )}
             />
 
-            <Button className="mt-4 w-full">Enter</Button>
+            <Button
+              className="mt-4 w-full"
+              disabled={form.formState.isSubmitting}
+            >
+              {form.formState.isSubmitting ? "Signing in…" : "Enter"}
+            </Button>
           </form>
         </Form>
       </CardContent>

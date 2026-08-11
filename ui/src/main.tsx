@@ -1,9 +1,10 @@
 import { RouterProvider } from "@tanstack/react-router";
 import { domMax, LazyMotion, MotionConfig } from "motion/react";
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import AuthProvider from "./components/auth.tsx";
 import ThemeProvider from "./components/theme.tsx";
+import { Spinner } from "./components/ui/spinner.tsx";
 import { useAuth } from "./hooks/use-auth.ts";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/space-grotesk";
@@ -12,6 +13,22 @@ import { router } from "./router.tsx";
 
 function InnerApp() {
   const auth = useAuth();
+
+  // A session going stale has to re-run the route guards, otherwise whatever
+  // is on screen keeps firing requests that will only ever 401.
+  useEffect(() => {
+    router.invalidate();
+  }, [auth.status]);
+
+  // Guarded routes must not load until we know whether the session is real.
+  if (auth.status === "pending") {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <Spinner className="size-5 text-muted-foreground" />
+      </div>
+    );
+  }
+
   return <RouterProvider router={router} context={{ auth }} />;
 }
 
