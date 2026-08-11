@@ -447,7 +447,7 @@ function Details({ control }: { control: Control<FormValues> }) {
               />
             </FormControl>
             <FormDescription>
-              Groups retros together by team or project. Enter or comma to add.
+              Groups retros together by team or project. Tab or Enter to add.
             </FormDescription>
             <FormMessage />
           </FormItem>
