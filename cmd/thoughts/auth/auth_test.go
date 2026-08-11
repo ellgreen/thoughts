@@ -64,7 +64,7 @@ func serve(t *testing.T, db *sqlx.DB, sp *session.Provider, req *http.Request) *
 func newProvider(t *testing.T) *session.Provider {
 	t.Helper()
 
-	sp, err := session.LoadSessionProvider(filepath.Join(t.TempDir(), "session.key"))
+	sp, err := session.LoadSessionProvider(filepath.Join(t.TempDir(), "session.key"), false)
 	if err != nil {
 		t.Fatalf("failed to load session provider: %v", err)
 	}
