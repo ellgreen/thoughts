@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
+	"net/url"
+	"strings"
 	"sync"
 
 	"github.com/ellgreen/thoughts/cmd/thoughts/auth"
@@ -14,13 +16,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-func NewRetroSocketHandler(db *sqlx.DB) http.HandlerFunc {
+func NewRetroSocketHandler(db *sqlx.DB, devOrigin string) http.HandlerFunc {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
-		CheckOrigin: func(r *http.Request) bool {
-			return true //TODO: Only do this in development
-		},
+		CheckOrigin:     checkOrigin(devOrigin),
 	}
 
 	var hubs sync.Map
@@ -69,5 +69,37 @@ func NewRetroSocketHandler(db *sqlx.DB) http.HandlerFunc {
 
 		go client.ReadPump(ctx)
 		go client.WritePump()
+	}
+}
+
+// checkOrigin rejects cross-site connections: sessions are cookie based, so
+// any origin would let any page a logged-in user visits drive their retros.
+// Requests with no Origin are not browsers and are allowed through.
+func checkOrigin(devOrigin string) func(*http.Request) bool {
+	return func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		if origin == "" {
+			return true
+		}
+
+		originURL, err := url.Parse(origin)
+		if err != nil {
+			slog.Warn("rejecting websocket with unparseable origin", "origin", origin)
+			return false
+		}
+
+		if strings.EqualFold(originURL.Host, r.Host) {
+			return true
+		}
+
+		if devOrigin != "" {
+			if devURL, err := url.Parse(devOrigin); err == nil && strings.EqualFold(originURL.Host, devURL.Host) {
+				return true
+			}
+		}
+
+		slog.Warn("rejecting websocket from disallowed origin", "origin", origin, "host", r.Host)
+
+		return false
 	}
 }

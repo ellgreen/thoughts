@@ -12,6 +12,9 @@ var (
 	alphaUpperCharSet = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
+// Obfuscate scrambles a string while preserving its length and the character
+// class of each rune, so other people's notes read as noise of the right shape
+// during the brainstorm stage.
 func Obfuscate(v string) string {
 	var obfuscated strings.Builder
 
@@ -24,15 +27,15 @@ func Obfuscate(v string) string {
 
 func obfuscateChar(c rune) rune {
 	if slices.Contains(alphaLowerCharSet, c) {
-		return alphaLowerCharSet[rand.Intn(len(alphaLowerCharSet)-1)]
+		return alphaLowerCharSet[rand.Intn(len(alphaLowerCharSet))]
 	}
 
 	if slices.Contains(alphaUpperCharSet, c) {
-		return alphaUpperCharSet[rand.Intn(len(alphaUpperCharSet)-1)]
+		return alphaUpperCharSet[rand.Intn(len(alphaUpperCharSet))]
 	}
 
 	if slices.Contains(numCharSet, c) {
-		return numCharSet[rand.Intn(len(numCharSet)-1)]
+		return numCharSet[rand.Intn(len(numCharSet))]
 	}
 
 	return c

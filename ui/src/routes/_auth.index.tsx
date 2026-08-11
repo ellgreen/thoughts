@@ -1,9 +1,12 @@
+import Container from "@/components/container";
 import Creator from "@/components/retro/creator";
 import Hero from "@/components/retro/hero";
 import List from "@/components/retro/list";
 import { api } from "@/lib/api";
+import { panelVariants } from "@/lib/motion";
 import { Retro } from "@/types";
 import { createFileRoute } from "@tanstack/react-router";
+import { m } from "motion/react";
 
 export const Route = createFileRoute("/_auth/")({
   component: RouteComponent,
@@ -29,13 +32,17 @@ function RouteComponent() {
   const { retros, stats } = Route.useLoaderData();
 
   return (
-    <div className="max-w-400 mx-auto px-8 space-y-6">
-      <Hero stats={stats} />
+    <Container className="space-y-6">
+      <m.div variants={panelVariants} initial="initial" animate="animate">
+        <Hero stats={stats} />
+      </m.div>
 
-      <div className="grid grid-cols-2 gap-6 items-start">
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-lg font-semibold tracking-tight">Recent retros</h2>
         <Creator />
-        <List retros={retros} />
       </div>
-    </div>
+
+      <List retros={retros} />
+    </Container>
   );
 }

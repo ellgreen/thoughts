@@ -12,7 +12,7 @@ export interface Retro {
   columns: RetroColumn[];
   unlisted: boolean;
   max_votes: number;
-  gifs_enabled: boolean;
+  gif_search_enabled: boolean;
   tags: string[];
   created_at: string;
   note_count: number;

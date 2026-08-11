@@ -1,5 +1,3 @@
-import { setStoredUser } from "@/hooks/use-auth";
-import { redirect } from "@tanstack/react-router";
 import axios from "axios";
 import { toast } from "sonner";
 
@@ -8,10 +6,23 @@ export const api = axios.create({
   baseURL: import.meta.env.DEV ? "http://localhost:3000" : undefined,
 });
 
+const authEndpoints = ["/api/auth/self", "/api/auth/login"];
+
+type SessionExpiredHandler = () => void;
+
+let onSessionExpired: SessionExpiredHandler = () => {};
+
+export function setSessionExpiredHandler(handler: SessionExpiredHandler) {
+  onSessionExpired = handler;
+}
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 400) {
+    const status = error.response?.status;
+    const url: string = error.config?.url ?? "";
+
+    if (status === 400) {
       toast("There was a problem with the request", {
         description: error.response.data,
       });
@@ -19,10 +30,8 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401) {
-      setStoredUser(null);
-
-      throw redirect({ to: "/login" });
+    if (status === 401 && !authEndpoints.some((path) => url.startsWith(path))) {
+      onSessionExpired();
     }
 
     return Promise.reject(error);

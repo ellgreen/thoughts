@@ -40,7 +40,7 @@ func applyRoutes(
 	authRouter.Handle("/tags", controllers.TagSuggestions(db)).Methods(http.MethodGet)
 	authRouter.Handle("/tags/{tag}", controllers.TagRetros(db)).Methods(http.MethodGet)
 
-	authRouter.Handle("/gifs", controllers.GifSearch(gifProvider)).Methods(http.MethodPost)
+	authRouter.Handle("/gifs", controllers.GifSearch(gifProvider)).Methods(http.MethodGet)
 
 	aiRouter := authRouter.PathPrefix("/ai").Subrouter()
 	aiRouter.Handle("/retro-template", controllers.AIRetroTemplate(aiModel)).Methods(http.MethodPost)
@@ -52,7 +52,14 @@ func applyRoutes(
 
 	retroRouter := retrosRouter.PathPrefix(fmt.Sprintf("/{id:%s}", uuidRegex)).Subrouter()
 
-	retroRouter.Handle("/ws", socket.NewRetroSocketHandler(db))
+	// The Vite dev server runs on a different origin, so it needs allowing
+	// explicitly. A bundled build is always same-origin.
+	devOrigin := ""
+	if !ui.IsBundled() {
+		devOrigin = cfg.UIAddress
+	}
+
+	retroRouter.Handle("/ws", socket.NewRetroSocketHandler(db, devOrigin))
 	retroRouter.Handle("/notes", controllers.RetroNotesIndex(db)).Methods(http.MethodGet)
 	retroRouter.Handle("/votes", controllers.VotesIndex(db)).Methods(http.MethodGet)
 	retroRouter.Handle("/votes", controllers.Vote(db)).Methods(http.MethodPost)

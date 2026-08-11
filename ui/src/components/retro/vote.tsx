@@ -1,7 +1,10 @@
+import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
 import { api } from "@/lib/api";
+import { AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
+import { EmptyColumn, NoteSkeletons } from "./column-states";
 import { Column, Columns } from "./columns";
 import { Note } from "./note";
 import { VotableNoteGroup } from "./note-group";
@@ -16,7 +19,8 @@ export default function Vote({
   setVotesRemaining: (votesRemaining: number) => void;
 }) {
   const { retro } = useRetro();
-  const { groupedNotes } = useNotes();
+  const { notes, groupedNotes, loaded } = useNotes();
+  const columnActions = useColumnActions(notes);
 
   const [votes, setVotes] = useState<Vote[]>([]);
 
@@ -25,7 +29,7 @@ export default function Vote({
       setVotes(res.data);
       setVotesRemaining(retro.max_votes - res.data.length);
     });
-  }, [retro.id, retro.max_votes]);
+  }, [retro.id, retro.max_votes, setVotesRemaining]);
 
   function handleVote(groupId: string, value: boolean) {
     api
@@ -39,25 +43,43 @@ export default function Vote({
   }
 
   return (
-    <Columns>
-      {retro.columns.map((column) => (
-        <Column key={column.id} column={column}>
-          {Object.entries(groupedNotes[column.id] ?? []).map(
-            ([groupId, groupNotes]) => (
-              <VotableNoteGroup
-                onVote={(value) => handleVote(groupId, value)}
-                voted={!!votes.find((vote) => vote.group_id === groupId)}
-                canVote={retro.max_votes > votes.length}
-                key={groupId}
-              >
-                {groupNotes.map((note) => (
-                  <Note key={note.id} note={note} />
-                ))}
-              </VotableNoteGroup>
-            ),
-          )}
-        </Column>
-      ))}
+    <Columns
+      onAddColumn={columnActions.create}
+      canAddColumn={columnActions.canCreate}
+    >
+      {retro.columns.map((column, index) => {
+        const groups = Object.entries(groupedNotes[column.id] ?? {});
+
+        return (
+          <Column
+            key={column.id}
+            column={column}
+            index={index}
+            {...columnActions.forColumn(column)}
+          >
+            {!loaded && <NoteSkeletons />}
+
+            {loaded && groups.length === 0 && (
+              <EmptyColumn>Nothing to vote on here.</EmptyColumn>
+            )}
+
+            <AnimatePresence mode="popLayout" initial={false}>
+              {groups.map(([groupId, groupNotes]) => (
+                <VotableNoteGroup
+                  onVote={(value) => handleVote(groupId, value)}
+                  voted={!!votes.find((vote) => vote.group_id === groupId)}
+                  canVote={retro.max_votes > votes.length}
+                  key={groupId}
+                >
+                  {groupNotes.map((note) => (
+                    <Note key={note.id} note={note} showAuthor />
+                  ))}
+                </VotableNoteGroup>
+              ))}
+            </AnimatePresence>
+          </Column>
+        );
+      })}
     </Columns>
   );
 }

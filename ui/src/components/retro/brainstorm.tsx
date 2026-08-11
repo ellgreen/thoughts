@@ -1,18 +1,23 @@
 import { createSocketEvent } from "@/events";
+import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DragEndEvent } from "@dnd-kit/core";
 import { Plus } from "lucide-react";
+import { AnimatePresence } from "motion/react";
 import { Button } from "../ui/button";
+import { EmptyColumn, NoteSkeletons } from "./column-states";
 import { Columns, DroppableColumn } from "./columns";
 import { DraggableNote, Note } from "./note";
 import NoteDialog from "./note-dialog";
+import NoteDndContext from "./note-dnd";
 
 export default function Brainstorm() {
   const {
-    retro: { columns, gifs_enabled },
+    retro: { columns },
   } = useRetro();
-  const { notes, dispatch } = useNotes();
+  const { notes, loaded, dispatch } = useNotes();
+  const columnActions = useColumnActions(notes);
 
   function handleNewNote(columnId: string, content: string) {
     dispatch(
@@ -27,94 +32,93 @@ export default function Brainstorm() {
     const overColumnId = event.over?.id;
     const note = notes.find((n) => n.id === event.active?.id);
 
-    if (note?.column_id === overColumnId) return;
+    if (!note || !overColumnId) return;
+
+    if (note.column_id === overColumnId) return;
 
     dispatch(
       createSocketEvent("note_update", {
-        id: note?.id,
+        id: note.id,
         column_id: overColumnId,
       }),
     );
   }
 
   function handleNoteEdit(noteId: string, content: string) {
-    dispatch(
-      createSocketEvent("note_update", {
-        id: noteId,
-        content,
-      }),
-    );
+    dispatch(createSocketEvent("note_update", { id: noteId, content }));
   }
 
   function handleNoteDelete(noteId: string) {
-    dispatch(
-      createSocketEvent("note_delete", {
-        id: noteId,
-      }),
-    );
+    dispatch(createSocketEvent("note_delete", { id: noteId }));
   }
 
   function handleNoteGifSelected(noteId: string, url: string) {
-    dispatch(
-      createSocketEvent("note_update", {
-        id: noteId,
-        img_url: url,
-      }),
-    );
+    dispatch(createSocketEvent("note_update", { id: noteId, img_url: url }));
   }
 
   function handleNoteGifRemoved(noteId: string) {
     dispatch(
-      createSocketEvent("note_update", {
-        id: noteId,
-        remove_img_url: true,
-      }),
+      createSocketEvent("note_update", { id: noteId, remove_img_url: true }),
     );
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
-      <Columns>
-        {columns.map((column) => (
-          <DroppableColumn column={column} key={column.id}>
-            <NoteDialog
-              title="New Note"
-              description="Create a new note."
-              onContentSave={(content) => handleNewNote(column.id, content)}
-            >
-              <Button variant="secondary" className="w-full">
-                <Plus />
-              </Button>
-            </NoteDialog>
+    <NoteDndContext notes={notes} onDragEnd={handleDragEnd}>
+      <Columns
+        onAddColumn={columnActions.create}
+        canAddColumn={columnActions.canCreate}
+      >
+        {columns.map((column, index) => {
+          const columnNotes = notes.filter((n) => n.column_id === column.id);
 
-            {notes
-              .filter((n) => n.column_id == column.id)
-              .map((note) => (
-                <div key={note.id} className="animate-in fade-in zoom-in-110">
-                  {note.created_by_me ? (
+          return (
+            <DroppableColumn
+              column={column}
+              index={index}
+              key={column.id}
+              {...columnActions.forColumn(column)}
+            >
+              <NoteDialog
+                title="New note"
+                description="Only you can read this until everyone moves on to grouping."
+                onContentSave={(content) => handleNewNote(column.id, content)}
+              >
+                <Button variant="secondary" className="w-full">
+                  <Plus />
+                  Add a thought
+                </Button>
+              </NoteDialog>
+
+              {!loaded && <NoteSkeletons />}
+
+              {loaded && columnNotes.length === 0 && (
+                <EmptyColumn>Nothing here yet.</EmptyColumn>
+              )}
+
+              {/* Not popLayout: it tears a note out of the flow to animate
+                  it away while its layoutId is gliding it to a new column. */}
+              <AnimatePresence initial={false}>
+                {columnNotes.map((note) =>
+                  note.created_by_me ? (
                     <DraggableNote
+                      key={note.id}
                       note={note}
                       onEdit={(content) => handleNoteEdit(note.id, content)}
                       onDelete={() => handleNoteDelete(note.id)}
-                      onGifSelected={
-                        gifs_enabled
-                          ? (url) => handleNoteGifSelected(note.id, url)
-                          : undefined
+                      onGifSelected={(url) =>
+                        handleNoteGifSelected(note.id, url)
                       }
-                      onGifRemoved={
-                        gifs_enabled
-                          ? () => handleNoteGifRemoved(note.id)
-                          : undefined
-                      }
+                      onGifRemoved={() => handleNoteGifRemoved(note.id)}
                     />
                   ) : (
-                    <Note note={note} blur />
-                  )}
-                </div>
-              ))}
-          </DroppableColumn>
-        ))}
+                    <Note key={note.id} note={note} blur />
+                  ),
+                )}
+              </AnimatePresence>
+            </DroppableColumn>
+          );
+        })}
       </Columns>
-    </DndContext>
+    </NoteDndContext>
   );
 }

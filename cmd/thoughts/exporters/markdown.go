@@ -67,7 +67,15 @@ func (e *Exporter) ToMarkdown(ctx context.Context, retro *model.Retro) ([]byte, 
 			content = strings.ReplaceAll(content, "\n", "\n> ")
 
 			buf.WriteString("\n> " + content)
-			buf.WriteString("\n>\n")
+			buf.WriteString("\n")
+
+			if note.ImgURL.Valid && note.ImgURL.V != "" {
+				buf.WriteString(">\n")
+				buf.WriteString("> ![](" + note.ImgURL.V + ")")
+				buf.WriteString("\n")
+			}
+
+			buf.WriteString(">\n")
 			buf.WriteString("> &mdash; <cite>" + author + "</cite>")
 			buf.WriteString("\n")
 		}

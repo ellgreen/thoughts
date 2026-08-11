@@ -20,6 +20,7 @@ export interface PayloadStatusUpdate {
 
 export interface PayloadError {
   message: string;
+  ref?: string;
 }
 
 export type PayloadStatusUpdated = PayloadStatusUpdate;
@@ -35,6 +36,24 @@ export interface PayloadNoteUpdate {
   column_id?: string;
   group_id?: string;
   img_url?: string;
+  remove_img_url?: boolean;
+}
+
+export interface Ref {
+  ref: string;
+}
+
+export interface PayloadColumnCreate {
+  title: string;
+  description: string;
+}
+
+export interface PayloadColumnUpdate extends PayloadColumnCreate {
+  id: string;
+}
+
+export interface PayloadColumnDelete {
+  id: string;
 }
 
 export interface PayloadConnectionInfo {

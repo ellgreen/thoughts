@@ -22,7 +22,7 @@ type Retro struct {
 	Columns            []*RetroColumn `json:"columns"`
 	Unlisted           bool           `json:"unlisted"`
 	MaxVotes           int            `json:"max_votes"`
-	GIFsEnabled        bool           `json:"gifs_enabled"`
+	GIFSearchEnabled   bool           `json:"gif_search_enabled"`
 	Tags               []string       `json:"tags"`
 	CreatedAt          time.Time      `json:"created_at"`
 	NoteCount          int            `json:"note_count"`
@@ -49,7 +49,7 @@ func RetroFromModel(m *model.Retro) *Retro {
 		}),
 		Unlisted:           m.Unlisted,
 		MaxVotes:           m.MaxVotes,
-		GIFsEnabled:        gif.IsAvailable(),
+		GIFSearchEnabled:   gif.SearchAvailable(),
 		Tags:               tags,
 		CreatedAt:          m.CreatedAt,
 		NoteCount:          m.NoteCount,

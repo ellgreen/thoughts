@@ -32,12 +32,8 @@ func RetroList(ctx context.Context, db *sqlx.DB, includeUnlisted bool) ([]*model
 		return nil, fmt.Errorf("%w: failed to select retros: %w", ErrExecution, err)
 	}
 
-	for _, retro := range retros {
-		tags, err := RetroTagsList(ctx, db, retro.ID)
-		if err != nil {
-			return nil, err
-		}
-		retro.Tags = tags
+	if err := RetroTagsAttach(ctx, db, retros); err != nil {
+		return nil, err
 	}
 
 	return retros, nil
@@ -115,6 +111,27 @@ func RetroUpdate(
 	}
 
 	return retro, nil
+}
+
+// RetroSetColumns persists a mutated columns blob. It takes the model rather
+// than an id because the caller has already read the retro to validate the
+// change, and needs the same object to broadcast afterwards.
+func RetroSetColumns(ctx context.Context, db *sqlx.DB, retro *model.Retro, columns model.RetroColumns) error {
+	retro.Columns = columns.ToJSON()
+	retro.UpdatedAt = time.Now()
+
+	_, err := db.NamedExecContext(ctx, `
+		update retros set
+			columns = :columns,
+			updated_at = :updated_at
+		where id = :id
+	`, retro)
+
+	if err != nil {
+		return fmt.Errorf("%w: failed to update retro columns: %w", ErrExecution, err)
+	}
+
+	return nil
 }
 
 func RetroUpdateStatus(ctx context.Context, db *sqlx.DB, id uuid.UUID, status model.RetroStatus) error {

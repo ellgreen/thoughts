@@ -54,14 +54,10 @@ func TagRetros(db *sqlx.DB) http.Handler {
 			return
 		}
 
-		for _, retro := range retros {
-			tags, err := dal.RetroTagsList(r.Context(), db, retro.ID)
-			if err != nil {
-				slog.Error("problem fetching tags for retro", "error", err)
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			retro.Tags = tags
+		if err := dal.RetroTagsAttach(r.Context(), db, retros); err != nil {
+			slog.Error("problem fetching tags for retros", "error", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
 		openTasks, err := dal.TagOpenTasks(r.Context(), db, tag)

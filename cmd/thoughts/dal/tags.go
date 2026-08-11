@@ -17,6 +17,47 @@ func RetroTagsList(ctx context.Context, db *sqlx.DB, retroID uuid.UUID) ([]strin
 	return tags, nil
 }
 
+// RetroTagsAttach loads the tags for a batch of retros in one query and hangs
+// them off the models, replacing a RetroTagsList call per retro.
+func RetroTagsAttach(ctx context.Context, db *sqlx.DB, retros []*model.Retro) error {
+	if len(retros) == 0 {
+		return nil
+	}
+
+	ids := make([]uuid.UUID, len(retros))
+	for i, retro := range retros {
+		ids[i] = retro.ID
+		retro.Tags = []string{}
+	}
+
+	query, args, err := sqlx.In("select retro_id, tag from retro_tags where retro_id in (?) order by tag", ids)
+	if err != nil {
+		return fmt.Errorf("%w: failed to build tags query: %w", ErrExecution, err)
+	}
+
+	var rows []struct {
+		RetroID uuid.UUID `db:"retro_id"`
+		Tag     string    `db:"tag"`
+	}
+
+	if err := db.SelectContext(ctx, &rows, db.Rebind(query), args...); err != nil {
+		return fmt.Errorf("%w: failed to list tags for retros: %w", ErrExecution, err)
+	}
+
+	byRetro := make(map[uuid.UUID][]string, len(retros))
+	for _, row := range rows {
+		byRetro[row.RetroID] = append(byRetro[row.RetroID], row.Tag)
+	}
+
+	for _, retro := range retros {
+		if tags, ok := byRetro[retro.ID]; ok {
+			retro.Tags = tags
+		}
+	}
+
+	return nil
+}
+
 // RetroTagsSet replaces all tags for a retro atomically.
 func RetroTagsSet(ctx context.Context, db *sqlx.DB, retroID uuid.UUID, tags []string) error {
 	tx, err := db.BeginTxx(ctx, nil)

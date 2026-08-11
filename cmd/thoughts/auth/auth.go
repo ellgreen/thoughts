@@ -27,19 +27,28 @@ func Middleware(db *sqlx.DB, sp *session.Provider) mux.MiddlewareFunc {
 					return
 				}
 
+				// Whether the browser sent a cookie at all is the useful
+				// thing here: none means it was never stored, one without a
+				// user means it failed to decode.
+				rejected(r, "session carries no user", "cookie_sent", hasSessionCookie(r))
 				w.WriteHeader(http.StatusUnauthorized)
+
 				return
 			}
 
 			user, err := dal.UserGet(r.Context(), db, userID)
 			if err != nil {
 				if errors.Is(err, sql.ErrNoRows) {
+					rejected(r, "session names a user that no longer exists", "user_id", userID)
 					w.WriteHeader(http.StatusUnauthorized)
+
 					return
 				}
 
 				slog.Error("failed to get user", "error", err)
 				w.WriteHeader(http.StatusInternalServerError)
+
+				return
 			}
 
 			r = RequestWithUser(r, user)
@@ -47,6 +56,24 @@ func Middleware(db *sqlx.DB, sp *session.Provider) mux.MiddlewareFunc {
 			next.ServeHTTP(w, r)
 		})
 	})
+}
+
+func rejected(r *http.Request, reason string, args ...any) {
+	slog.Debug(
+		"rejecting unauthenticated request",
+		append([]any{
+			"reason", reason,
+			"path", r.URL.Path,
+			"origin", r.Header.Get("Origin"),
+			"host", r.Host,
+		}, args...)...,
+	)
+}
+
+func hasSessionCookie(r *http.Request) bool {
+	_, err := r.Cookie("session")
+
+	return err == nil
 }
 
 func RequestWithUser(r *http.Request, user *model.User) *http.Request {

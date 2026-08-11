@@ -1,12 +1,15 @@
+import { AutoTextarea } from "@/components/ui/auto-textarea";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -17,38 +20,54 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import useTemplates from "@/hooks/use-templates";
+import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
+import { cardVariants, spring, stagger } from "@/lib/motion";
+import { cn } from "@/lib/utils";
 import { Route as RetrosRoute } from "@/routes/_auth.retros.$retroId";
 import { Retro } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "@tanstack/react-router";
-import { BookDashed, Trash2 } from "lucide-react";
-import { useFieldArray, useForm, useFormContext } from "react-hook-form";
+import { Columns3, Plus, Trash2 } from "lucide-react";
+import { AnimatePresence, m } from "motion/react";
+import { useState } from "react";
+import { Control, useFieldArray, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 import AIRetroTemplate from "./ai-retro-template";
-import { useAuth } from "@/hooks/use-auth";
 import TagInput from "./tag-input";
+import TemplatePicker from "./template-picker";
+
+const minColumns = 2;
+const maxColumns = 5;
+const maxDescription = 255;
 
 const schema = z.object({
-  title: z.string().min(5).max(255),
+  title: z.string().trim().min(5).max(255),
   columns: z
     .array(
       z.object({
-        title: z.string().min(2).max(255),
-        description: z.string().max(255),
+        title: z.string().trim().min(2).max(255),
+        description: z.string().trim().max(maxDescription),
       }),
     )
-    .min(2, "At least 2 columns are required")
-    .max(5, "At most 5 columns are allowed"),
+    .min(minColumns, `Add at least ${minColumns} columns`)
+    .max(maxColumns, `${maxColumns} columns is the most a board can hold`),
   unlisted: z.boolean().optional(),
   tags: z.array(z.string().min(1).max(50)).max(10).optional(),
 });
 
-export default function Creator({ className }: { className?: string }) {
-  const navigate = useNavigate();
+type FormValues = z.infer<typeof schema>;
+type ColumnDraft = FormValues["columns"][number];
 
-  const form = useForm({
+const emptyColumn: ColumnDraft = { title: "", description: "" };
+
+export default function Creator() {
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       title: "",
@@ -58,23 +77,53 @@ export default function Creator({ className }: { className?: string }) {
     },
   });
 
-  function handleSubmit(data: z.infer<typeof schema>) {
-    api.post<Retro>("/api/retros", data).then((response) => {
-      navigate({ to: RetrosRoute.path, params: { retroId: response.data.id } });
-    });
+  const columns = useFieldArray({ control: form.control, name: "columns" });
+
+  function handleSubmit(data: FormValues) {
+    api
+      .post<Retro>("/api/retros", data)
+      .then((response) => {
+        setOpen(false);
+        form.reset();
+        navigate({
+          to: RetrosRoute.path,
+          params: { retroId: response.data.id },
+        });
+      })
+      .catch(() => {
+        toast.error("Couldn't create the retro", {
+          description: "Give it another go in a moment.",
+        });
+      });
+  }
+
+  function applyColumns(next: ColumnDraft[]) {
+    columns.replace(next.slice(0, maxColumns));
+    form.clearErrors("columns");
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <CardTitle>Create a retrospective</CardTitle>
-      </CardHeader>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button>
+          <Plus />
+          New retro
+        </Button>
+      </DialogTrigger>
 
-      <CardContent>
+      <DialogContent className="max-h-[88vh] gap-0 overflow-y-auto sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Create a retrospective</DialogTitle>
+          <DialogDescription>
+            Start from a template, dream one up, or write your own. Everything
+            here can be changed later.
+          </DialogDescription>
+        </DialogHeader>
+
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit(handleSubmit)}
-            className="space-y-6"
+            className="mt-4 space-y-6"
           >
             <FormField
               control={form.control}
@@ -84,150 +133,199 @@ export default function Creator({ className }: { className?: string }) {
                   <FormLabel>Title</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="My Teams Retro - Sprint 99"
+                      autoFocus
+                      placeholder="Team Rocket, Sprint 24"
                       {...field}
                     />
                   </FormControl>
-                  <FormDescription>
-                    Give your retrospective a title
-                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <Columns />
-
-            <FormField
+            <ColumnsSection
               control={form.control}
-              name="unlisted"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Unlisted</FormLabel>
-                    <FormDescription>
-                      If checked, the retrospective will not be listed on the
-                      home page.
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
+              fields={columns.fields}
+              generating={generating}
+              onApply={applyColumns}
+              onAdd={() => columns.append(emptyColumn)}
+              onRemove={columns.remove}
+              onClear={() => applyColumns([])}
+              onGeneratingChange={setGenerating}
             />
 
-            <FormField
-              control={form.control}
-              name="tags"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Tags</FormLabel>
-                  <FormControl>
-                    <TagInput
-                      value={field.value ?? []}
-                      onChange={field.onChange}
-                      placeholder="team-name, project-name"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Tag retros to group them by team or project. Press Enter or comma to add.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <Details control={form.control} />
 
-            <Button type="submit">Create</Button>
+            <DialogFooter className="border-t pt-4">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={form.formState.isSubmitting}>
+                Create retro
+              </Button>
+            </DialogFooter>
           </form>
         </Form>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   );
 }
 
-function Columns() {
-  const { fields, append, remove } = useFieldArray({ name: "columns" });
-  const { control } = useFormContext();
-
+function ColumnsSection({
+  control,
+  fields,
+  generating,
+  onApply,
+  onAdd,
+  onRemove,
+  onClear,
+  onGeneratingChange,
+}: {
+  control: Control<FormValues>;
+  fields: { id: string }[];
+  generating: boolean;
+  onApply: (columns: ColumnDraft[]) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  onClear: () => void;
+  onGeneratingChange: (generating: boolean) => void;
+}) {
   const { user } = useAuth();
 
+  const full = fields.length >= maxColumns;
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Columns</h3>
-
-      {fields.map((field, index) => (
-        <ColumnInput
-          key={field.id}
-          index={index}
-          onRemove={() => remove(index)}
-        />
-      ))}
-
-      <FormField control={control} name="columns" render={() => <FormMessage />} />
-
-      <div className="flex gap-2">
-        <Button
-          type="button"
-          onClick={() => append({ title: "", description: "" })}
-          variant="secondary"
-          className="flex-1"
-        >
-          Add Column
-        </Button>
-
-        <div className="flex-1">
-          <FromTemplateDropDown />
+    <section className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h3 className="font-medium">Columns</h3>
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-xs tabular-nums",
+              full
+                ? "bg-muted text-muted-foreground"
+                : "bg-muted/60 text-muted-foreground",
+            )}
+          >
+            {fields.length} of {maxColumns}
+          </span>
         </div>
 
-        {user?.ai_enabled && (
-          <div className="flex-1">
-            <AIRetroTemplate />
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          {fields.length > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClear}
+              className="text-muted-foreground"
+            >
+              Clear
+            </Button>
+          )}
+
+          <TemplatePicker onApply={onApply} />
+
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={onAdd}
+            disabled={full}
+          >
+            <Plus className="size-4" />
+            Add
+          </Button>
+        </div>
       </div>
-    </div>
+
+      {user?.ai_enabled && (
+        <AIRetroTemplate
+          onApply={onApply}
+          onGeneratingChange={onGeneratingChange}
+        />
+      )}
+
+      <div
+        className={cn(
+          "space-y-2.5 transition-opacity",
+          generating && fields.length > 0 && "opacity-50",
+        )}
+      >
+        <AnimatePresence mode="popLayout" initial={false}>
+          {fields.length === 0 && generating && (
+            <GeneratingPlaceholder key="generating" />
+          )}
+
+          {fields.length === 0 && !generating && <EmptyColumns key="empty" />}
+
+          {fields.map((field, index) => (
+            <ColumnCard
+              key={field.id}
+              control={control}
+              index={index}
+              onRemove={() => onRemove(index)}
+            />
+          ))}
+        </AnimatePresence>
+      </div>
+
+      <FormField
+        control={control}
+        name="columns"
+        render={() => <FormMessage />}
+      />
+    </section>
   );
 }
 
-function ColumnInput({
+function ColumnCard({
+  control,
   index,
   onRemove,
 }: {
+  control: Control<FormValues>;
   index: number;
   onRemove: () => void;
 }) {
-  const { control } = useFormContext();
-
   return (
-    <div className="rounded-md border animate-in fade-in slide-in-from-bottom-2 duration-200">
-      <div className="flex items-center justify-between px-4 py-2 border-b bg-muted/40">
-        <span className="text-sm font-medium text-muted-foreground">
+    <m.div
+      layout
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={stagger(index)}
+      className="rounded-xl border bg-surface p-3"
+    >
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted-foreground">
           Column {index + 1}
         </span>
+
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
           onClick={onRemove}
+          aria-label={`Remove column ${index + 1}`}
+          className="size-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="size-3.5" />
         </Button>
       </div>
 
-      <div className="p-4 space-y-4">
+      <div className="space-y-3">
         <FormField
           control={control}
           name={`columns.${index}.title`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Title</FormLabel>
+              <FormLabel className="text-xs">Title</FormLabel>
               <FormControl>
-                <Input {...field} />
+                <Input placeholder="What went well" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -239,41 +337,133 @@ function ColumnInput({
           name={`columns.${index}.description`}
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Description</FormLabel>
+              <FormLabel className="text-xs">
+                Description{" "}
+                <span className="font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </FormLabel>
               <FormControl>
-                <Input {...field} />
+                <AutoTextarea
+                  placeholder="A prompt to help people fill this column in"
+                  maxLength={maxDescription}
+                  {...field}
+                />
               </FormControl>
-              <FormMessage />
+
+              <div className="flex items-center justify-between gap-2">
+                <FormMessage />
+                <CharacterCount value={field.value ?? ""} />
+              </div>
             </FormItem>
           )}
         />
       </div>
-    </div>
+    </m.div>
   );
 }
 
-function FromTemplateDropDown() {
-  const templates = useTemplates();
-  const { setValue } = useFormContext();
+function CharacterCount({ value }: { value: string }) {
+  const remaining = maxDescription - value.length;
+
+  if (remaining > 40) return null;
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" type="button" className="w-full">
-          <BookDashed />
-          From Template
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-max">
-        {templates.map((template) => (
-          <DropdownMenuItem
-            key={template.title}
-            onClick={() => setValue("columns", template.columns)}
-          >
-            {template.title}
-          </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <span
+      className={cn(
+        "ml-auto shrink-0 text-xs tabular-nums",
+        remaining <= 0 ? "text-destructive" : "text-muted-foreground",
+      )}
+    >
+      {remaining} left
+    </span>
+  );
+}
+
+function EmptyColumns() {
+  return (
+    <m.div
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={spring}
+      className="flex flex-col items-center gap-1.5 rounded-xl border border-dashed px-6 py-8 text-center"
+    >
+      <Columns3 className="size-5 text-muted-foreground/60" />
+      <p className="text-sm font-medium">No columns yet</p>
+      <p className="max-w-xs text-xs text-muted-foreground">
+        Pick a template, name a theme above, or add your own.
+      </p>
+    </m.div>
+  );
+}
+
+function GeneratingPlaceholder() {
+  return (
+    <m.div
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={spring}
+      className="space-y-2.5"
+    >
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="space-y-2 rounded-xl border bg-surface p-3">
+          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+          <div className="h-8 w-full animate-pulse rounded-md bg-muted/70" />
+          <div className="h-8 w-full animate-pulse rounded-md bg-muted/70" />
+        </div>
+      ))}
+    </m.div>
+  );
+}
+
+function Details({ control }: { control: Control<FormValues> }) {
+  return (
+    <section className="space-y-4 border-t pt-5">
+      <FormField
+        control={control}
+        name="tags"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Tags</FormLabel>
+            <FormControl>
+              <TagInput
+                value={field.value ?? []}
+                onChange={field.onChange}
+                placeholder="team-name, project-name"
+              />
+            </FormControl>
+            <FormDescription>
+              Groups retros together by team or project. Tab or Enter to add.
+            </FormDescription>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={control}
+        name="unlisted"
+        render={({ field }) => (
+          <FormItem className="flex flex-row items-center gap-3 space-y-0">
+            <FormControl>
+              <Checkbox
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </FormControl>
+            <div className="leading-tight">
+              <FormLabel className="font-normal">Unlisted</FormLabel>
+              <FormDescription className="text-xs">
+                Keep it off the home page. Anyone with the link can still join.
+              </FormDescription>
+            </div>
+          </FormItem>
+        )}
+      />
+    </section>
   );
 }

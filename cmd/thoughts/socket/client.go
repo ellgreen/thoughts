@@ -12,17 +12,17 @@ import (
 )
 
 const (
-	// Time allowed to write a message to the peer.
 	writeWait = 10 * time.Second
 
-	// Time allowed to read the next pong message from the peer.
 	pongWait = 60 * time.Second
 
-	// Send pings to peer with this period. Must be less than pongWait.
 	pingPeriod = (pongWait * 9) / 10
 
-	// Maximum message size allowed from peer.
-	maxMessageSize = 512
+	// Maximum message size allowed from peer. A retro_update with a full
+	// title and ten tags is already well over 512 bytes.
+	maxMessageSize = 4096
+
+	sendBufferSize = 64
 )
 
 type Client struct {
@@ -37,7 +37,7 @@ func NewClient(hub *Hub, conn *websocket.Conn, user *model.User) *Client {
 		hub:  hub,
 		conn: conn,
 		user: user,
-		send: make(chan []byte),
+		send: make(chan []byte, sendBufferSize),
 	}
 }
 
@@ -69,8 +69,13 @@ func (c *Client) ReadPump(ctx context.Context) {
 	}
 }
 
-func (c *Client) Send(message []byte) {
-	c.send <- message
+func (c *Client) Send(message []byte) bool {
+	select {
+	case c.send <- message:
+		return true
+	default:
+		return false
+	}
 }
 
 func (c *Client) WritePump() {

@@ -13,6 +13,8 @@ type config struct {
 	SessionKeyFile string `mapstructure:"session_key_file"`
 	TLSKeyPath     string `mapstructure:"tls_key_path"`
 	TLSCertPath    string `mapstructure:"tls_cert_path"`
+	GIFProvider    string `mapstructure:"gif_provider"`
+	GIFAPIKey      string `mapstructure:"gif_api_key"`
 	TenorAPIKey    string `mapstructure:"tenor_api_key"`
 	OpenAIAPIKey   string `mapstructure:"openai_api_key"`
 }
@@ -28,6 +30,8 @@ func loadConfig() (*config, error) {
 	v.SetDefault("session_key_file", "session.key")
 	v.SetDefault("tls_key_path", "")
 	v.SetDefault("tls_cert_path", "")
+	v.SetDefault("gif_provider", "")
+	v.SetDefault("gif_api_key", "")
 	v.SetDefault("tenor_api_key", "")
 	v.SetDefault("openai_api_key", "")
 

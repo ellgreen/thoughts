@@ -1,18 +1,23 @@
+import { cardVariants, spring, springy } from "@/lib/motion";
 import { useDroppable } from "@dnd-kit/core";
 import { Check, Flame, TrendingUp, X } from "lucide-react";
+import { AnimatePresence, m } from "motion/react";
 import React, { Children } from "react";
 import { twMerge } from "tailwind-merge";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 
-interface NoteGroupProps extends React.HTMLAttributes<HTMLDivElement> {
+// Omit children: motion widens it to accept MotionValues, which Children.count
+// cannot deal with.
+interface NoteGroupProps
+  extends Omit<React.ComponentProps<typeof m.div>, "children"> {
   voteCount?: {
     forGroup: number;
     total: number;
   };
   authors?: string[];
+  children?: React.ReactNode;
 }
-
 
 export const NoteGroup = ({
   voteCount,
@@ -20,29 +25,36 @@ export const NoteGroup = ({
   className,
   children,
   ...props
-}: NoteGroupProps & React.ComponentProps<"div">) => {
+}: NoteGroupProps) => {
   const hasVoteCount = voteCount !== undefined;
   const childCount = Children.count(children);
   const isGrouped = childCount > 1;
   const hasNonZeroVotes = hasVoteCount && voteCount.forGroup > 0;
   const showFooter = authors || hasNonZeroVotes;
 
-  const classes = twMerge(
-    "rounded-lg transition-all duration-100",
-    isGrouped || hasVoteCount
-      ? "bg-muted/60 border border-border/60 p-2 space-y-2"
-      : "space-y-1",
-    className,
-  );
-
   return (
-    <div className={classes} {...props}>
+    <m.div
+      layout="position"
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={spring}
+      className={twMerge(
+        "rounded-xl",
+        isGrouped || hasVoteCount
+          ? "space-y-2 bg-surface p-2 ring-1 ring-border/60"
+          : "space-y-1",
+        className,
+      )}
+      {...props}
+    >
       {children}
 
       {showFooter && (
         <div className="flex items-center justify-between gap-2 px-1 pt-1">
           {authors && (
-            <span className="text-xs text-muted-foreground truncate">
+            <span className="truncate text-xs text-muted-foreground">
               {authors.join(", ")}
             </span>
           )}
@@ -52,7 +64,7 @@ export const NoteGroup = ({
           )}
         </div>
       )}
-    </div>
+    </m.div>
   );
 };
 
@@ -61,21 +73,20 @@ const hotThreshold = 0.098;
 function VoteCount({ forGroup, total }: { forGroup: number; total: number }) {
   if (forGroup === 0 || total === 0) return null;
 
-  let Icon: React.ElementType;
-  let variant: "destructive" | "secondary";
-
-  if (forGroup / total >= hotThreshold) {
-    Icon = Flame;
-    variant = "destructive";
-  } else {
-    Icon = TrendingUp;
-    variant = "secondary";
-  }
+  const isHot = forGroup / total >= hotThreshold;
+  const Icon = isHot ? Flame : TrendingUp;
 
   return (
-    <Badge variant={variant} className="gap-1">
-      <Icon className="size-3.5" /> {forGroup}
-    </Badge>
+    <m.div
+      key={`${forGroup}-${isHot}`}
+      initial={{ scale: 0.7, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={springy}
+    >
+      <Badge variant={isHot ? "destructive" : "secondary"} className="gap-1">
+        <Icon className="size-3.5" /> {forGroup}
+      </Badge>
+    </m.div>
   );
 }
 
@@ -94,8 +105,12 @@ export function DroppableNoteGroup({
 
   return (
     <NoteGroup
-      className={isOver ? "ring-2 ring-primary/60 bg-primary/10 border-primary/40" : ""}
       ref={setNodeRef}
+      className={
+        isOver
+          ? "bg-[color-mix(in_oklch,var(--accent)_10%,transparent)] ring-2 ring-[color-mix(in_oklch,var(--accent)_55%,transparent)]"
+          : ""
+      }
     >
       {children}
     </NoteGroup>
@@ -114,18 +129,28 @@ export function VotableNoteGroup({
   canVote: boolean;
 }) {
   return (
-    <div
+    <m.div
+      layout="position"
+      variants={cardVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      transition={spring}
       className={twMerge(
-        "rounded-lg border transition-all duration-150",
-        voted ? "border-primary/50 bg-primary/5" : "border-border/60",
+        "overflow-hidden rounded-xl ring-1 transition-colors duration-200",
+        voted
+          ? "bg-[color-mix(in_oklch,var(--accent)_7%,transparent)] ring-[color-mix(in_oklch,var(--accent)_50%,transparent)]"
+          : "ring-border/60",
       )}
     >
-      <div className="p-1.5 space-y-1.5">{children}</div>
+      <div className="space-y-1.5 p-1.5">{children}</div>
 
       <div
         className={twMerge(
-          "flex justify-end px-2 py-1.5 border-t rounded-b-lg bg-muted/40",
-          voted ? "border-primary/20" : "border-border/40",
+          "flex justify-end border-t px-2 py-1.5",
+          voted
+            ? "border-[color-mix(in_oklch,var(--accent)_25%,transparent)] bg-[color-mix(in_oklch,var(--accent)_5%,transparent)]"
+            : "border-border/40 bg-muted/40",
         )}
       >
         <Button
@@ -134,10 +159,21 @@ export function VotableNoteGroup({
           onClick={() => onVote(!voted)}
           disabled={!voted && !canVote}
         >
-          {voted ? <X className="size-3" /> : <Check className="size-3" />}
-          {voted ? "Remove vote" : "Vote"}
+          <AnimatePresence mode="wait" initial={false}>
+            <m.span
+              key={voted ? "voted" : "not-voted"}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={springy}
+              className="flex items-center gap-1.5"
+            >
+              {voted ? <X className="size-3" /> : <Check className="size-3" />}
+              {voted ? "Remove vote" : "Vote"}
+            </m.span>
+          </AnimatePresence>
         </Button>
       </div>
-    </div>
+    </m.div>
   );
 }

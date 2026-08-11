@@ -6,27 +6,64 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/securecookie"
 	"github.com/gorilla/sessions"
 )
 
-const keyLength = 64
+const (
+	keyLength = 64
+
+	sessionMaxAge = 86400 * 30
+)
 
 var ErrValueNotFound = errors.New("session: value not found")
 
 type Provider struct {
 	store sessions.Store
+
+	tls bool
 }
 
-func LoadSessionProvider(keyPath string) (*Provider, error) {
+func LoadSessionProvider(keyPath string, tls bool) (*Provider, error) {
 	key, err := loadKey(keyPath)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Provider{store: sessions.NewCookieStore(key)}, nil
+	store := sessions.NewCookieStore(key)
+
+	// gorilla/sessions defaults to Secure with SameSite=None, so the cookie is
+	// only ever stored over https. Chrome excepts http://localhost; Safari
+	// does not, which left people logged out after a login that looked fine.
+	store.Options = defaultOptions(tls)
+
+	return &Provider{store: store, tls: tls}, nil
+}
+
+func defaultOptions(secure bool) *sessions.Options {
+	return &sessions.Options{
+		Path:     "/",
+		MaxAge:   sessionMaxAge,
+		HttpOnly: true,
+		// Not None, which would drag the Secure requirement back in with it.
+		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+	}
+}
+
+func (sp *Provider) optionsFor(r *http.Request) *sessions.Options {
+	return defaultOptions(sp.tls || isHTTPS(r))
+}
+
+func isHTTPS(r *http.Request) bool {
+	if r.TLS != nil {
+		return true
+	}
+
+	return strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https")
 }
 
 func loadKey(path string) ([]byte, error) {
@@ -53,12 +90,16 @@ func loadKey(path string) ([]byte, error) {
 
 func (sp *Provider) Get(w http.ResponseWriter, r *http.Request) (*sessions.Session, error) {
 	sess, err := sp.store.Get(r, "session")
+	if sess != nil {
+		sess.Options = sp.optionsFor(r)
+	}
+
 	if err != nil {
 		if sess == nil {
 			return nil, fmt.Errorf("failed to get session: %w", err)
 		}
 
-		slog.Warn("failed to get session, creating a new one", "err", err)
+		slog.Debug("could not decode the session cookie, starting a new one", "err", err)
 
 		if err := sess.Save(r, w); err != nil {
 			return nil, fmt.Errorf("failed to save session after retry: %w", err)

@@ -3,6 +3,9 @@ package controllers
 import (
 	"log/slog"
 	"net/http"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/ellgreen/thoughts/cmd/thoughts/auth"
 	"github.com/ellgreen/thoughts/cmd/thoughts/dal"
@@ -13,7 +16,7 @@ import (
 )
 
 type AuthLoginRequest struct {
-	Name string `json:"name" validate:"required,alpha,min=2,max=20"`
+	Name string `json:"name" validate:"required,max=32"`
 }
 
 func AuthLogin(db *sqlx.DB, sessionProvider *session.Provider) http.Handler {
@@ -23,19 +26,26 @@ func AuthLogin(db *sqlx.DB, sessionProvider *session.Provider) http.Handler {
 			return
 		}
 
-		if len(req.Name) < 1 {
-			http.Error(w, "name should be more than one character", http.StatusBadRequest)
+		// Names are free text - people have spaces, hyphens and accents in
+		// them. Only control characters are worth rejecting.
+		name := strings.TrimSpace(req.Name)
+
+		if utf8.RuneCountInString(name) < 2 {
+			http.Error(w, "Name should contain at least 2 characters", http.StatusBadRequest)
 			return
 		}
 
-		user, err := dal.UserInsert(r.Context(), db, req.Name)
+		if strings.ContainsFunc(name, func(r rune) bool { return !unicode.IsPrint(r) }) {
+			http.Error(w, "Name should not contain control characters", http.StatusBadRequest)
+			return
+		}
+
+		user, err := dal.UserInsert(r.Context(), db, name)
 		if err != nil {
 			slog.Error("failed to insert user", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		slog.Info("user created", "user_id", user.ID, "name", user.Name)
 
 		if err := sessionProvider.AddUserID(w, r, user.ID); err != nil {
 			slog.Error("failed to add user id to session", "error", err)

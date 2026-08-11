@@ -19,6 +19,9 @@ func UserGet(ctx context.Context, db *sqlx.DB, id uuid.UUID) (*model.User, error
 	return user, nil
 }
 
+// UserInsert creates a new identity. Names are labels rather than accounts:
+// two people called Alex are two people, and one person entering their name
+// twice is two sessions.
 func UserInsert(ctx context.Context, db *sqlx.DB, name string) (*model.User, error) {
 	user := &model.User{
 		ID:        uuid.New(),

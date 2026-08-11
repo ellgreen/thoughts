@@ -40,6 +40,24 @@ func newErrorEvent(message string) *ErrorEvent {
 
 type UserDependentEvent func(user *model.User) *Event
 
+// refFrom pulls the client's correlation id out of an inbound payload. Clients
+// use it to match server confirmations and failures back to the optimistic
+// update they already applied locally.
+func refFrom(payload Payload) string {
+	ref, _ := payload["ref"].(string)
+
+	return ref
+}
+
+// withRef echoes a correlation id back on an outbound payload.
+func withRef(payload Payload, ref string) Payload {
+	if ref != "" {
+		payload["ref"] = ref
+	}
+
+	return payload
+}
+
 func (e *Event) ToJSON() []byte {
 	val, err := json.Marshal(e)
 	if err != nil {

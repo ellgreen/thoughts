@@ -1,7 +1,10 @@
 import { User } from "@/types";
 import { createContext, useContext } from "react";
 
+export type AuthStatus = "pending" | "authenticated" | "anonymous";
+
 export interface AuthContext {
+  status: AuthStatus;
   isAuthenticated: boolean;
   login: (name: string) => Promise<void>;
   logout: () => Promise<void>;

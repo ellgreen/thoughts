@@ -11,7 +11,6 @@ import (
 	"github.com/ellgreen/thoughts/cmd/thoughts/gif"
 	"github.com/ellgreen/thoughts/cmd/thoughts/session"
 	"github.com/ellgreen/thoughts/migrations"
-	"github.com/ellgreen/thoughts/ui"
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	"github.com/pressly/goose/v3"
@@ -46,10 +45,23 @@ func main() {
 		os.Exit(1)
 	}
 
+	servesTLS := cfg.TLSCertPath != "" && cfg.TLSKeyPath != ""
+
 	sessionKeyPath := filepath.Join(cfg.DataPath, cfg.SessionKeyFile)
-	sessionProvider, err := session.LoadSessionProvider(sessionKeyPath)
+	sessionProvider, err := session.LoadSessionProvider(sessionKeyPath, servesTLS)
 	if err != nil {
 		slog.Error("failed to load session provider", "err", err)
+		os.Exit(1)
+	}
+
+	if cfg.TenorAPIKey != "" {
+		slog.Warn("THOUGHTS_TENOR_API_KEY is set but the Tenor API was shut down on 2026-06-30; " +
+			"use THOUGHTS_GIF_PROVIDER and THOUGHTS_GIF_API_KEY instead")
+	}
+
+	gifProvider, err := gif.Resolve(cfg.GIFProvider, cfg.GIFAPIKey)
+	if err != nil {
+		slog.Error("failed to configure gif provider", "err", err)
 		os.Exit(1)
 	}
 
@@ -59,22 +71,22 @@ func main() {
 		router,
 		sessionProvider,
 		ai.ResolveModel(cfg.OpenAIAPIKey),
-		gif.ResolveProvider(cfg.TenorAPIKey),
+		gifProvider,
 	)
 
-	corsCfg := cors.Default()
-	if !ui.IsBundled() {
-		corsCfg = cors.New(cors.Options{
-			AllowedOrigins:   []string{cfg.UIAddress},
-			AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-			AllowedHeaders:   []string{"Authorization", "Content-Type"},
-			AllowCredentials: true,
-		})
-	}
+	// Always credential-aware, bundled or not. A wildcard origin cannot carry
+	// credentials at all, so a browser pointed at the Vite dev server while a
+	// bundled binary served the API would silently drop the session cookie:
+	// the login looked like a 200 in the network tab and every request after
+	// it came back 401.
+	handler := cors.New(cors.Options{
+		AllowedOrigins:   []string{cfg.UIAddress},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Authorization", "Content-Type"},
+		AllowCredentials: true,
+	}).Handler(router)
 
-	handler := corsCfg.Handler(router)
-
-	if cfg.TLSCertPath != "" && cfg.TLSKeyPath != "" {
+	if servesTLS {
 		slog.Info("starting server (with tls)", "addr", cfg.Address)
 
 		if err := http.ListenAndServeTLS(cfg.Address, cfg.TLSCertPath, cfg.TLSKeyPath, handler); err != nil {

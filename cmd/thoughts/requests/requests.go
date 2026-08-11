@@ -39,6 +39,12 @@ func validationMessage(validationErrors validator.ValidationErrors) string {
 			fieldMessages = append(fieldMessages, fmt.Sprintf("%s should be less than %s characters", err.Field(), err.Param()))
 		case "uuid":
 			fieldMessages = append(fieldMessages, fmt.Sprintf("%s is not a valid UUID", err.Field()))
+		case "url":
+			fieldMessages = append(fieldMessages, fmt.Sprintf("%s is not a valid URL", err.Field()))
+		case "startswith":
+			fieldMessages = append(fieldMessages, fmt.Sprintf("%s should start with %s", err.Field(), err.Param()))
+		case "oneof":
+			fieldMessages = append(fieldMessages, fmt.Sprintf("%s should be one of: %s", err.Field(), err.Param()))
 		default:
 			fieldMessages = append(fieldMessages, fmt.Sprintf("%s is invalid", err.Field()))
 		}

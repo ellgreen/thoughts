@@ -1,3 +1,4 @@
+import Container from "@/components/container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,7 +44,7 @@ function RouteComponent() {
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-8 space-y-6">
+    <Container className="space-y-6">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link to="/" className="text-muted-foreground text-sm hover:text-foreground transition-colors">
@@ -114,15 +115,15 @@ function RouteComponent() {
           {retros.length === 0 ? (
             <p className="text-sm text-muted-foreground">No retrospectives found for this tag.</p>
           ) : (
-            <div className="flex flex-col gap-2">
-              {retros.map((retro: Retro) => (
-                <RetroItem key={retro.id} retro={retro} />
+            <div className="grid gap-3 sm:grid-cols-2">
+              {retros.map((retro: Retro, i: number) => (
+                <RetroItem key={retro.id} retro={retro} index={i} />
               ))}
             </div>
           )}
         </CardContent>
       </Card>
-    </div>
+    </Container>
   );
 }
 
