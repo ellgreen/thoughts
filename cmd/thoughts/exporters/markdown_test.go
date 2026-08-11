@@ -27,7 +27,7 @@ func TestToMarkdown(t *testing.T) {
 
 	columns := retro.GetColumns()
 
-	author, err := dal.UserGetOrCreate(ctx, db, "Ada")
+	author, err := dal.UserInsert(ctx, db, "Ada")
 	if err != nil {
 		t.Fatalf("failed to seed user: %v", err)
 	}

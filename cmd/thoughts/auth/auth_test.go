@@ -42,8 +42,7 @@ func serve(t *testing.T, db *sqlx.DB, sp *session.Provider, req *http.Request) *
 	handler := auth.Middleware(db, sp)(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reached = true
 
-		// Panics here are the failure mode we care about: the middleware used
-		// to fall through with a nil user after writing an error status.
+		// The middleware used to fall through with a nil user here.
 		if user := auth.UserFromRequest(r); user == nil {
 			t.Error("handler reached with no user")
 		}
@@ -76,7 +75,7 @@ func TestMiddlewareAllowsAKnownUser(t *testing.T) {
 	db := testutil.NewDB(t)
 	sp := newProvider(t)
 
-	user, err := dal.UserGetOrCreate(context.Background(), db, "Ada")
+	user, err := dal.UserInsert(context.Background(), db, "Ada")
 	if err != nil {
 		t.Fatalf("failed to create user: %v", err)
 	}
@@ -90,9 +89,7 @@ func TestMiddlewareRejectsASessionForAUserThatNoLongerExists(t *testing.T) {
 	db := testutil.NewDB(t)
 	sp := newProvider(t)
 
-	// The state people end up in when their identity row has gone: the cookie
-	// still decodes, it just points at nobody. This has to be a clean 401 so
-	// the client knows to send them back to the login screen.
+	// The cookie still decodes, it just points at nobody.
 	code := serve(t, db, sp, sessionFor(t, sp, uuid.New())).Code
 
 	if code != http.StatusUnauthorized {
@@ -115,8 +112,7 @@ func TestMiddlewareRejectsAnUndecodableCookie(t *testing.T) {
 	db := testutil.NewDB(t)
 	sp := newProvider(t)
 
-	// A cookie signed with a different key, which is what a rotated session
-	// key looks like from the browser's side.
+	// What a rotated session key looks like from the browser's side.
 	other := newProvider(t)
 	req := sessionFor(t, other, uuid.New())
 
@@ -129,15 +125,15 @@ func TestMiddlewareStopsOnALookupFailure(t *testing.T) {
 	db := testutil.NewDB(t)
 	sp := newProvider(t)
 
-	user, err := dal.UserGetOrCreate(context.Background(), db, "Ada")
+	user, err := dal.UserInsert(context.Background(), db, "Ada")
 	if err != nil {
 		t.Fatalf("failed to create user: %v", err)
 	}
 
 	req := sessionFor(t, sp, user.ID)
 
-	// Any lookup failure that is not "no such row". The middleware wrote a 500
-	// and then carried on into the handler with a nil user, which panicked.
+	// Any lookup failure that is not "no such row". The middleware used to
+	// write a 500 and carry on into the handler with a nil user.
 	db.Close()
 
 	if code := serve(t, db, sp, req).Code; code != http.StatusInternalServerError {

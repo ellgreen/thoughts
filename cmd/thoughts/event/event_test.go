@@ -15,8 +15,8 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-// harness drives a broker the way the socket does - inbound JSON in, broadcast
-// events out - while draining both outbound channels so handlers never block.
+// harness drives a broker the way the socket does, draining both outbound
+// channels so handlers never block.
 type harness struct {
 	db       *sqlx.DB
 	broker   *event.Broker
@@ -71,7 +71,7 @@ func newHarness(t *testing.T) *harness {
 func (h *harness) user(t *testing.T, name string) *model.User {
 	t.Helper()
 
-	user, err := dal.UserGetOrCreate(context.Background(), h.db, name)
+	user, err := dal.UserInsert(context.Background(), h.db, name)
 	if err != nil {
 		t.Fatalf("failed to create user %s: %v", name, err)
 	}
@@ -119,7 +119,6 @@ func (h *harness) createNote(t *testing.T, user *model.User, content string) uui
 		t.Fatalf("expected note_created, got %s", evt.Name)
 	}
 
-	// Payloads hold native values until they are marshalled onto the wire.
 	id, ok := evt.Payload["id"].(uuid.UUID)
 	if !ok {
 		t.Fatalf("note_created carried an id of type %T", evt.Payload["id"])
@@ -246,7 +245,7 @@ func TestAnyoneMayMoveANote(t *testing.T) {
 
 	noteID := h.createNote(t, author, "my own thought")
 
-	// Grouping is a shared activity - moving someone else's note is the point.
+	// Moving someone else's note is the point of the group stage.
 	err := h.handle(t, other, "note_update", map[string]any{
 		"id":        noteID.String(),
 		"column_id": h.columns[1].ID.String(),
@@ -300,7 +299,6 @@ func TestNotesFromAnotherRetroAreInvisible(t *testing.T) {
 
 	author := h.user(t, "Author")
 
-	// A note that lives in a different retro entirely.
 	otherRetro, err := dal.RetroInsert(ctx, h.db, "Another retro", model.RetroColumns{
 		{Title: "One", Description: ""},
 		{Title: "Two", Description: ""},
@@ -391,7 +389,7 @@ func TestNotesAreOnlyObfuscatedDuringBrainstorm(t *testing.T) {
 		t.Fatalf("note_create failed: %v", err)
 	}
 
-	// Past brainstorm, note_created must not scramble the content any more.
+	// Past brainstorm, note_created must not scramble the content.
 	if got := h.next(t).Payload["content"]; got != "open thought" {
 		t.Errorf("expected the content in the clear after brainstorm, got %q", got)
 	}

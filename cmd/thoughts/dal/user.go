@@ -2,8 +2,6 @@ package dal
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"fmt"
 	"time"
 
@@ -21,24 +19,9 @@ func UserGet(ctx context.Context, db *sqlx.DB, id uuid.UUID) (*model.User, error
 	return user, nil
 }
 
-// UserGetOrCreate resolves the identity behind a name, creating it on first
-// sight. Auth is name-only, so the name is the identity: logging in again has
-// to land on the same row or the person loses ownership of their own notes.
-func UserGetOrCreate(ctx context.Context, db *sqlx.DB, name string) (*model.User, error) {
-	user := &model.User{}
-
-	err := db.GetContext(ctx, user, "select * from users where name = ?", name)
-	if err == nil {
-		return user, nil
-	}
-
-	if !errors.Is(err, sql.ErrNoRows) {
-		return nil, fmt.Errorf("%w: failed to get user by name: %w", ErrExecution, err)
-	}
-
-	return UserInsert(ctx, db, name)
-}
-
+// UserInsert creates a new identity. Names are labels rather than accounts:
+// two people called Alex are two people, and one person entering their name
+// twice is two sessions.
 func UserInsert(ctx context.Context, db *sqlx.DB, name string) (*model.User, error) {
 	user := &model.User{
 		ID:        uuid.New(),

@@ -40,9 +40,9 @@ func AuthLogin(db *sqlx.DB, sessionProvider *session.Provider) http.Handler {
 			return
 		}
 
-		user, err := dal.UserGetOrCreate(r.Context(), db, name)
+		user, err := dal.UserInsert(r.Context(), db, name)
 		if err != nil {
-			slog.Error("failed to resolve user", "error", err)
+			slog.Error("failed to insert user", "error", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
