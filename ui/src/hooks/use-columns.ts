@@ -15,8 +15,8 @@ export interface ColumnActions {
 }
 
 /**
- * Wires the column mutation events. Columns stay server-authoritative — they
- * only ever arrive via retro_updated — so there is no optimistic state here to
+ * Wires the column mutation events. Columns stay server-authoritative: they
+ * only ever arrive via retro_updated, so there is no optimistic state here to
  * drift out of sync.
  *
  * Takes the notes rather than calling useNotes itself: a second copy would

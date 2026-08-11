@@ -6,31 +6,42 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
+// Shaped from a real api.klipy.com response. The nesting is size first and
+// then format, under "file" rather than "files" - an earlier guess had it the
+// other way round, which parsed cleanly and produced nothing at all.
 const klipyBody = `{
   "result": true,
   "data": {
     "data": [
       {
         "slug": "dancing-cat",
-        "files": {
-          "gif":  {"hd": {"url": "https://cdn.example/hd.gif", "width": 480, "height": 360},
-                   "md": {"url": "https://cdn.example/md.gif", "width": 360, "height": 270},
-                   "sm": {"url": "https://cdn.example/sm.gif", "width": 240, "height": 180}},
-          "webp": {"sm": {"url": "https://cdn.example/sm.webp", "width": 240, "height": 180}}
+        "type": "gif",
+        "file": {
+          "hd": {"gif":  {"url": "https://cdn.example/hd.gif",  "width": 480, "height": 360},
+                 "webp": {"url": "https://cdn.example/hd.webp", "width": 480, "height": 360}},
+          "md": {"gif":  {"url": "https://cdn.example/md.gif",  "width": 360, "height": 270},
+                 "webp": {"url": "https://cdn.example/md.webp", "width": 360, "height": 270}},
+          "sm": {"gif":  {"url": "https://cdn.example/sm.gif",  "width": 240, "height": 180},
+                 "webp": {"url": "https://cdn.example/sm.webp", "width": 240, "height": 180}},
+          "xs": {"gif":  {"url": "https://cdn.example/xs.gif",  "width": 87,  "height": 90}}
         }
       },
       {
         "slug": "an-advert",
-        "files": {}
+        "type": "ad",
+        "file": {}
       },
       {
-        "slug": "no-webp",
-        "files": {
-          "gif": {"sm": {"url": "https://cdn.example/only-sm.gif", "width": 100, "height": 100}}
+        "slug": "only-one-size",
+        "type": "gif",
+        "file": {
+          "sm": {"gif": {"url": "https://cdn.example/only-sm.gif", "width": 100, "height": 100}}
         }
       }
     ],
@@ -150,6 +161,53 @@ func TestKlipySurfacesUpstreamFailures(t *testing.T) {
 
 			if _, err := provider.Search(context.Background(), "cat", 1); err == nil {
 				t.Error("expected an error to be surfaced")
+			}
+		})
+	}
+}
+
+// TestKlipyLiveContract talks to the real API. Skipped unless a key is set, so
+// CI stays offline, but it is the only thing that catches the provider's shape
+// changing underneath us - a canned payload written from the docs parsed
+// perfectly and returned zero results.
+//
+//	THOUGHTS_GIF_API_KEY=... go test ./cmd/thoughts/gif/ -run Live
+func TestKlipyLiveContract(t *testing.T) {
+	key := os.Getenv("THOUGHTS_GIF_API_KEY")
+	if key == "" {
+		t.Skip("set THOUGHTS_GIF_API_KEY to check the live Klipy contract")
+	}
+
+	provider := NewKlipyProvider(key)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	for _, tc := range []struct {
+		name string
+		call func() (*SearchPage, error)
+	}{
+		{"search", func() (*SearchPage, error) { return provider.Search(ctx, "cat", 1) }},
+		{"trending", func() (*SearchPage, error) { return provider.Trending(ctx, 1) }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			page, err := tc.call()
+			if err != nil {
+				t.Fatalf("%s failed: %v", tc.name, err)
+			}
+
+			if len(page.Results) == 0 {
+				t.Fatalf("%s returned no usable results - the response shape has probably changed", tc.name)
+			}
+
+			for i, result := range page.Results {
+				if result.URL == "" || result.PreviewURL == "" {
+					t.Errorf("result %d has an empty url: %+v", i, result)
+				}
+
+				if !strings.HasPrefix(result.URL, "https://") {
+					t.Errorf("result %d url is not https: %s", i, result.URL)
+				}
 			}
 		})
 	}

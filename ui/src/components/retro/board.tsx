@@ -13,6 +13,7 @@ import {
 } from "@/events";
 import useRetro from "@/hooks/use-retro";
 import { panelVariants } from "@/lib/motion";
+import { stageLabel } from "@/lib/stages";
 import { RetroStatus } from "@/types";
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -27,13 +28,6 @@ import Settings from "./settings";
 import ShowMarkdown from "./show-markdown";
 import StageRail from "./stage-rail";
 import Vote from "./vote";
-
-const stageLabel: Record<RetroStatus, string> = {
-  brainstorm: "Brainstorm",
-  group: "Group",
-  vote: "Vote",
-  discuss: "Discuss",
-};
 
 export default function Board() {
   const {
@@ -74,7 +68,7 @@ export default function Board() {
       <div className="sticky top-12 z-40 mb-4">
         <Collapsible open={expanded} onOpenChange={setExpanded}>
           <div className="rounded-xl bg-background/80 shadow-sm ring-1 ring-border/40 backdrop-blur-xl">
-            {/* Compact bar — always visible. Stacks on narrow screens: the
+            {/* Compact bar, always visible. Stacks on narrow screens: the
                 title and the rail cannot share 375px without one of them
                 becoming unreadable. */}
             <div className="flex flex-col gap-1.5 px-4 py-2 sm:h-12 sm:flex-row sm:items-center sm:gap-3 sm:py-0">
@@ -92,7 +86,7 @@ export default function Board() {
                     variant="outline"
                     className="hidden shrink-0 text-xs sm:flex"
                   >
-                    {stageLabel[status]}
+                    {stageLabel(status)}
                   </Badge>
                 )}
 

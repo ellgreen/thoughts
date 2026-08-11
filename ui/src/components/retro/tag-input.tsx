@@ -44,6 +44,16 @@ export default function TagInput({ value, onChange, placeholder = "Add tag…", 
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    // Tab commits what you have typed rather than tabbing away and losing it,
+    // the way it works anywhere else you type a list of labels. With nothing
+    // typed it moves focus on as normal.
+    if (e.key === "Tab" && input.trim() && !e.shiftKey) {
+      e.preventDefault();
+      addTag(input);
+      setOpen(false);
+      return;
+    }
+
     if ((e.key === "Enter" || e.key === ",") && input.trim()) {
       e.preventDefault();
       addTag(input);
@@ -71,6 +81,7 @@ export default function TagInput({ value, onChange, placeholder = "Add tag…", 
               {tag}
               <button
                 type="button"
+                aria-label={`Remove tag ${tag}`}
                 onClick={(e) => { e.stopPropagation(); removeTag(tag); }}
                 className="rounded-sm hover:bg-primary-foreground/20 p-0.5"
               >
@@ -84,6 +95,7 @@ export default function TagInput({ value, onChange, placeholder = "Add tag…", 
             onChange={(e) => { setInput(e.target.value); setOpen(true); }}
             onKeyDown={handleKeyDown}
             onFocus={() => setOpen(true)}
+            aria-label="Add a tag"
             placeholder={value.length === 0 ? placeholder : ""}
             className="flex-1 min-w-[120px] bg-transparent outline-none placeholder:text-muted-foreground"
           />

@@ -22,7 +22,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/lib/api";
-import { accentForIndex } from "@/lib/column-accent";
 import { cardVariants, spring, stagger } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 import { Route as RetrosRoute } from "@/routes/_auth.retros.$retroId";
@@ -138,7 +137,7 @@ export default function Creator() {
                   <FormControl>
                     <Input
                       autoFocus
-                      placeholder="Team Rocket — Sprint 24"
+                      placeholder="Team Rocket, Sprint 24"
                       {...field}
                     />
                   </FormControl>
@@ -154,6 +153,7 @@ export default function Creator() {
               onApply={applyColumns}
               onAdd={() => columns.append(emptyColumn)}
               onRemove={columns.remove}
+              onClear={() => applyColumns([])}
               onGeneratingChange={setGenerating}
             />
 
@@ -185,6 +185,7 @@ function ColumnsSection({
   onApply,
   onAdd,
   onRemove,
+  onClear,
   onGeneratingChange,
 }: {
   control: Control<FormValues>;
@@ -193,6 +194,7 @@ function ColumnsSection({
   onApply: (columns: ColumnDraft[]) => void;
   onAdd: () => void;
   onRemove: (index: number) => void;
+  onClear: () => void;
   onGeneratingChange: (generating: boolean) => void;
 }) {
   const { user } = useAuth();
@@ -217,7 +219,19 @@ function ColumnsSection({
         </div>
 
         <div className="flex items-center gap-2">
+          {fields.length > 0 && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClear}
+              className="text-muted-foreground"
+            >
+              Clear
+            </Button>
+          )}
+
           <TemplatePicker onApply={onApply} />
+
           <Button
             type="button"
             variant="secondary"
@@ -259,7 +273,6 @@ function ColumnsSection({
               control={control}
               index={index}
               onRemove={() => onRemove(index)}
-              canRemove={fields.length > minColumns}
             />
           ))}
         </AnimatePresence>
@@ -278,15 +291,11 @@ function ColumnCard({
   control,
   index,
   onRemove,
-  canRemove,
 }: {
   control: Control<FormValues>;
   index: number;
   onRemove: () => void;
-  canRemove: boolean;
 }) {
-  const accent = accentForIndex(index);
-
   return (
     <m.div
       layout
@@ -295,70 +304,68 @@ function ColumnCard({
       animate="animate"
       exit="exit"
       transition={stagger(index)}
-      className="group relative overflow-hidden rounded-xl bg-surface-raised pr-2 pl-4 ring-1 ring-border/70"
+      className="rounded-xl border bg-surface p-3"
     >
-      {/* The colour this column will actually be on the board. */}
-      <span
-        aria-hidden
-        className="absolute inset-y-0 left-0 w-1"
-        style={{ background: accent }}
-      />
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-muted-foreground">
+          Column {index + 1}
+        </span>
 
-      <div className="flex items-start gap-2 py-3">
-        <div className="min-w-0 flex-1 space-y-2">
-          <FormField
-            control={control}
-            name={`columns.${index}.title`}
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    placeholder="What went well"
-                    aria-label={`Column ${index + 1} title`}
-                    className="h-8 border-0 bg-transparent px-0 font-medium shadow-none focus-visible:ring-0 dark:bg-transparent"
-                    {...field}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={control}
-            name={`columns.${index}.description`}
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <AutoTextarea
-                    placeholder="A prompt to help people fill this column in…"
-                    aria-label={`Column ${index + 1} description`}
-                    maxLength={maxDescription}
-                    className="border-0 bg-transparent px-0 text-sm shadow-none focus-visible:ring-0 dark:bg-transparent"
-                    {...field}
-                  />
-                </FormControl>
-
-                <div className="flex items-center justify-between gap-2">
-                  <FormMessage />
-                  <CharacterCount value={field.value ?? ""} />
-                </div>
-              </FormItem>
-            )}
-          />
-        </div>
-
+        {/* Always visible: a control you have to hover to discover is not one
+            you can rely on, and any column can be removed here. */}
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          disabled={!canRemove}
           onClick={onRemove}
           aria-label={`Remove column ${index + 1}`}
-          className="size-7 shrink-0 text-muted-foreground opacity-0 transition-opacity hover:bg-destructive/10 hover:text-destructive group-hover:opacity-100 focus-visible:opacity-100 disabled:opacity-0"
+          className="size-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="size-3.5" />
         </Button>
+      </div>
+
+      <div className="space-y-3">
+        <FormField
+          control={control}
+          name={`columns.${index}.title`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">Title</FormLabel>
+              <FormControl>
+                <Input placeholder="What went well" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={control}
+          name={`columns.${index}.description`}
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel className="text-xs">
+                Description{" "}
+                <span className="font-normal text-muted-foreground">
+                  (optional)
+                </span>
+              </FormLabel>
+              <FormControl>
+                <AutoTextarea
+                  placeholder="A prompt to help people fill this column in"
+                  maxLength={maxDescription}
+                  {...field}
+                />
+              </FormControl>
+
+              <div className="flex items-center justify-between gap-2">
+                <FormMessage />
+                <CharacterCount value={field.value ?? ""} />
+              </div>
+            </FormItem>
+          )}
+        />
       </div>
     </m.div>
   );
@@ -413,19 +420,10 @@ function GeneratingPlaceholder() {
       className="space-y-2.5"
     >
       {[0, 1, 2].map((i) => (
-        <div
-          key={i}
-          className="relative overflow-hidden rounded-xl bg-surface-raised py-3 pr-2 pl-4 ring-1 ring-border/70"
-        >
-          <span
-            aria-hidden
-            className="absolute inset-y-0 left-0 w-1 animate-pulse"
-            style={{ background: accentForIndex(i) }}
-          />
-          <div className="space-y-2">
-            <div className="h-3.5 w-32 animate-pulse rounded bg-muted" />
-            <div className="h-3 w-full animate-pulse rounded bg-muted/70" />
-          </div>
+        <div key={i} className="space-y-2 rounded-xl border bg-surface p-3">
+          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+          <div className="h-8 w-full animate-pulse rounded-md bg-muted/70" />
+          <div className="h-8 w-full animate-pulse rounded-md bg-muted/70" />
         </div>
       ))}
     </m.div>
@@ -470,7 +468,7 @@ function Details({ control }: { control: Control<FormValues> }) {
             <div className="leading-tight">
               <FormLabel className="font-normal">Unlisted</FormLabel>
               <FormDescription className="text-xs">
-                Keep it off the home page — anyone with the link can still join.
+                Keep it off the home page. Anyone with the link can still join.
               </FormDescription>
             </div>
           </FormItem>

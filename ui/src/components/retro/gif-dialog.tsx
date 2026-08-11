@@ -230,7 +230,7 @@ function LinkTab({ onSelect }: { onSelect: (url: string) => void }) {
       />
 
       <p className="text-xs text-muted-foreground">
-        Any https image or GIF link works — right-click an image anywhere and
+        Any https image or GIF link works. Right-click an image anywhere and
         copy its address.
       </p>
 

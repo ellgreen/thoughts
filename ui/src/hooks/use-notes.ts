@@ -60,7 +60,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
       return { notes: event.payload as Note[], loaded: true, rollbacks: {} };
     }
 
-    // Optimistic — applied locally the moment the user acts.
+    // Optimistic: applied locally the moment the user acts.
     case "note_create": {
       const payload = event.payload as PayloadNoteCreate & Ref;
 

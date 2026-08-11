@@ -16,7 +16,7 @@ const schema = z.object({
     .string()
     .trim()
     .min(2, "Give it something to work with")
-    .max(128, "That's a bit long — keep it under 128 characters"),
+    .max(128, "That's a bit long. Keep it under 128 characters"),
 });
 
 /** Enough to show what this is for without anyone having to think. */
@@ -60,7 +60,7 @@ export default function AIRetroTemplate({
         onApply(res.data.columns);
 
         toast.success(`${res.data.theme} it is ✨`, {
-          description: `${res.data.columns.length} columns ready — tweak anything you like.`,
+          description: `${res.data.columns.length} columns ready. Tweak anything you like.`,
         });
       })
       .catch(() => {

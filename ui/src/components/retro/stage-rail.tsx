@@ -8,23 +8,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { spring } from "@/lib/motion";
+import { nextStage, previousStage, stageIndex, stages } from "@/lib/stages";
 import { cn } from "@/lib/utils";
 import { RetroStatus } from "@/types";
-import { Brain, Check, Group, Speech, Vote } from "lucide-react";
+import { ArrowRight, Check, Undo2 } from "lucide-react";
 import { m } from "motion/react";
 import { useState } from "react";
 
-const stages = [
-  { status: "brainstorm", icon: Brain, label: "Brainstorm" },
-  { status: "group", icon: Group, label: "Group" },
-  { status: "vote", icon: Vote, label: "Vote" },
-  { status: "discuss", icon: Speech, label: "Discuss" },
-] as const satisfies readonly { status: RetroStatus; icon: unknown; label: string }[];
-
 /**
- * Replaces a pair of anonymous chevrons with something that shows where the
- * retro actually is. Adjacent stages are clickable; the rest are context.
+ * Where the retro is, and how it moves on.
+ *
+ * The rail itself is a read-only indicator now. Advancing used to mean knowing
+ * you could click the next step, which nobody would guess: it is a button.
  */
 export default function StageRail({
   status,
@@ -35,72 +36,97 @@ export default function StageRail({
 }) {
   const [pending, setPending] = useState<RetroStatus | null>(null);
 
-  const currentIndex = stages.findIndex((stage) => stage.status === status);
+  const current = stageIndex(status);
+  const next = nextStage(status);
+  const previous = previousStage(status);
+
   const pendingStage = stages.find((stage) => stage.status === pending);
-  const movingForward = pendingStage
-    ? stages.indexOf(pendingStage) > currentIndex
-    : true;
+  const goingBack = pendingStage ? stageIndex(pendingStage.status) < current : false;
 
   return (
     <>
-      <ol className="flex items-center gap-0.5">
-        {stages.map((stage, index) => {
-          const done = index < currentIndex;
-          const active = index === currentIndex;
-          const reachable = Math.abs(index - currentIndex) === 1;
-          const Icon = done ? Check : stage.icon;
+      <div className="flex items-center gap-2">
+        <ol className="hidden items-center gap-0.5 md:flex">
+          {stages.map((stage, index) => {
+            const done = index < current;
+            const active = index === current;
+            const Icon = done ? Check : stage.icon;
 
-          return (
-            <li key={stage.status} className="flex items-center">
-              {index > 0 && (
-                <span
-                  aria-hidden
-                  className={cn(
-                    "mx-0.5 h-px w-3 transition-colors duration-300 sm:w-5",
-                    index <= currentIndex ? "bg-primary/60" : "bg-border",
-                  )}
-                />
-              )}
-
-              <button
-                type="button"
-                disabled={!reachable}
-                aria-current={active ? "step" : undefined}
-                onClick={() => setPending(stage.status)}
-                className={cn(
-                  "relative flex items-center gap-1.5 rounded-full px-2 py-1 text-sm transition-colors duration-200",
-                  "[&_svg]:size-3.5 [&_svg]:shrink-0",
-                  active && "font-medium text-primary-foreground",
-                  !active && done && "text-muted-foreground hover:text-foreground",
-                  !active && !done && "text-muted-foreground/45",
-                  reachable && "hover:bg-accent/60 cursor-pointer",
-                  !reachable && "cursor-default",
-                )}
-              >
-                {active && (
-                  // One shared element sliding between stages, rather than four
-                  // backgrounds fading in and out.
-                  <m.span
-                    layoutId="stage-rail-active"
-                    transition={spring}
-                    className="absolute inset-0 rounded-full bg-primary"
+            return (
+              <li key={stage.status} className="flex items-center">
+                {index > 0 && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "mx-0.5 h-px w-3 transition-colors duration-300 lg:w-5",
+                      index <= current ? "bg-primary/60" : "bg-border",
+                    )}
                   />
                 )}
 
-                <span className="relative flex items-center gap-1.5">
-                  <Icon />
-                  {/* Labels are the first thing to go when space is tight;
-                      the icons and the filled pill still carry the state. */}
-                  <span className={cn("hidden", active ? "sm:inline" : "lg:inline")}>
-                    {stage.label}
+                <span
+                  aria-current={active ? "step" : undefined}
+                  className={cn(
+                    "relative flex items-center gap-1.5 rounded-full px-2 py-1 text-sm",
+                    "[&_svg]:size-3.5 [&_svg]:shrink-0",
+                    active && "font-medium text-primary-foreground",
+                    !active && done && "text-muted-foreground",
+                    !active && !done && "text-muted-foreground/45",
+                  )}
+                >
+                  {active && (
+                    // One shared element sliding between stages, rather than
+                    // four backgrounds fading in and out.
+                    <m.span
+                      layoutId="stage-rail-active"
+                      transition={spring}
+                      className="absolute inset-0 rounded-full bg-primary"
+                    />
+                  )}
+
+                  <span className="relative flex items-center gap-1.5">
+                    <Icon />
+                    <span className={cn(!active && "hidden lg:inline")}>
+                      {stage.label}
+                    </span>
                   </span>
-                  <span className="sr-only">{stage.label}</span>
                 </span>
-              </button>
-            </li>
-          );
-        })}
-      </ol>
+              </li>
+            );
+          })}
+        </ol>
+
+        {/* Going back is deliberately quieter than going on. */}
+        {previous && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={`Back to ${previous.label.toLowerCase()}`}
+                onClick={() => setPending(previous.status)}
+                className="size-8 shrink-0 text-muted-foreground"
+              >
+                <Undo2 className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Back to {previous.label.toLowerCase()}</TooltipContent>
+          </Tooltip>
+        )}
+
+        {next && (
+          <Button
+            type="button"
+            onClick={() => setPending(next.status)}
+            className="shrink-0 gap-1.5"
+          >
+            <span className="hidden sm:inline">{next.action}</span>
+            <span className="sm:hidden">Next</span>
+            <ArrowRight className="size-4" />
+          </Button>
+        )}
+      </div>
 
       <Dialog
         open={pending !== null}
@@ -109,7 +135,7 @@ export default function StageRail({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {movingForward ? "Move on to" : "Go back to"}{" "}
+              {goingBack ? "Go back to" : "Move on to"}{" "}
               {pendingStage?.label.toLowerCase()}?
             </DialogTitle>
             <DialogDescription>
@@ -131,7 +157,7 @@ export default function StageRail({
                 setPending(null);
               }}
             >
-              {movingForward ? "Move on" : "Go back"}
+              {goingBack ? "Go back" : "Move on"}
             </Button>
           </DialogFooter>
         </DialogContent>

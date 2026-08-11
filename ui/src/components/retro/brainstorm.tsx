@@ -80,7 +80,7 @@ export default function Brainstorm() {
             >
               <NoteDialog
                 title="New note"
-                description="Only you can read this until the brainstorm ends."
+                description="Only you can read this until everyone moves on to grouping."
                 onContentSave={(content) => handleNewNote(column.id, content)}
               >
                 <Button variant="secondary" className="w-full">

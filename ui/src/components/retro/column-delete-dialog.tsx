@@ -26,7 +26,7 @@ export default function ColumnDeleteDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete “{columnTitle}”?</AlertDialogTitle>
           <AlertDialogDescription>
-            The column is empty, so nothing is lost — but everyone in this retro
+            The column is empty, so nothing is lost, but everyone in this retro
             will see it disappear.
           </AlertDialogDescription>
         </AlertDialogHeader>

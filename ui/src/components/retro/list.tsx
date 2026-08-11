@@ -1,17 +1,11 @@
 import { Badge } from "@/components/ui/badge";
 import { accentForIndex } from "@/lib/column-accent";
 import { cardVariants, spring, stagger } from "@/lib/motion";
+import { stageLabel } from "@/lib/stages";
 import { Retro, RetroStatus } from "@/types";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { CircleCheck, StickyNote, Telescope } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
-
-const statusLabel: Record<RetroStatus, string> = {
-  brainstorm: "Brainstorm",
-  group: "Grouping",
-  vote: "Voting",
-  discuss: "Discuss",
-};
 
 // One accent per stage, so a glance down the list tells you where things are.
 const statusAccent: Record<RetroStatus, string> = {
@@ -28,7 +22,7 @@ export default function List({ retros }: { retros?: Retro[] }) {
         <Telescope className="size-6 text-muted-foreground/60" />
         <p className="font-medium">No retros yet</p>
         <p className="max-w-xs text-sm text-muted-foreground">
-          Start one above and share the link — everyone joins by typing their
+          Start one above and share the link. Everyone joins by typing their
           name.
         </p>
       </div>
@@ -94,7 +88,7 @@ export function RetroItem({
           variant="outline"
           className="shrink-0 text-xs font-normal text-muted-foreground"
         >
-          {statusLabel[retro.status]}
+          {stageLabel(retro.status)}
         </Badge>
       </div>
 

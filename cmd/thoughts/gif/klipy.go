@@ -46,19 +46,22 @@ type (
 		Height int    `json:"height"`
 	}
 
-	// Klipy returns each format in three sizes.
-	klipyVariants struct {
-		HD klipyFile `json:"hd"`
-		MD klipyFile `json:"md"`
-		SM klipyFile `json:"sm"`
+	// Each size carries every format. Note the nesting: size first, then
+	// format, and the field is "file" rather than "files".
+	klipyFormats struct {
+		Gif  klipyFile `json:"gif"`
+		Webp klipyFile `json:"webp"`
 	}
 
 	klipyItem struct {
-		Slug  string `json:"slug"`
-		Files struct {
-			Gif  klipyVariants `json:"gif"`
-			Webp klipyVariants `json:"webp"`
-		} `json:"files"`
+		Slug string `json:"slug"`
+		Type string `json:"type"`
+		File struct {
+			HD klipyFormats `json:"hd"`
+			MD klipyFormats `json:"md"`
+			SM klipyFormats `json:"sm"`
+			XS klipyFormats `json:"xs"`
+		} `json:"file"`
 	}
 
 	klipyResponse struct {
@@ -127,13 +130,14 @@ func (k *KlipyProvider) fetch(ctx context.Context, path string, params url.Value
 func (i klipyItem) toResult() (SearchResult, bool) {
 	// Medium is the sweet spot on a note card; fall back through the other
 	// sizes so an item missing one variant is still usable.
-	full := firstFile(i.Files.Gif.MD, i.Files.Gif.HD, i.Files.Gif.SM)
+	full := firstFile(i.File.MD.Gif, i.File.HD.Gif, i.File.SM.Gif)
 	if full.URL == "" {
 		// Ads and other non-GIF items come through the same list.
 		return SearchResult{}, false
 	}
 
-	preview := firstFile(i.Files.Webp.SM, i.Files.Gif.SM, full)
+	// webp for the grid: same frames at roughly a quarter of the bytes.
+	preview := firstFile(i.File.SM.Webp, i.File.XS.Webp, i.File.SM.Gif, full)
 
 	return SearchResult{
 		PreviewURL: preview.URL,
