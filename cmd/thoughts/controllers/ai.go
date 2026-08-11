@@ -1,13 +1,19 @@
 package controllers
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/ellgreen/thoughts/cmd/thoughts/ai"
 	"github.com/ellgreen/thoughts/cmd/thoughts/ai/prompts"
 	"github.com/ellgreen/thoughts/cmd/thoughts/requests"
 )
+
+// Generous enough for a slow model, short enough that a hung provider surfaces
+// as an error rather than an endless wait.
+const generateTimeout = 30 * time.Second
 
 type PromptRequest struct {
 	Prompt string `json:"prompt" validate:"required,min=2,max=128"`
@@ -26,7 +32,12 @@ func AIRetroTemplate(aiModel ai.Model) http.Handler {
 			return
 		}
 
-		resp, err := prompts.GenerateRetroTemplate(r.Context(), aiModel, req.Prompt)
+		// Bounded, so a slow or unreachable provider cannot leave someone
+		// watching a spinner indefinitely.
+		ctx, cancel := context.WithTimeout(r.Context(), generateTimeout)
+		defer cancel()
+
+		resp, err := prompts.GenerateRetroTemplate(ctx, aiModel, req.Prompt)
 		if err != nil {
 			slog.Error("failed to generate retro template", "err", err)
 			http.Error(w, "failed to generate retro template", http.StatusInternalServerError)

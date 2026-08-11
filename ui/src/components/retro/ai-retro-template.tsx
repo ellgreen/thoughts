@@ -1,130 +1,197 @@
-import { Sparkles } from "lucide-react";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { Button } from "../ui/button";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "../ui/form";
-import { AIRetroTemplateResponse } from "@/types";
-import z from "zod";
-import { useForm, useFormContext } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
-import { toast } from "sonner";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "../ui/input-group";
+import { spring, springy } from "@/lib/motion";
+import { AIRetroTemplateResponse } from "@/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Sparkles, WandSparkles } from "lucide-react";
+import { m } from "motion/react";
 import { useState } from "react";
-import { Spinner } from "../ui/spinner";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import z from "zod";
 
-const aiTemplateSchema = z.object({
+const schema = z.object({
   prompt: z
     .string()
-    .min(4, "Please enter a prompt")
-    .max(128, "Prompt is too long (max 128 characters)")
-    .transform((value) => value.trim()),
+    .trim()
+    .min(2, "Give it something to work with")
+    .max(128, "That's a bit long — keep it under 128 characters"),
 });
 
-export default function AIRetroTemplate() {
-  const { setValue } = useFormContext();
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+/** Enough to show what this is for without anyone having to think. */
+const suggestions = [
+  "Star Wars",
+  "The Great British Bake Off",
+  "Pirates",
+  "Deep sea",
+  "Heist movie",
+  "Formula 1",
+];
+
+export interface GeneratedColumn {
+  title: string;
+  description: string;
+}
+
+export default function AIRetroTemplate({
+  onApply,
+  onGeneratingChange,
+}: {
+  onApply: (columns: GeneratedColumn[]) => void;
+  onGeneratingChange?: (generating: boolean) => void;
+}) {
+  const [generating, setGenerating] = useState(false);
 
   const form = useForm({
-    resolver: zodResolver(aiTemplateSchema),
-    defaultValues: {
-      prompt: "",
-    },
+    resolver: zodResolver(schema),
+    defaultValues: { prompt: "" },
   });
 
-  function handleSubmit(data: z.infer<typeof aiTemplateSchema>) {
-    if (isGenerating) return;
-    setIsGenerating(true);
+  function generate(prompt: string) {
+    if (generating) return;
+
+    setGenerating(true);
+    onGeneratingChange?.(true);
 
     api
-      .post<AIRetroTemplateResponse>("/api/ai/retro-template", {
-        prompt: data.prompt,
-      })
+      .post<AIRetroTemplateResponse>("/api/ai/retro-template", { prompt })
       .then((res) => {
-        setValue("columns", res.data.columns);
-        form.reset();
-        toast.success(`🎉 ${res.data.theme} retro generated!`, {
-          description: `${res.data.columns.length} fresh columns are ready to go 🚀`,
-          duration: 5000,
+        onApply(res.data.columns);
+
+        toast.success(`${res.data.theme} it is ✨`, {
+          description: `${res.data.columns.length} columns ready — tweak anything you like.`,
         });
       })
       .catch(() => {
-        toast.error("Failed to generate columns from AI");
+        toast.error("Couldn't dream that one up", {
+          description: "Try a different theme, or pick a template instead.",
+        });
       })
       .finally(() => {
-        setIsGenerating(false);
-        setPopoverOpen(false);
+        setGenerating(false);
+        onGeneratingChange?.(false);
       });
   }
 
+  // Validates through react-hook-form without an enclosing <form> element.
+  const submit = form.handleSubmit((data) => generate(data.prompt));
+
+  function applySuggestion(suggestion: string) {
+    form.setValue("prompt", suggestion);
+    generate(suggestion);
+  }
+
+  const error = form.formState.errors.prompt?.message;
+
   return (
-    <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="outline" type="button" className="w-full">
-          <Sparkles />
-          From AI
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="min-w-lg">
-        <h4 className="font-medium">Generate a retro template using AI.</h4>
-        <p className="text-muted-foreground text-sm mt-2 mb-4">
-          Enter a prompt to generate a retro template. The AI will generate
-          columns based on the prompt.
+    <div className="relative overflow-hidden rounded-xl p-px">
+      {/* Gradient edge that drifts while it thinks, and sits still otherwise. */}
+      <m.div
+        aria-hidden
+        className="absolute inset-[-100%] bg-[conic-gradient(from_0deg,var(--chart-1),var(--chart-2),var(--chart-4),var(--chart-1))]"
+        animate={generating ? { rotate: 360 } : { rotate: 0 }}
+        transition={
+          generating
+            ? { duration: 2.5, repeat: Infinity, ease: "linear" }
+            : { duration: 0.4 }
+        }
+        style={{ opacity: generating ? 0.9 : 0.35 }}
+      />
+
+      <div className="relative rounded-[11px] bg-surface p-3.5">
+        <div className="flex items-center gap-2">
+          <m.span
+            aria-hidden
+            className="text-[var(--chart-1)]"
+            animate={
+              generating
+                ? { scale: [1, 1.25, 1], rotate: [0, 12, -8, 0] }
+                : { scale: 1, rotate: 0 }
+            }
+            transition={
+              generating
+                ? { duration: 1.2, repeat: Infinity, ease: "easeInOut" }
+                : spring
+            }
+          >
+            <Sparkles className="size-4" />
+          </m.span>
+
+          <h4 className="text-sm font-medium">Conjure a themed board</h4>
+
+          <span className="ml-auto text-xs text-muted-foreground">
+            Powered by AI
+          </span>
+        </div>
+
+        <p className="mt-1 text-xs text-muted-foreground">
+          Name a theme and we'll write the columns around it.
         </p>
 
-        <Form {...form}>
-          <FormField
-            control={form.control}
-            name="prompt"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <InputGroup>
-                    <InputGroupInput
-                      autoComplete="off"
-                      placeholder="star wars"
-                      {...field}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          form.handleSubmit(handleSubmit)();
-                        }
-                      }}
-                    />
+        {/* Deliberately not a <form>: this sits inside the create-retro form,
+            and HTML has no nested forms - the browser drops the inner one, so
+            a submit button here would submit the outer form and create the
+            retro instead of generating anything. */}
+        <div className="mt-3 flex gap-2">
+          <Input
+            autoComplete="off"
+            placeholder="a heist movie"
+            disabled={generating}
+            aria-label="Retro theme"
+            onKeyDown={(event) => {
+              if (event.key !== "Enter") return;
 
-                    <InputGroupAddon align="inline-end">
-                      {isGenerating ? (
-                        <Spinner />
-                      ) : (
-                        <InputGroupButton
-                          type="button"
-                          onClick={form.handleSubmit(handleSubmit)}
-                          disabled={isGenerating}
-                        >
-                          Generate
-                        </InputGroupButton>
-                      )}
-                    </InputGroupAddon>
-                  </InputGroup>
-                </FormControl>
-
-                <FormMessage />
-              </FormItem>
-            )}
+              event.preventDefault();
+              submit();
+            }}
+            {...form.register("prompt")}
           />
-        </Form>
-      </PopoverContent>
-    </Popover>
+
+          {/* The label swaps in place rather than crossfading: an empty button
+              mid-transition jumps the layout of the whole row. */}
+          <Button
+            type="button"
+            onClick={submit}
+            disabled={generating}
+            className="w-32 shrink-0 gap-1.5"
+          >
+            <m.span
+              aria-hidden
+              animate={generating ? { rotate: [0, -12, 12, 0] } : { rotate: 0 }}
+              transition={
+                generating
+                  ? { duration: 1, repeat: Infinity, ease: "easeInOut" }
+                  : springy
+              }
+              className="flex"
+            >
+              <WandSparkles className="size-4" />
+            </m.span>
+            {generating ? "Conjuring…" : "Generate"}
+          </Button>
+        </div>
+
+        {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
+          {suggestions.map((suggestion, i) => (
+            <m.button
+              key={suggestion}
+              type="button"
+              disabled={generating}
+              onClick={() => applySuggestion(suggestion)}
+              initial={{ opacity: 0, y: 3 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...spring, delay: 0.03 * i }}
+              whileHover={{ y: -1 }}
+              className="rounded-full border border-border/70 px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-[var(--chart-1)] hover:text-foreground disabled:opacity-50"
+            >
+              {suggestion}
+            </m.button>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

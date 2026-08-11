@@ -8,6 +8,12 @@ import (
 	"github.com/tmc/langchaingo/llms"
 )
 
+const (
+	// Mirrors the create endpoint's limits.
+	maxColumns     = 5
+	maxFieldLength = 255
+)
+
 const retroTemplateSystemPrompt = `You are a backend service that generates JSON-only retrospective board templates.
 
 You MUST respond with a single JSON object matching exactly this schema:
@@ -79,7 +85,9 @@ func GenerateRetroTemplate(ctx context.Context, model ai.Model, userPrompt strin
 		},
 		llms.WithJSONMode(),
 		llms.WithTemperature(0.9),
-		llms.WithMaxTokens(250),
+		// Five columns with descriptions do not fit in 250, and a truncated
+		// response is invalid JSON, so the whole generation failed.
+		llms.WithMaxTokens(700),
 	)
 	if err != nil {
 		return RetroTemplateResponse{}, fmt.Errorf("failed to generate content: %w", err)
@@ -90,5 +98,33 @@ func GenerateRetroTemplate(ctx context.Context, model ai.Model, userPrompt strin
 		return RetroTemplateResponse{}, fmt.Errorf("failed to parse response: %w", err)
 	}
 
-	return resp, nil
+	return clamp(resp), nil
+}
+
+// clamp brings a generated template inside what the create endpoint accepts.
+// The prompt asks for 2 to 5 columns within the length limits, but a model is
+// free to ignore that, and the failure would otherwise surface as a validation
+// error on a form the person never filled in themselves.
+func clamp(resp RetroTemplateResponse) RetroTemplateResponse {
+	if len(resp.Columns) > maxColumns {
+		resp.Columns = resp.Columns[:maxColumns]
+	}
+
+	resp.Theme = truncate(resp.Theme, maxFieldLength)
+
+	for i := range resp.Columns {
+		resp.Columns[i].Title = truncate(resp.Columns[i].Title, maxFieldLength)
+		resp.Columns[i].Description = truncate(resp.Columns[i].Description, maxFieldLength)
+	}
+
+	return resp
+}
+
+func truncate(value string, limit int) string {
+	runes := []rune(value)
+	if len(runes) <= limit {
+		return value
+	}
+
+	return string(runes[:limit])
 }

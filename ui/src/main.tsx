@@ -1,6 +1,6 @@
 import { RouterProvider } from "@tanstack/react-router";
 import { domMax, LazyMotion, MotionConfig } from "motion/react";
-import { StrictMode, useEffect } from "react";
+import { StrictMode, useEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import AuthProvider from "./components/auth.tsx";
 import ThemeProvider from "./components/theme.tsx";
@@ -13,10 +13,17 @@ import { router } from "./router.tsx";
 
 function InnerApp() {
   const auth = useAuth();
+  const lastStatus = useRef(auth.status);
 
   // A session going stale has to re-run the route guards, otherwise whatever
   // is on screen keeps firing requests that will only ever 401.
   useEffect(() => {
+    // Not on the first run: the router has not been handed its context yet,
+    // so beforeLoad would read isAuthenticated off an undefined auth.
+    if (lastStatus.current === auth.status) return;
+
+    lastStatus.current = auth.status;
+
     router.invalidate();
   }, [auth.status]);
 
