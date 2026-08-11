@@ -6,11 +6,23 @@ import {
   DraggableSyntheticListeners,
   useDraggable,
 } from "@dnd-kit/core";
-import { GripVertical, Image, ImageOff, Pencil, Trash2 } from "lucide-react";
+import {
+  GripVertical,
+  Image,
+  ImageOff,
+  Pencil,
+  Trash2,
+  Ungroup,
+} from "lucide-react";
 import { m } from "motion/react";
 import React, { useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { Button } from "../ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import GIFDialog from "./gif-dialog";
 import NoteDeleteDialog from "./note-delete-dialog";
 import NoteDialog from "./note-dialog";
@@ -27,7 +39,12 @@ interface NoteProps {
   onDelete?: () => void;
   onGifSelected?: (url: string) => void;
   onGifRemoved?: () => void;
+  /** Set only for notes sharing a group, to lift this one back out of it. */
+  onUngroup?: () => void;
 }
+
+const shellClassName =
+  "group relative rounded-lg bg-surface-raised p-2 ring-1 ring-border/70";
 
 export const Note = ({
   note,
@@ -40,13 +57,14 @@ export const Note = ({
   onDelete,
   onGifSelected,
   onGifRemoved,
+  onUngroup,
   className,
+  ref,
   ...props
 }: NoteProps & React.ComponentProps<typeof m.div>) => {
-  const hasActions = !!(onGifSelected || onGifRemoved || onDelete || onEdit);
-
   return (
     <m.div
+      ref={ref}
       // layoutId keeps the same card alive across stage changes, so notes
       // glide into their groups instead of blinking out and back.
       layoutId={note.id}
@@ -57,7 +75,7 @@ export const Note = ({
       exit="exit"
       transition={spring}
       className={twMerge(
-        "group relative rounded-lg bg-surface-raised p-2 ring-1 ring-border/70",
+        shellClassName,
         "shadow-[0_1px_2px_rgb(0_0_0/0.04)] transition-shadow duration-200",
         "hover:shadow-[0_4px_16px_-4px_rgb(0_0_0/0.12)]",
         className,
@@ -65,6 +83,76 @@ export const Note = ({
       )}
       {...props}
     >
+      <NoteBody
+        note={note}
+        showGrip={showGrip}
+        blur={blur}
+        showAuthor={showAuthor}
+        listeners={listeners}
+        attributes={attributes}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onGifSelected={onGifSelected}
+        onGifRemoved={onGifRemoved}
+        onUngroup={onUngroup}
+      />
+    </m.div>
+  );
+};
+
+/**
+ * The card as it looks under the cursor mid-drag, rendered by dnd-kit's
+ * DragOverlay in a portal.
+ *
+ * It has to be a plain element rather than a `Note`: motion owns the transform
+ * of anything with a layoutId, so a dragged note's own transform was being
+ * overwritten every frame and the card never left its slot. The overlay sits
+ * outside that system entirely, and a second element sharing the layoutId
+ * would fight the original for it anyway.
+ */
+export function NoteOverlay({
+  note,
+  showAuthor,
+}: {
+  note: NoteType;
+  showAuthor?: boolean;
+}) {
+  return (
+    <div
+      className={twMerge(
+        shellClassName,
+        "cursor-grabbing shadow-[0_12px_32px_-8px_rgb(0_0_0/0.35)] ring-primary/40",
+      )}
+      style={{ transform: "rotate(1.5deg) scale(1.03)" }}
+    >
+      <NoteBody note={note} showAuthor={showAuthor} showGrip />
+    </div>
+  );
+}
+
+function NoteBody({
+  note,
+  showGrip,
+  blur,
+  showAuthor,
+  listeners,
+  attributes,
+  onEdit,
+  onDelete,
+  onGifSelected,
+  onGifRemoved,
+  onUngroup,
+}: NoteProps) {
+  const hasActions = !!(
+    onGifSelected ||
+    onGifRemoved ||
+    onDelete ||
+    onEdit ||
+    onUngroup
+  );
+
+  return (
+    <>
       {note.img_url && <NoteImage src={note.img_url} blur={blur} />}
 
       <div className="flex items-start gap-2">
@@ -87,6 +175,23 @@ export const Note = ({
 
       {hasActions && (
         <div className="absolute top-1.5 right-1.5 flex items-center gap-px rounded-md bg-surface-raised/95 p-0.5 opacity-0 shadow-sm ring-1 ring-border backdrop-blur-sm transition-all duration-150 group-hover:opacity-100 focus-within:opacity-100">
+          {onUngroup && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-6"
+                  aria-label="Take this note out of its group"
+                  onClick={onUngroup}
+                >
+                  <Ungroup className="size-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Take out of this group</TooltipContent>
+            </Tooltip>
+          )}
+
           {onGifSelected && note.img_url === "" && (
             <GIFDialog onSelect={onGifSelected}>
               <Button
@@ -144,9 +249,9 @@ export const Note = ({
           )}
         </div>
       )}
-    </m.div>
+    </>
   );
-};
+}
 
 /**
  * Fixed aspect box with a placeholder: the image used to pop in at its natural
@@ -197,37 +302,45 @@ function Author({ name }: { name: string }) {
 
 export function DraggableNote({
   note,
+  ref,
   ...actions
 }: {
   note: NoteType;
-} & Pick<NoteProps, "onEdit" | "onDelete" | "onGifSelected" | "onGifRemoved" | "showAuthor">) {
-  const { setNodeRef, transform, listeners, attributes, isDragging } =
-    useDraggable({
-      id: note.id,
-    });
+  ref?: React.Ref<HTMLDivElement>;
+} & Pick<
+  NoteProps,
+  | "onEdit"
+  | "onDelete"
+  | "onGifSelected"
+  | "onGifRemoved"
+  | "onUngroup"
+  | "showAuthor"
+>) {
+  const { setNodeRef, listeners, attributes, isDragging } = useDraggable({
+    id: note.id,
+  });
 
   return (
     <Note
-      ref={setNodeRef}
+      // Composed, and destructured out of the spread above rather than left in
+      // it. AnimatePresence's popLayout mode clones each child with a ref of
+      // its own to measure it, and that one used to land in the spread and
+      // overwrite dnd-kit's: with no node to measure there was nothing to
+      // show being dragged.
+      ref={(node: HTMLDivElement | null) => {
+        setNodeRef(node);
+
+        if (typeof ref === "function") ref(node);
+        else if (ref) ref.current = node;
+      }}
       note={note}
       showGrip
       listeners={listeners}
       attributes={attributes}
-      style={
-        transform
-          ? {
-              // translate3d rather than motion's x/y so it does not fight the
-              // layout animation while a drag is in flight.
-              transform: `translate3d(${transform.x}px, ${transform.y}px, 0) rotate(1.5deg) scale(1.03)`,
-              zIndex: 30,
-            }
-          : undefined
-      }
-      className={
-        isDragging
-          ? "cursor-grabbing shadow-[0_12px_32px_-8px_rgb(0_0_0/0.35)] ring-primary/40"
-          : ""
-      }
+      // The card under the cursor is the DragOverlay's; what stays behind is
+      // the gap it left, dimmed so you can see where it came from. Animated
+      // rather than classed because motion writes opacity inline.
+      animate={isDragging ? { opacity: 0.3, scale: 0.98 } : "animate"}
       {...actions}
     />
   );

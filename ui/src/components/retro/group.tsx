@@ -2,11 +2,12 @@ import { createSocketEvent } from "@/events";
 import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DragEndEvent } from "@dnd-kit/core";
 import { AnimatePresence } from "motion/react";
 import { EmptyColumn, NoteSkeletons } from "./column-states";
 import { Columns, DroppableColumn } from "./columns";
 import { DraggableNote } from "./note";
+import NoteDndContext from "./note-dnd";
 import { DroppableNoteGroup } from "./note-group";
 
 export default function Group() {
@@ -41,8 +42,15 @@ export default function Group() {
     );
   }
 
+  // An empty group_id asks the server for a fresh one, which is what being in
+  // a group of your own means here. The column is left out of the payload so
+  // it keeps the one it already has.
+  function handleUngroup(noteId: string) {
+    dispatch(createSocketEvent("note_update", { id: noteId, group_id: "" }));
+  }
+
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <NoteDndContext notes={notes} showAuthor onDragEnd={handleDragEnd}>
       <Columns
         onAddColumn={columnActions.create}
         canAddColumn={columnActions.canCreate}
@@ -63,7 +71,9 @@ export default function Group() {
                 <EmptyColumn>No thoughts in this column.</EmptyColumn>
               )}
 
-              <AnimatePresence mode="popLayout" initial={false}>
+              {/* Sync rather than popLayout, so a note being regrouped glides
+                  via its layoutId instead of being popped out of the flow. */}
+              <AnimatePresence initial={false}>
                 {groups.map(([groupId, groupNotes]) => (
                   <DroppableNoteGroup
                     columnId={column.id}
@@ -71,7 +81,18 @@ export default function Group() {
                     key={groupId}
                   >
                     {groupNotes.map((note) => (
-                      <DraggableNote key={note.id} note={note} showAuthor />
+                      <DraggableNote
+                        key={note.id}
+                        note={note}
+                        showAuthor
+                        // Only where there is a group to leave: on its own a
+                        // note is already its own group.
+                        onUngroup={
+                          groupNotes.length > 1
+                            ? () => handleUngroup(note.id)
+                            : undefined
+                        }
+                      />
                     ))}
                   </DroppableNoteGroup>
                 ))}
@@ -80,6 +101,6 @@ export default function Group() {
           );
         })}
       </Columns>
-    </DndContext>
+    </NoteDndContext>
   );
 }

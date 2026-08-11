@@ -2,7 +2,7 @@ import { createSocketEvent } from "@/events";
 import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
-import { DndContext, DragEndEvent } from "@dnd-kit/core";
+import { DragEndEvent } from "@dnd-kit/core";
 import { Plus } from "lucide-react";
 import { AnimatePresence } from "motion/react";
 import { Button } from "../ui/button";
@@ -10,6 +10,7 @@ import { EmptyColumn, NoteSkeletons } from "./column-states";
 import { Columns, DroppableColumn } from "./columns";
 import { DraggableNote, Note } from "./note";
 import NoteDialog from "./note-dialog";
+import NoteDndContext from "./note-dnd";
 
 export default function Brainstorm() {
   const {
@@ -63,7 +64,7 @@ export default function Brainstorm() {
   }
 
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <NoteDndContext notes={notes} onDragEnd={handleDragEnd}>
       <Columns
         onAddColumn={columnActions.create}
         canAddColumn={columnActions.canCreate}
@@ -95,7 +96,10 @@ export default function Brainstorm() {
                 <EmptyColumn>Nothing here yet.</EmptyColumn>
               )}
 
-              <AnimatePresence mode="popLayout" initial={false}>
+              {/* Not popLayout: a note moving column is one card changing
+                  place, and popLayout tears it out of the flow to animate it
+                  away while its layoutId is gliding it to the new column. */}
+              <AnimatePresence initial={false}>
                 {columnNotes.map((note) =>
                   note.created_by_me ? (
                     <DraggableNote
@@ -117,6 +121,6 @@ export default function Brainstorm() {
           );
         })}
       </Columns>
-    </DndContext>
+    </NoteDndContext>
   );
 }
