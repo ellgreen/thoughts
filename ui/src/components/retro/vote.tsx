@@ -29,7 +29,7 @@ export default function Vote({
       setVotes(res.data);
       setVotesRemaining(retro.max_votes - res.data.length);
     });
-  }, [retro.id, retro.max_votes]);
+  }, [retro.id, retro.max_votes, setVotesRemaining]);
 
   function handleVote(groupId: string, value: boolean) {
     api

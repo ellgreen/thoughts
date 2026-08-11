@@ -1,13 +1,7 @@
 import { cn } from "@/lib/utils";
 import { useCallback, useLayoutEffect, useRef } from "react";
-import { textareaClassName } from "./textarea";
+import { textareaClassName } from "./textarea-class";
 
-/**
- * A textarea that grows with its content.
- *
- * Sized in JS rather than with `field-sizing: content`, which only Chrome
- * supports, and renders its own element so the ref reaches the real node.
- */
 export function AutoTextarea({
   className,
   value,
@@ -46,7 +40,6 @@ export function AutoTextarea({
     el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
   }, [maxHeight]);
 
-  // Before paint, and covers value changing from outside.
   useLayoutEffect(resize, [value, resize]);
 
   return (
