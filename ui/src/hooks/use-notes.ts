@@ -233,12 +233,17 @@ export function useNotes() {
   return ctx;
 }
 
-export function useNotesState(): NotesValue {
+export function useNotesState(loaded: Note[]): NotesValue {
   const { retro } = useRetro();
   const { user } = useAuth();
   const { send } = useRetroSocket();
   const readyState = useReadyState();
-  const [state, dispatch] = useReducer(notesReducer, initialState);
+
+  // Seeded through the reducer rather than by hand, so loaded and rollbacks
+  // cannot drift from what note_index already does.
+  const [state, dispatch] = useReducer(notesReducer, loaded, (notes) =>
+    notesReducer(initialState, { name: "note_index", payload: notes }),
+  );
 
   const groupedNotes = useMemo(() => groupNotes(state.notes), [state.notes]);
   const byColumn = useMemo(() => notesByColumn(state.notes), [state.notes]);
@@ -274,11 +279,9 @@ export function useNotesState(): NotesValue {
     });
   }, [retro.id]);
 
-  useEffect(load, [load]);
-
   // Nothing replays what the socket missed while it was down, and this hook no
   // longer remounts per stage to refetch by accident, so a reconnect has to ask
-  // the server for the list again.
+  // the server for the list again. The route loader covers the first connection.
   const dropped = useRef(false);
 
   useEffect(() => {
