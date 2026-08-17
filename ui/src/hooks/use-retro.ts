@@ -1,11 +1,9 @@
 import { Retro } from "@/types";
 import { createContext, useContext } from "react";
-import { WebSocketHook } from "react-use-websocket/dist/lib/types";
 
 type RetroContextType = {
   retro: Retro;
   setRetro: (retro: Retro) => void;
-  socket: WebSocketHook;
 };
 
 export const RetroContext = createContext<RetroContextType>(

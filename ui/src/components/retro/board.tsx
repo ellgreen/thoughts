@@ -12,12 +12,13 @@ import {
   SocketEvent,
 } from "@/events";
 import useRetro from "@/hooks/use-retro";
+import { useReadyState, useRetroSocket, useSocketEvent } from "@/hooks/use-retro-socket";
 import { panelVariants } from "@/lib/motion";
 import { RetroStatus } from "@/types";
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import Brainstorm from "./brainstorm";
 import ConnectionIndicator from "./connection-indicator";
@@ -29,10 +30,9 @@ import StageRail from "./stage-rail";
 import Vote from "./vote";
 
 export default function Board() {
-  const {
-    retro,
-    socket: { sendJsonMessage, lastJsonMessage, readyState },
-  } = useRetro();
+  const { retro } = useRetro();
+  const { send } = useRetroSocket();
+  const readyState = useReadyState();
   const [status, setStatus] = useState<RetroStatus>(retro.status);
   const [connectionInfo, setConnectionInfo] = useState<PayloadConnectionInfo>({
     users: [],
@@ -40,9 +40,7 @@ export default function Board() {
   const [votesRemaining, setVotesRemaining] = useState(0);
   const [expanded, setExpanded] = useState(true);
 
-  useEffect(() => {
-    if (!lastJsonMessage) return;
-    const event = lastJsonMessage as SocketEvent;
+  useSocketEvent((event: SocketEvent) => {
     switch (event.name) {
       case "error":
         toast("Something went wrong", {
@@ -56,10 +54,10 @@ export default function Board() {
         setConnectionInfo(event.payload as PayloadConnectionInfo);
         return;
     }
-  }, [lastJsonMessage]);
+  });
 
   function handleStatusUpdate(s: RetroStatus) {
-    sendJsonMessage(createSocketEvent("status_update", { status: s }));
+    send(createSocketEvent("status_update", { status: s }));
   }
 
   return (

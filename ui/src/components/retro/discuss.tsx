@@ -2,6 +2,7 @@ import { createSocketEvent, SocketEvent } from "@/events";
 import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
+import { useSocketEvent } from "@/hooks/use-retro-socket";
 import { api } from "@/lib/api";
 import { Task as TaskType } from "@/types";
 import { Plus } from "lucide-react";
@@ -22,10 +23,7 @@ interface Vote {
 }
 
 export default function Discuss() {
-  const {
-    retro,
-    socket: { lastJsonMessage },
-  } = useRetro();
+  const { retro } = useRetro();
   const { notes, groupedNotes, loaded, dispatch } = useNotes();
   const columnActions = useColumnActions(notes);
 
@@ -58,11 +56,7 @@ export default function Discuss() {
     [groupedNotes, votes],
   );
 
-  useEffect(() => {
-    if (!lastJsonMessage) return;
-
-    const event = lastJsonMessage as SocketEvent;
-
+  useSocketEvent((event: SocketEvent) => {
     switch (event.name) {
       case "task_created":
         setTasks((tasks) => [...tasks, event.payload as TaskType]);
@@ -76,7 +70,7 @@ export default function Discuss() {
         break;
       }
     }
-  }, [lastJsonMessage]);
+  });
 
   function handleNewTask(data: {
     who: string;

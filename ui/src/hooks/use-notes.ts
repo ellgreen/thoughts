@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { Note } from "@/types";
 import { useCallback, useEffect, useMemo, useReducer } from "react";
 import useRetro from "./use-retro";
+import { useRetroSocket, useSocketEvent } from "./use-retro-socket";
 
 const optimisticEvents = new Set(["note_create", "note_update", "note_delete"]);
 
@@ -190,10 +191,8 @@ export { groupNotes, notesReducer, initialState };
 export type { NotesState };
 
 export function useNotes() {
-  const {
-    retro,
-    socket: { lastJsonMessage, sendJsonMessage },
-  } = useRetro();
+  const { retro } = useRetro();
+  const { send } = useRetroSocket();
   const [state, dispatch] = useReducer(notesReducer, initialState);
 
   const groupedNotes = useMemo(() => groupNotes(state.notes), [state.notes]);
@@ -208,16 +207,12 @@ export function useNotes() {
         : event;
 
       dispatch(tracked);
-      sendJsonMessage(tracked);
+      send(tracked);
     },
-    [sendJsonMessage],
+    [send],
   );
 
-  useEffect(() => {
-    if (!lastJsonMessage) return;
-
-    dispatch(lastJsonMessage as SocketEvent);
-  }, [lastJsonMessage]);
+  useSocketEvent(dispatch);
 
   useEffect(() => {
     api.get<Note[]>(`/api/retros/${retro.id}/notes`).then((res) => {
