@@ -13,7 +13,6 @@ import {
 } from "@/events";
 import useRetro from "@/hooks/use-retro";
 import { panelVariants } from "@/lib/motion";
-import { stageLabel } from "@/lib/stages";
 import { RetroStatus } from "@/types";
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
@@ -78,16 +77,12 @@ export default function Board() {
               </span>
 
               <div className="flex shrink-0 items-center gap-2">
-                {!expanded && (
-                  <Badge
-                    variant="outline"
-                    className="hidden shrink-0 text-xs sm:flex"
-                  >
-                    {stageLabel(status)}
-                  </Badge>
-                )}
-
                 <StageRail status={status} onStatusUpdate={handleStatusUpdate} />
+
+                <ConnectionIndicator
+                  connectionInfo={connectionInfo}
+                  readyState={readyState}
+                />
 
                 <Button
                   variant="ghost"
@@ -144,10 +139,6 @@ export default function Board() {
 
                   {status === "discuss" && <ShowMarkdown />}
                   <Settings />
-                  <ConnectionIndicator
-                    connectionInfo={connectionInfo}
-                    readyState={readyState}
-                  />
                 </div>
               </div>
             </CollapsibleContent>

@@ -16,9 +16,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { AutoTextarea } from "@/components/ui/auto-textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 
@@ -53,16 +53,20 @@ export default function NoteDialog({
     onContentSave(data.content);
   };
 
-  useEffect(() => {
-    if (content) {
-      form.reset({ content });
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+
+    // Reopening should show what the note says now, not the last thing typed
+    // into this dialog or someone else's live edit.
+    if (next) {
+      form.reset({ content: content ?? "" });
     }
-  }, [content, form]);
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -78,10 +82,19 @@ export default function NoteDialog({
                   <FormLabel>Note</FormLabel>
 
                   <FormControl>
-                    <Input
+                    <AutoTextarea
                       className="w-full"
                       autoComplete="off"
                       autoFocus
+                      maxLength={255}
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === "Enter" &&
+                          (event.metaKey || event.ctrlKey)
+                        ) {
+                          event.currentTarget.form?.requestSubmit();
+                        }
+                      }}
                       {...field}
                     />
                   </FormControl>
