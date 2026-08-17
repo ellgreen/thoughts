@@ -38,23 +38,17 @@ const stats = [
 export default function Hero({ stats: values }: { stats: HeroStats }) {
   return (
     <div className="relative overflow-hidden rounded-2xl bg-surface px-6 py-7 ring-1 ring-border/60 sm:px-8">
-      <m.div
+      <div
         aria-hidden
         className="pointer-events-none absolute -top-24 -left-20 size-72 rounded-full bg-[var(--chart-1)]/15 blur-3xl"
-        animate={{ x: [0, 24, 0], y: [0, 14, 0] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
-      <m.div
+      <div
         aria-hidden
         className="pointer-events-none absolute -right-16 -bottom-24 size-64 rounded-full bg-[var(--chart-2)]/15 blur-3xl"
-        animate={{ x: [0, -20, 0], y: [0, -16, 0] }}
-        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       />
-      <m.div
+      <div
         aria-hidden
         className="pointer-events-none absolute top-0 right-1/4 size-56 rounded-full bg-[var(--chart-4)]/10 blur-3xl"
-        animate={{ x: [0, 16, 0], y: [0, 20, 0] }}
-        transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
       />
 
       <div className="relative flex flex-col gap-8 md:flex-row md:items-center md:justify-between">

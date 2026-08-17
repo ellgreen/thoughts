@@ -66,10 +66,13 @@ export default function Board() {
     <div className="flex flex-col pt-3">
       <div className="sticky top-12 z-40 mb-4">
         <Collapsible open={expanded} onOpenChange={setExpanded}>
-          <div className="rounded-xl bg-background/80 shadow-sm ring-1 ring-border/40 backdrop-blur-xl">
+          {/* Opaque, not backdrop-blurred: Nav is already a sticky
+              backdrop-blur-xl directly above, and stacking a second one made
+              both re-rasterise on every scroll frame. */}
+          <div className="rounded-xl bg-background shadow-sm ring-1 ring-border/40">
             <div className="flex flex-col gap-1.5 px-4 py-2 sm:h-12 sm:flex-row sm:items-center sm:gap-3 sm:py-0">
               <span
-                className={`min-w-0 flex-1 truncate font-bold tracking-tight transition-all ${
+                className={`min-w-0 flex-1 truncate font-bold tracking-tight ${
                   expanded ? "text-lg sm:text-2xl" : "text-base"
                 }`}
               >

@@ -160,7 +160,7 @@ function NoteBody({
       )}
 
       {hasActions && (
-        <div className="absolute top-1.5 right-1.5 flex items-center gap-px rounded-md bg-surface-raised/95 p-0.5 opacity-0 shadow-sm ring-1 ring-border backdrop-blur-sm transition-all duration-150 group-hover:opacity-100 focus-within:opacity-100">
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-px rounded-md bg-surface-raised p-0.5 opacity-0 shadow-sm ring-1 ring-border transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100">
           {onUngroup && (
             <Tooltip>
               <TooltipTrigger asChild>

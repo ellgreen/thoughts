@@ -15,12 +15,11 @@ function TooltipProvider({
   )
 }
 
+// No TooltipProvider here, unlike the shadcn original: one lives at the app
+// root instead. Every note in the group stage renders a Tooltip, and a provider
+// each meant a state machine each and no shared delay between them.
 function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
-  return (
-    <TooltipProvider>
-      <TooltipPrimitive.Root data-slot="tooltip" {...props} />
-    </TooltipProvider>
-  )
+  return <TooltipPrimitive.Root data-slot="tooltip" {...props} />
 }
 
 function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
