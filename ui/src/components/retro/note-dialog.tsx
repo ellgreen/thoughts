@@ -17,6 +17,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AutoTextarea } from "@/components/ui/auto-textarea";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
+import { modKey } from "@/lib/keys";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
@@ -105,7 +107,17 @@ export default function NoteDialog({
             />
 
             <DialogFooter className="mt-4">
-              <Button type="submit">Save</Button>
+              <Button type="submit">
+                Save
+                <KbdGroup>
+                  <Kbd className="bg-primary-foreground/15 text-primary-foreground">
+                    {modKey}
+                  </Kbd>
+                  <Kbd className="bg-primary-foreground/15 text-primary-foreground">
+                    ↵
+                  </Kbd>
+                </KbdGroup>
+              </Button>
             </DialogFooter>
           </form>
         </Form>
