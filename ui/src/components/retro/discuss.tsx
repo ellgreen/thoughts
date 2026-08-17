@@ -4,10 +4,10 @@ import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
 import { useSocketEvent } from "@/hooks/use-retro-socket";
 import { api } from "@/lib/api";
-import { Task as TaskType } from "@/types";
+import { Note as NoteType, Task as TaskType } from "@/types";
 import { Plus } from "lucide-react";
 import { AnimatePresence } from "motion/react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "../ui/button";
 import { EmptyColumn, NoteSkeletons } from "./column-states";
 import { Column, Columns } from "./columns";
@@ -20,6 +20,16 @@ import { DialogTrigger } from "../ui/dialog";
 interface Vote {
   group_id: string;
   count: number;
+}
+
+function authorsOf(notes: NoteType[]) {
+  return Array.from(
+    new Set(
+      notes
+        .map((note) => note.created_by_name)
+        .filter((name): name is string => Boolean(name)),
+    ),
+  );
 }
 
 export default function Discuss() {
@@ -40,20 +50,32 @@ export default function Discuss() {
     });
   }, [retro.id]);
 
+  const voteCounts = useMemo(
+    () => new Map(votes.map((v) => [v.group_id, v.count])),
+    [votes],
+  );
+
+  const totalVotes = useMemo(
+    () => votes.reduce((acc, v) => acc + v.count, 0),
+    [votes],
+  );
+
   const groupedNotesForColumn = useCallback(
     (columnId: string) => {
       const cols = [...Object.entries(groupedNotes[columnId] ?? [])];
 
-      cols.sort(([aGroupId], [bGroupId]) => {
-        const countFor = (groupId: string) =>
-          votes.find((v) => v.group_id === groupId)?.count ?? 0;
-
-        return countFor(bGroupId) - countFor(aGroupId);
-      });
+      cols.sort(
+        ([a], [b]) => (voteCounts.get(b) ?? 0) - (voteCounts.get(a) ?? 0),
+      );
 
       return cols;
     },
-    [groupedNotes, votes],
+    [groupedNotes, voteCounts],
+  );
+
+  const sortedTasks = useMemo(
+    () => [...tasks].sort((a, b) => Number(a.completed) - Number(b.completed)),
+    [tasks],
   );
 
   useSocketEvent((event: SocketEvent) => {
@@ -126,17 +148,10 @@ export default function Discuss() {
                 <NoteGroup
                   key={groupId}
                   voteCount={{
-                    forGroup:
-                      votes.find((v) => v.group_id === groupId)?.count ?? 0,
-                    total: votes.reduce((acc, v) => acc + v.count, 0),
+                    forGroup: voteCounts.get(groupId) ?? 0,
+                    total: totalVotes,
                   }}
-                  authors={Array.from(
-                    new Set(
-                      groupNotes
-                        .map((note) => note.created_by_name)
-                        .filter((name): name is string => Boolean(name)),
-                    ),
-                  )}
+                  authors={authorsOf(groupNotes)}
                 >
                   {groupNotes.map((note) => (
                     <Note key={note.id} note={note} />
@@ -174,16 +189,14 @@ export default function Discuss() {
         )}
 
         <AnimatePresence mode="popLayout" initial={false}>
-          {[...tasks]
-            .sort((a, b) => Number(a.completed) - Number(b.completed))
-            .map((task) => (
-              <Task
-                key={task.id}
-                task={task}
-                onEdit={(d) => handleEditTask(task.id, d)}
-                onComplete={(c) => handleTaskComplete(task.id, c)}
-              />
-            ))}
+          {sortedTasks.map((task) => (
+            <Task
+              key={task.id}
+              task={task}
+              onEdit={(d) => handleEditTask(task.id, d)}
+              onComplete={(c) => handleTaskComplete(task.id, c)}
+            />
+          ))}
         </AnimatePresence>
       </Column>
     </Columns>

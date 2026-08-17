@@ -18,7 +18,7 @@ import { RetroStatus } from "@/types";
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import { toast } from "sonner";
 import Brainstorm from "./brainstorm";
 import ConnectionIndicator from "./connection-indicator";
@@ -157,7 +157,9 @@ export default function Board() {
   );
 }
 
-function BoardForStatus({
+// Memoised because Board holds connectionInfo and votesRemaining: without it
+// every join, leave and vote re-renders the whole stage and all its notes.
+const BoardForStatus = memo(function BoardForStatus({
   status,
   setVotesRemaining,
 }: {
@@ -176,4 +178,4 @@ function BoardForStatus({
     default:
       return <div>Unknown status: {status}</div>;
   }
-}
+});
