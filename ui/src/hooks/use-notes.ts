@@ -7,9 +7,22 @@ import {
 } from "@/events";
 import { api } from "@/lib/api";
 import { Note } from "@/types";
-import { useCallback, useEffect, useMemo, useReducer } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+} from "react";
+import { ReadyState } from "react-use-websocket";
 import useRetro from "./use-retro";
-import { useRetroSocket, useSocketEvent } from "./use-retro-socket";
+import {
+  useReadyState,
+  useRetroSocket,
+  useSocketEvent,
+} from "./use-retro-socket";
 
 const optimisticEvents = new Set(["note_create", "note_update", "note_delete"]);
 
@@ -187,15 +200,45 @@ function groupNotes(notes: Note[]) {
   return groups;
 }
 
-export { groupNotes, notesReducer, initialState };
+function notesByColumn(notes: Note[]) {
+  const columns: Record<string, Note[]> = {};
+
+  notes.forEach((note) => {
+    (columns[note.column_id] ??= []).push(note);
+  });
+
+  return columns;
+}
+
+export { groupNotes, notesByColumn, notesReducer, initialState };
 export type { NotesState };
 
+export type NotesValue = {
+  notes: Note[];
+  groupedNotes: GroupedNotes;
+  notesByColumn: Record<string, Note[]>;
+  loaded: boolean;
+  dispatch: (event: SocketEvent) => void;
+};
+
+export const NotesContext = createContext<NotesValue | null>(null);
+
 export function useNotes() {
+  const ctx = useContext(NotesContext);
+
+  if (!ctx) throw new Error("useNotes must be used within a NotesProvider");
+
+  return ctx;
+}
+
+export function useNotesState(): NotesValue {
   const { retro } = useRetro();
   const { send } = useRetroSocket();
+  const readyState = useReadyState();
   const [state, dispatch] = useReducer(notesReducer, initialState);
 
   const groupedNotes = useMemo(() => groupNotes(state.notes), [state.notes]);
+  const byColumn = useMemo(() => notesByColumn(state.notes), [state.notes]);
 
   const dispatchAndSend = useCallback(
     (event: SocketEvent) => {
@@ -214,16 +257,39 @@ export function useNotes() {
 
   useSocketEvent(dispatch);
 
-  useEffect(() => {
+  const load = useCallback(() => {
     api.get<Note[]>(`/api/retros/${retro.id}/notes`).then((res) => {
       dispatch({ name: "note_index", payload: res.data });
     });
   }, [retro.id]);
 
-  return {
-    notes: state.notes,
-    groupedNotes,
-    loaded: state.loaded,
-    dispatch: dispatchAndSend,
-  };
+  useEffect(load, [load]);
+
+  // Nothing replays what the socket missed while it was down, and this hook no
+  // longer remounts per stage to refetch by accident, so a reconnect has to ask
+  // the server for the list again.
+  const dropped = useRef(false);
+
+  useEffect(() => {
+    if (readyState === ReadyState.CLOSED) {
+      dropped.current = true;
+      return;
+    }
+
+    if (readyState === ReadyState.OPEN && dropped.current) {
+      dropped.current = false;
+      load();
+    }
+  }, [readyState, load]);
+
+  return useMemo(
+    () => ({
+      notes: state.notes,
+      groupedNotes,
+      notesByColumn: byColumn,
+      loaded: state.loaded,
+      dispatch: dispatchAndSend,
+    }),
+    [state.notes, state.loaded, groupedNotes, byColumn, dispatchAndSend],
+  );
 }

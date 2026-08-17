@@ -1,5 +1,6 @@
 import Container from "@/components/container";
 import Board from "@/components/retro/board";
+import NotesProvider from "@/components/retro/notes";
 import SocketProvider from "@/components/retro/socket";
 import { RetroContext } from "@/hooks/use-retro";
 import { useSocketEvent } from "@/hooks/use-retro-socket";
@@ -22,9 +23,11 @@ export default function RouteComponent() {
   return (
     <SocketProvider retroId={loaded.id}>
       <RetroProvider loaded={loaded}>
-        <Container>
-          <Board />
-        </Container>
+        <NotesProvider>
+          <Container>
+            <Board />
+          </Container>
+        </NotesProvider>
       </RetroProvider>
     </SocketProvider>
   );

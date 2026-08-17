@@ -147,20 +147,12 @@ export default function Board() {
         </Collapsible>
       </div>
 
-      <AnimatePresence mode="wait" initial={false}>
-        <m.div
-          key={status}
-          variants={panelVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-        >
-          <BoardForStatus
-            status={status}
-            setVotesRemaining={setVotesRemaining}
-          />
-        </m.div>
-      </AnimatePresence>
+      {/* No AnimatePresence: mode="wait" meant the incoming stage waited out
+          the outgoing one's exit, and the alternatives keep both mounted, so
+          every note's layoutId would exist twice at once. */}
+      <m.div key={status} variants={panelVariants} initial="initial" animate="animate">
+        <BoardForStatus status={status} setVotesRemaining={setVotesRemaining} />
+      </m.div>
     </div>
   );
 }
