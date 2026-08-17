@@ -1,4 +1,4 @@
-import { accentForName, initialsFor } from "@/lib/column-accent";
+import { accentForName } from "@/lib/column-accent";
 import { cardVariants, spring } from "@/lib/motion";
 import { Note as NoteType } from "@/types";
 import {
@@ -270,11 +270,9 @@ function Author({ name }: { name: string }) {
     <div className="mt-1 flex items-center gap-1.5 pl-0.5">
       <span
         aria-hidden
-        className="grid size-4 place-items-center rounded-full text-[9px] font-semibold text-background"
+        className="size-1.5 shrink-0 rounded-full"
         style={{ background: accentForName(name) }}
-      >
-        {initialsFor(name)}
-      </span>
+      />
       <span className="truncate text-xs text-muted-foreground">{name}</span>
     </div>
   );

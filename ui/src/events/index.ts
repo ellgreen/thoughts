@@ -28,6 +28,9 @@ export type PayloadStatusUpdated = PayloadStatusUpdate;
 export interface PayloadNoteCreate {
   column_id: string;
   content: string;
+  // Added to the local dispatch only, never sent: without it the author line
+  // pops in when the server echo lands.
+  created_by_name?: string;
 }
 
 export interface PayloadNoteUpdate {

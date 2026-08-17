@@ -17,6 +17,7 @@ import {
   useRef,
 } from "react";
 import { ReadyState } from "react-use-websocket";
+import { useAuth } from "./use-auth";
 import useRetro from "./use-retro";
 import {
   useReadyState,
@@ -75,6 +76,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
           {
             id: payload.ref,
             created_by_me: true,
+            created_by_name: payload.created_by_name,
             content: payload.content,
             column_id: payload.column_id,
             group_id: payload.ref,
@@ -233,6 +235,7 @@ export function useNotes() {
 
 export function useNotesState(): NotesValue {
   const { retro } = useRetro();
+  const { user } = useAuth();
   const { send } = useRetroSocket();
   const readyState = useReadyState();
   const [state, dispatch] = useReducer(notesReducer, initialState);
@@ -249,10 +252,18 @@ export function useNotesState(): NotesValue {
           }
         : event;
 
-      dispatch(tracked);
       send(tracked);
+
+      dispatch(
+        tracked.name === "note_create"
+          ? {
+              ...tracked,
+              payload: { ...tracked.payload, created_by_name: user?.name },
+            }
+          : tracked,
+      );
     },
-    [send],
+    [send, user?.name],
   );
 
   useSocketEvent(dispatch);
