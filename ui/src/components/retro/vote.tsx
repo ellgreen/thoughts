@@ -1,17 +1,13 @@
 import { useColumnActions } from "@/hooks/use-columns";
 import { useNotes } from "@/hooks/use-notes";
 import useRetro from "@/hooks/use-retro";
-import { api } from "@/lib/api";
+import { useVotes } from "@/hooks/use-votes";
 import { AnimatePresence } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { EmptyColumn, NoteSkeletons } from "./column-states";
 import { Column, Columns } from "./columns";
 import { Note } from "./note";
 import { VotableNoteGroup } from "./note-group";
-
-interface Vote {
-  group_id: string;
-}
 
 export default function Vote({
   setVotesRemaining,
@@ -22,25 +18,12 @@ export default function Vote({
   const { notes, groupedNotes, loaded } = useNotes();
   const columnActions = useColumnActions(notes);
 
-  const [votes, setVotes] = useState<Vote[]>([]);
+  const { voted, count, toggle } = useVotes(retro.id);
+  const canVote = retro.max_votes > count;
 
   useEffect(() => {
-    api.get(`/api/retros/${retro.id}/votes`).then((res) => {
-      setVotes(res.data);
-      setVotesRemaining(retro.max_votes - res.data.length);
-    });
-  }, [retro.id, retro.max_votes, setVotesRemaining]);
-
-  function handleVote(groupId: string, value: boolean) {
-    api
-      .post(`/api/retros/${retro.id}/votes`, { group_id: groupId, value })
-      .then((res) => {
-        if (res.status === 200) {
-          setVotes(res.data);
-          setVotesRemaining(retro.max_votes - res.data.length);
-        }
-      });
-  }
+    setVotesRemaining(retro.max_votes - count);
+  }, [retro.max_votes, count, setVotesRemaining]);
 
   return (
     <Columns
@@ -66,9 +49,9 @@ export default function Vote({
             <AnimatePresence mode="popLayout" initial={false}>
               {groups.map(([groupId, groupNotes]) => (
                 <VotableNoteGroup
-                  onVote={(value) => handleVote(groupId, value)}
-                  voted={!!votes.find((vote) => vote.group_id === groupId)}
-                  canVote={retro.max_votes > votes.length}
+                  onVote={(value) => toggle(groupId, value)}
+                  voted={voted.has(groupId)}
+                  canVote={canVote}
                   key={groupId}
                 >
                   {groupNotes.map((note) => (
