@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { z } from "zod";
 import { Button } from "../ui/button";
 import { DatePickerFormItem } from "../date-picker";
@@ -60,23 +60,27 @@ export default function TaskDialog({
     },
   });
 
-  function handleSubmit(data: TaskData) {
+  function handleSubmit(values: TaskData) {
     setOpen(false);
-    onSave(data);
+    onSave(values);
   }
 
-  useEffect(() => {
-    if (data) {
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+
+    // Reopening should show what the task says now, not the last thing typed
+    // into this dialog or someone else's live edit.
+    if (next) {
       form.reset({
-        who: data.who,
-        what: data.what,
-        when: new Date(data.when),
+        who: data?.who ?? "",
+        what: data?.what ?? "",
+        when: data ? new Date(data.when) : new Date(),
       });
     }
-  }, [data, form]);
+  }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       {children}
 
       <DialogContent>

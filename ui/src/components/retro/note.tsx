@@ -1,4 +1,4 @@
-import { accentForName, initialsFor } from "@/lib/column-accent";
+import { accentForName } from "@/lib/column-accent";
 import { cardVariants, spring } from "@/lib/motion";
 import { Note as NoteType } from "@/types";
 import {
@@ -160,7 +160,7 @@ function NoteBody({
       )}
 
       {hasActions && (
-        <div className="absolute top-1.5 right-1.5 flex items-center gap-px rounded-md bg-surface-raised/95 p-0.5 opacity-0 shadow-sm ring-1 ring-border backdrop-blur-sm transition-all duration-150 group-hover:opacity-100 focus-within:opacity-100">
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-px rounded-md bg-surface-raised p-0.5 opacity-0 shadow-sm ring-1 ring-border transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100">
           {onUngroup && (
             <Tooltip>
               <TooltipTrigger asChild>
@@ -270,11 +270,9 @@ function Author({ name }: { name: string }) {
     <div className="mt-1 flex items-center gap-1.5 pl-0.5">
       <span
         aria-hidden
-        className="grid size-4 place-items-center rounded-full text-[9px] font-semibold text-background"
+        className="size-1.5 shrink-0 rounded-full"
         style={{ background: accentForName(name) }}
-      >
-        {initialsFor(name)}
-      </span>
+      />
       <span className="truncate text-xs text-muted-foreground">{name}</span>
     </div>
   );

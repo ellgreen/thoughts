@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import {
   Popover,
   PopoverContent,
@@ -214,6 +215,19 @@ export default function TagInput({
             </li>
           ))}
         </ul>
+
+        <div className="mt-1 flex items-center gap-3 border-t px-1.5 pt-1.5 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Kbd>↵</Kbd> add
+          </span>
+          <span className="flex items-center gap-1">
+            <KbdGroup>
+              <Kbd>↑</Kbd>
+              <Kbd>↓</Kbd>
+            </KbdGroup>
+            choose
+          </span>
+        </div>
       </PopoverContent>
     </Popover>
   );

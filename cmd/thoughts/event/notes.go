@@ -33,7 +33,7 @@ func (b *Broker) handleNoteCreate(db *sqlx.DB, retroID uuid.UUID) Handler {
 			return err
 		}
 
-		b.dispatchUserDependent(newNoteCreatedEvent(note, retro, refFrom(payload)))
+		b.dispatchUserDependent(newNoteCreatedEvent(note, user, retro, refFrom(payload)))
 
 		return nil
 	}
@@ -101,7 +101,15 @@ func (b *Broker) handleNoteUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
 			return newErrorEvent("problem updating note")
 		}
 
-		b.dispatchUserDependent(newNoteUpdatedEvent(note, retro, refFrom(payload)))
+		// Not the acting user: grouping and moving are allowed on other
+		// people's notes, so the author has to be looked up.
+		author, err := dal.UserGet(ctx, db, note.UserID)
+		if err != nil {
+			slog.Error("problem getting note author", "error", err)
+			return newErrorEvent("problem updating note")
+		}
+
+		b.dispatchUserDependent(newNoteUpdatedEvent(note, author, retro, refFrom(payload)))
 
 		return nil
 	}
@@ -173,9 +181,12 @@ func payloadHasAny(payload Payload, keys ...string) bool {
 	return false
 }
 
-func newNoteCreatedEvent(note *model.Note, retro *model.Retro, ref string) UserDependentEvent {
+// author, not the person receiving the event: NoteFromModel resolves
+// created_by_name from it, and passing nil made every broadcast note read
+// "unknown" for everyone once it was moved or edited.
+func newNoteCreatedEvent(note *model.Note, author *model.User, retro *model.Retro, ref string) UserDependentEvent {
 	return func(user *model.User) *Event {
-		resource := resources.NoteFromModel(note, nil, user.ID, retro.IsBrainstorming())
+		resource := resources.NoteFromModel(note, author, user.ID, retro.IsBrainstorming())
 		payload := resources.StructToMap(resource)
 
 		return &Event{
@@ -185,9 +196,9 @@ func newNoteCreatedEvent(note *model.Note, retro *model.Retro, ref string) UserD
 	}
 }
 
-func newNoteUpdatedEvent(note *model.Note, retro *model.Retro, ref string) UserDependentEvent {
+func newNoteUpdatedEvent(note *model.Note, author *model.User, retro *model.Retro, ref string) UserDependentEvent {
 	return func(user *model.User) *Event {
-		resource := resources.NoteFromModel(note, nil, user.ID, retro.IsBrainstorming())
+		resource := resources.NoteFromModel(note, author, user.ID, retro.IsBrainstorming())
 		payload := resources.StructToMap(resource)
 
 		return &Event{

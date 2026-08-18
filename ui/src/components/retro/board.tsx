@@ -12,13 +12,13 @@ import {
   SocketEvent,
 } from "@/events";
 import useRetro from "@/hooks/use-retro";
+import { useReadyState, useRetroSocket, useSocketEvent } from "@/hooks/use-retro-socket";
 import { panelVariants } from "@/lib/motion";
-import { stageLabel } from "@/lib/stages";
 import { RetroStatus } from "@/types";
 import { Link } from "@tanstack/react-router";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { AnimatePresence, m } from "motion/react";
-import { useEffect, useState } from "react";
+import { memo, useState } from "react";
 import { toast } from "sonner";
 import Brainstorm from "./brainstorm";
 import ConnectionIndicator from "./connection-indicator";
@@ -30,10 +30,9 @@ import StageRail from "./stage-rail";
 import Vote from "./vote";
 
 export default function Board() {
-  const {
-    retro,
-    socket: { sendJsonMessage, lastJsonMessage, readyState },
-  } = useRetro();
+  const { retro } = useRetro();
+  const { send } = useRetroSocket();
+  const readyState = useReadyState();
   const [status, setStatus] = useState<RetroStatus>(retro.status);
   const [connectionInfo, setConnectionInfo] = useState<PayloadConnectionInfo>({
     users: [],
@@ -41,9 +40,7 @@ export default function Board() {
   const [votesRemaining, setVotesRemaining] = useState(0);
   const [expanded, setExpanded] = useState(true);
 
-  useEffect(() => {
-    if (!lastJsonMessage) return;
-    const event = lastJsonMessage as SocketEvent;
+  useSocketEvent((event: SocketEvent) => {
     switch (event.name) {
       case "error":
         toast("Something went wrong", {
@@ -57,20 +54,23 @@ export default function Board() {
         setConnectionInfo(event.payload as PayloadConnectionInfo);
         return;
     }
-  }, [lastJsonMessage]);
+  });
 
   function handleStatusUpdate(s: RetroStatus) {
-    sendJsonMessage(createSocketEvent("status_update", { status: s }));
+    send(createSocketEvent("status_update", { status: s }));
   }
 
   return (
     <div className="flex flex-col pt-3">
       <div className="sticky top-12 z-40 mb-4">
         <Collapsible open={expanded} onOpenChange={setExpanded}>
-          <div className="rounded-xl bg-background/80 shadow-sm ring-1 ring-border/40 backdrop-blur-xl">
+          {/* Opaque, not backdrop-blurred: Nav is already a sticky
+              backdrop-blur-xl directly above, and stacking a second one made
+              both re-rasterise on every scroll frame. */}
+          <div className="rounded-xl bg-background shadow-sm ring-1 ring-border/40">
             <div className="flex flex-col gap-1.5 px-4 py-2 sm:h-12 sm:flex-row sm:items-center sm:gap-3 sm:py-0">
               <span
-                className={`min-w-0 flex-1 truncate font-bold tracking-tight transition-all ${
+                className={`min-w-0 flex-1 truncate font-bold tracking-tight ${
                   expanded ? "text-lg sm:text-2xl" : "text-base"
                 }`}
               >
@@ -78,16 +78,12 @@ export default function Board() {
               </span>
 
               <div className="flex shrink-0 items-center gap-2">
-                {!expanded && (
-                  <Badge
-                    variant="outline"
-                    className="hidden shrink-0 text-xs sm:flex"
-                  >
-                    {stageLabel(status)}
-                  </Badge>
-                )}
-
                 <StageRail status={status} onStatusUpdate={handleStatusUpdate} />
+
+                <ConnectionIndicator
+                  connectionInfo={connectionInfo}
+                  readyState={readyState}
+                />
 
                 <Button
                   variant="ghost"
@@ -144,10 +140,6 @@ export default function Board() {
 
                   {status === "discuss" && <ShowMarkdown />}
                   <Settings />
-                  <ConnectionIndicator
-                    connectionInfo={connectionInfo}
-                    readyState={readyState}
-                  />
                 </div>
               </div>
             </CollapsibleContent>
@@ -155,25 +147,19 @@ export default function Board() {
         </Collapsible>
       </div>
 
-      <AnimatePresence mode="wait" initial={false}>
-        <m.div
-          key={status}
-          variants={panelVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-        >
-          <BoardForStatus
-            status={status}
-            setVotesRemaining={setVotesRemaining}
-          />
-        </m.div>
-      </AnimatePresence>
+      {/* No AnimatePresence: mode="wait" meant the incoming stage waited out
+          the outgoing one's exit, and the alternatives keep both mounted, so
+          every note's layoutId would exist twice at once. */}
+      <m.div key={status} variants={panelVariants} initial="initial" animate="animate">
+        <BoardForStatus status={status} setVotesRemaining={setVotesRemaining} />
+      </m.div>
     </div>
   );
 }
 
-function BoardForStatus({
+// Memoised because Board holds connectionInfo and votesRemaining: without it
+// every join, leave and vote re-renders the whole stage and all its notes.
+const BoardForStatus = memo(function BoardForStatus({
   status,
   setVotesRemaining,
 }: {
@@ -192,4 +178,4 @@ function BoardForStatus({
     default:
       return <div>Unknown status: {status}</div>;
   }
-}
+});

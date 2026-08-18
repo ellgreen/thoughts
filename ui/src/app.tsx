@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import AuthProvider from "./components/auth.tsx";
 import ThemeProvider from "./components/theme.tsx";
 import { Spinner } from "./components/ui/spinner.tsx";
+import { TooltipProvider } from "./components/ui/tooltip.tsx";
 import { useAuth } from "./hooks/use-auth.ts";
 import { router } from "./router.tsx";
 
@@ -42,7 +43,9 @@ export default function App() {
       <LazyMotion features={domMax} strict>
         <AuthProvider>
           <ThemeProvider defaultTheme="system">
-            <InnerApp />
+            <TooltipProvider>
+              <InnerApp />
+            </TooltipProvider>
           </ThemeProvider>
         </AuthProvider>
       </LazyMotion>

@@ -59,6 +59,20 @@ describe("notesReducer", () => {
     expect(state.rollbacks).toEqual({ "ref-1": null });
   });
 
+  it("carries the author onto the placeholder", () => {
+    const state = replay({
+      name: "note_create",
+      payload: {
+        column_id: "column-1",
+        content: "optimistic",
+        ref: "ref-1",
+        created_by_name: "Alex",
+      },
+    });
+
+    expect(state.notes[0].created_by_name).toBe("Alex");
+  });
+
   it("swaps the placeholder for the confirmed note", () => {
     const state = replay(
       { name: "note_create", payload: { column_id: "column-1", content: "optimistic", ref: "ref-1" } },

@@ -3,6 +3,7 @@ import { ColumnData } from "@/components/retro/column-dialog";
 import { Note, RetroColumn } from "@/types";
 import { useCallback, useMemo } from "react";
 import useRetro from "./use-retro";
+import { useRetroSocket } from "./use-retro-socket";
 
 // Kept in step with minColumns/maxColumns in cmd/thoughts/event/columns.go.
 const minColumns = 2;
@@ -15,10 +16,8 @@ export interface ColumnActions {
 }
 
 export function useColumnActions(notes: Note[]) {
-  const {
-    retro,
-    socket: { sendJsonMessage },
-  } = useRetro();
+  const { retro } = useRetro();
+  const { send } = useRetroSocket();
 
   const noteCounts = useMemo(
     () =>
@@ -33,23 +32,21 @@ export function useColumnActions(notes: Note[]) {
 
   const create = useCallback(
     (data: ColumnData) => {
-      sendJsonMessage(createSocketEvent("column_create", data));
+      send(createSocketEvent("column_create", data));
     },
-    [sendJsonMessage],
+    [send],
   );
 
   const forColumn = useCallback(
     (column: RetroColumn): ColumnActions => ({
       onEdit: (data) =>
-        sendJsonMessage(
-          createSocketEvent("column_update", { id: column.id, ...data }),
-        ),
+        send(createSocketEvent("column_update", { id: column.id, ...data })),
       onDelete: () =>
-        sendJsonMessage(createSocketEvent("column_delete", { id: column.id })),
+        send(createSocketEvent("column_delete", { id: column.id })),
       canDelete:
         (noteCounts[column.id] ?? 0) === 0 && columnCount > minColumns,
     }),
-    [sendJsonMessage, noteCounts, columnCount],
+    [send, noteCounts, columnCount],
   );
 
   return { create, forColumn, canCreate: columnCount < maxColumns };

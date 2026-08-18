@@ -16,7 +16,7 @@ export default function Brainstorm() {
   const {
     retro: { columns },
   } = useRetro();
-  const { notes, loaded, dispatch } = useNotes();
+  const { notes, notesByColumn, loaded, dispatch } = useNotes();
   const columnActions = useColumnActions(notes);
 
   function handleNewNote(columnId: string, content: string) {
@@ -69,7 +69,7 @@ export default function Brainstorm() {
         canAddColumn={columnActions.canCreate}
       >
         {columns.map((column, index) => {
-          const columnNotes = notes.filter((n) => n.column_id === column.id);
+          const columnNotes = notesByColumn[column.id] ?? [];
 
           return (
             <DroppableColumn

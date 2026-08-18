@@ -40,19 +40,25 @@ export default function StageRail({
   return (
     <>
       <div className="flex items-center gap-2">
-        <ol className="hidden items-center gap-0.5 md:flex">
+        <ol className="flex items-center gap-0.5">
           {stages.map((stage, index) => {
             const done = index < current;
             const active = index === current;
             const Icon = done ? Check : stage.icon;
 
             return (
-              <li key={stage.status} className="flex items-center">
+              <li
+                key={stage.status}
+                className={cn(
+                  "items-center",
+                  active ? "flex" : "hidden md:flex",
+                )}
+              >
                 {index > 0 && (
                   <span
                     aria-hidden
                     className={cn(
-                      "mx-0.5 h-px w-3 transition-colors duration-300 lg:w-5",
+                      "mx-0.5 hidden h-px w-3 transition-colors duration-300 md:block lg:w-5",
                       index <= current ? "bg-primary/60" : "bg-border",
                     )}
                   />
