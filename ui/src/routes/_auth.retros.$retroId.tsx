@@ -9,7 +9,7 @@ import { useSocketEvent } from "@/hooks/use-retro-socket";
 import { api } from "@/lib/api";
 import { SocketEvent } from "@/events";
 import { Note, Retro } from "@/types";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 export const Route = createFileRoute("/_auth/retros/$retroId")({
@@ -71,6 +71,7 @@ function RetroProvider({
   loaded: Retro;
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const [retro, setRetro] = useState<Retro>(loaded);
 
   // Owned here rather than in Settings: that component lives inside the
@@ -79,6 +80,14 @@ function RetroProvider({
   useSocketEvent((event: SocketEvent) => {
     if (event.name === "retro_updated") {
       setRetro(event.payload as Retro);
+    }
+
+    // Anything the socket reports leaves the loader's cached copy wrong, and
+    // the router keeps that copy after you navigate away. Coming back seeds
+    // the board from it, so without this you get the stage you left rather
+    // than the one the retro is on.
+    if (event.name === "retro_updated" || event.name === "status_updated") {
+      router.invalidate();
     }
   });
 
