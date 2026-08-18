@@ -17,8 +17,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AutoTextarea } from "@/components/ui/auto-textarea";
-import { Kbd, KbdGroup } from "@/components/ui/kbd";
-import { modKey } from "@/lib/keys";
+import { Kbd } from "@/components/ui/kbd";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
@@ -90,12 +89,13 @@ export default function NoteDialog({
                       autoFocus
                       maxLength={255}
                       onKeyDown={(event) => {
-                        if (
-                          event.key === "Enter" &&
-                          (event.metaKey || event.ctrlKey)
-                        ) {
-                          event.currentTarget.form?.requestSubmit();
-                        }
+                        if (event.key !== "Enter" || event.shiftKey) return;
+
+                        // Shift+Enter still makes a newline; plain Enter
+                        // would otherwise just add one via the textarea's
+                        // own default.
+                        event.preventDefault();
+                        event.currentTarget.form?.requestSubmit();
                       }}
                       {...field}
                     />
@@ -109,14 +109,9 @@ export default function NoteDialog({
             <DialogFooter className="mt-4">
               <Button type="submit">
                 Save
-                <KbdGroup>
-                  <Kbd className="bg-primary-foreground/15 text-primary-foreground">
-                    {modKey}
-                  </Kbd>
-                  <Kbd className="bg-primary-foreground/15 text-primary-foreground">
-                    ↵
-                  </Kbd>
-                </KbdGroup>
+                <Kbd className="bg-primary-foreground/15 text-primary-foreground">
+                  ↵
+                </Kbd>
               </Button>
             </DialogFooter>
           </form>
