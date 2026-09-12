@@ -154,7 +154,19 @@ export default function Discuss() {
                   authors={authorsOf(groupNotes)}
                 >
                   {groupNotes.map((note) => (
-                    <Note key={note.id} note={note} />
+                    <Note
+                      key={note.id}
+                      note={note}
+                      onReact={(emoji, value) =>
+                        dispatch(
+                          createSocketEvent("reaction_toggle", {
+                            note_id: note.id,
+                            emoji,
+                            value,
+                          }),
+                        )
+                      }
+                    />
                   ))}
                 </NoteGroup>
               ))}

@@ -26,6 +26,12 @@ export interface RetroColumn {
   description: string;
 }
 
+export interface Reaction {
+  emoji: string;
+  count: number;
+  reacted_by_me: boolean;
+}
+
 export interface Note {
   id: string;
   created_by_me: boolean;
@@ -34,6 +40,7 @@ export interface Note {
   group_id: string;
   content: string;
   img_url: string;
+  reactions: Reaction[];
 }
 
 export interface Task {
