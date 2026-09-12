@@ -11,6 +11,7 @@ function note(overrides: Partial<Note> = {}): Note {
     group_id: "group-1",
     content: "a thought",
     img_url: "",
+    reactions: [],
     ...overrides,
   };
 }
@@ -193,6 +194,36 @@ describe("notesReducer", () => {
     );
 
     expect(state.notes.map((n) => n.id)).toEqual(["n2"]);
+  });
+
+  it("updates a note's reactions on note_reactions_updated", () => {
+    const state = replay(
+      { name: "note_index", payload: [note({ id: "n1" }), note({ id: "n2" })] },
+      {
+        name: "note_reactions_updated",
+        payload: {
+          id: "n1",
+          reactions: [{ emoji: "👍", count: 1, reacted_by_me: true }],
+        },
+      },
+    );
+
+    expect(state.notes[0].reactions).toEqual([
+      { emoji: "👍", count: 1, reacted_by_me: true },
+    ]);
+    expect(state.notes[1].reactions).toEqual([]);
+  });
+
+  it("ignores reactions for a note it has never seen", () => {
+    const state = replay(
+      { name: "note_index", payload: [note({ id: "n1" })] },
+      {
+        name: "note_reactions_updated",
+        payload: { id: "ghost", reactions: [] },
+      },
+    );
+
+    expect(state.notes.map((n) => n.id)).toEqual(["n1"]);
   });
 
   it("leaves state untouched for events it does not handle", () => {

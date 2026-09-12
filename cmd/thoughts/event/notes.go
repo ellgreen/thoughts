@@ -109,7 +109,15 @@ func (b *Broker) handleNoteUpdate(db *sqlx.DB, retroID uuid.UUID) Handler {
 			return newErrorEvent("problem updating note")
 		}
 
-		b.dispatchUserDependent(newNoteUpdatedEvent(note, author, retro, refFrom(payload)))
+		// The frontend replaces the whole note on this event, so its
+		// reactions have to come along or they'd vanish for everyone.
+		reactions, err := dal.ReactionsForNote(ctx, db, note.ID)
+		if err != nil {
+			slog.Error("problem getting note reactions", "error", err)
+			return newErrorEvent("problem updating note")
+		}
+
+		b.dispatchUserDependent(newNoteUpdatedEvent(note, author, retro, reactions, refFrom(payload)))
 
 		return nil
 	}
@@ -186,7 +194,7 @@ func payloadHasAny(payload Payload, keys ...string) bool {
 // "unknown" for everyone once it was moved or edited.
 func newNoteCreatedEvent(note *model.Note, author *model.User, retro *model.Retro, ref string) UserDependentEvent {
 	return func(user *model.User) *Event {
-		resource := resources.NoteFromModel(note, author, user.ID, retro.IsBrainstorming())
+		resource := resources.NoteFromModel(note, author, user.ID, retro.IsBrainstorming(), nil)
 		payload := resources.StructToMap(resource)
 
 		return &Event{
@@ -196,9 +204,9 @@ func newNoteCreatedEvent(note *model.Note, author *model.User, retro *model.Retr
 	}
 }
 
-func newNoteUpdatedEvent(note *model.Note, author *model.User, retro *model.Retro, ref string) UserDependentEvent {
+func newNoteUpdatedEvent(note *model.Note, author *model.User, retro *model.Retro, reactions []*model.Reaction, ref string) UserDependentEvent {
 	return func(user *model.User) *Event {
-		resource := resources.NoteFromModel(note, author, user.ID, retro.IsBrainstorming())
+		resource := resources.NoteFromModel(note, author, user.ID, retro.IsBrainstorming(), reactions)
 		payload := resources.StructToMap(resource)
 
 		return &Event{

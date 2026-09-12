@@ -1,6 +1,7 @@
 import { accentForName } from "@/lib/column-accent";
 import { cardVariants, spring } from "@/lib/motion";
-import { Note as NoteType } from "@/types";
+import { REACTION_EMOJI } from "@/lib/reactions";
+import { Note as NoteType, Reaction } from "@/types";
 import {
   DraggableAttributes,
   DraggableSyntheticListeners,
@@ -11,6 +12,7 @@ import {
   Image,
   ImageOff,
   Pencil,
+  SmilePlus,
   Trash2,
   Ungroup,
 } from "lucide-react";
@@ -18,6 +20,7 @@ import { m } from "motion/react";
 import React, { useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { Button } from "../ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Tooltip,
   TooltipContent,
@@ -39,6 +42,7 @@ interface NoteProps {
   onGifSelected?: (url: string) => void;
   onGifRemoved?: () => void;
   onUngroup?: () => void;
+  onReact?: (emoji: string, value: boolean) => void;
 }
 
 const shellClassName =
@@ -56,6 +60,7 @@ export const Note = ({
   onGifSelected,
   onGifRemoved,
   onUngroup,
+  onReact,
   className,
   ref,
   ...props
@@ -91,6 +96,7 @@ export const Note = ({
         onGifSelected={onGifSelected}
         onGifRemoved={onGifRemoved}
         onUngroup={onUngroup}
+        onReact={onReact}
       />
     </m.div>
   );
@@ -128,6 +134,7 @@ function NoteBody({
   onGifSelected,
   onGifRemoved,
   onUngroup,
+  onReact,
 }: NoteProps) {
   const hasActions = !!(
     onGifSelected ||
@@ -158,6 +165,8 @@ function NoteBody({
       {showAuthor && note.created_by_name && (
         <Author name={note.created_by_name} />
       )}
+
+      {onReact && <ReactionBar reactions={note.reactions} onReact={onReact} />}
 
       {hasActions && (
         <div className="absolute top-1.5 right-1.5 flex items-center gap-px rounded-md bg-surface-raised p-0.5 opacity-0 shadow-sm ring-1 ring-border transition-opacity duration-150 group-hover:opacity-100 focus-within:opacity-100">
@@ -261,6 +270,69 @@ function NoteImage({ src, blur }: { src: string; blur?: boolean }) {
           loaded ? "opacity-100" : "opacity-0",
         )}
       />
+    </div>
+  );
+}
+
+function ReactionBar({
+  reactions,
+  onReact,
+}: {
+  reactions: Reaction[];
+  onReact: (emoji: string, value: boolean) => void;
+}) {
+  const reacted = new Set(
+    reactions.filter((r) => r.reacted_by_me).map((r) => r.emoji),
+  );
+
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-1">
+      {reactions.map((reaction) => (
+        <button
+          key={reaction.emoji}
+          type="button"
+          onClick={() => onReact(reaction.emoji, !reaction.reacted_by_me)}
+          className={twMerge(
+            "flex items-center gap-1 rounded-full px-1.5 py-0.5 text-xs ring-1 transition-colors",
+            reaction.reacted_by_me
+              ? "bg-primary/10 text-primary ring-primary/40"
+              : "bg-surface-raised text-muted-foreground ring-border/70 hover:ring-border",
+          )}
+        >
+          <span>{reaction.emoji}</span>
+          <span className="tabular-nums">{reaction.count}</span>
+        </button>
+      ))}
+
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="size-6 text-muted-foreground opacity-0 transition-opacity duration-150 group-hover:opacity-100 data-[state=open]:opacity-100"
+            aria-label="Add a reaction"
+          >
+            <SmilePlus className="size-3.5" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-1" align="start">
+          <div className="flex gap-0.5">
+            {REACTION_EMOJI.map((emoji) => (
+              <button
+                key={emoji}
+                type="button"
+                onClick={() => onReact(emoji, !reacted.has(emoji))}
+                className={twMerge(
+                  "rounded-md p-1.5 text-base hover:bg-muted",
+                  reacted.has(emoji) ? "bg-primary/10" : "",
+                )}
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }

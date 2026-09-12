@@ -46,12 +46,23 @@ func RetroNotesIndex(db *sqlx.DB) http.Handler {
 			return
 		}
 
+		reactions, err := dal.ReactionsForRetro(r.Context(), db, retroID)
+		if err != nil {
+			slog.Error("problem fetching reactions", "error", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		reactionsByNote := lo.GroupBy(reactions, func(reaction *model.Reaction) uuid.UUID {
+			return reaction.NoteID
+		})
+
 		user := auth.UserFromRequest(r)
 
 		obfuscate := retro.Status == model.RetroStatusBrainstorm
 
 		writeJSON(w, lo.Map(notes, func(note *model.Note, _ int) *resources.Note {
-			return resources.NoteFromModel(note, userMap[note.UserID], user.ID, obfuscate)
+			return resources.NoteFromModel(note, userMap[note.UserID], user.ID, obfuscate, reactionsByNote[note.ID])
 		}))
 	})
 }

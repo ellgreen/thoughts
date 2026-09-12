@@ -1,6 +1,7 @@
 import {
   PayloadError,
   PayloadNoteCreate,
+  PayloadNoteReactionsUpdated,
   PayloadNoteUpdate,
   Ref,
   SocketEvent,
@@ -81,6 +82,7 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
             column_id: payload.column_id,
             group_id: payload.ref,
             img_url: "",
+            reactions: [],
           },
         ],
         rollbacks: { ...state.rollbacks, [payload.ref]: null },
@@ -154,6 +156,19 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
         ...state,
         notes: state.notes.filter((note) => note.id !== payload.id),
         rollbacks: forget(state.rollbacks, payload.ref),
+      };
+    }
+
+    case "note_reactions_updated": {
+      const payload = event.payload as PayloadNoteReactionsUpdated;
+
+      return {
+        ...state,
+        notes: state.notes.map((note) =>
+          note.id === payload.id
+            ? { ...note, reactions: payload.reactions }
+            : note,
+        ),
       };
     }
 

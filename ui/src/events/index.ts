@@ -1,4 +1,4 @@
-import { RetroStatus } from "@/types";
+import { Reaction, RetroStatus } from "@/types";
 
 export type Payload = object;
 
@@ -61,6 +61,17 @@ export interface PayloadColumnDelete {
 
 export interface PayloadConnectionInfo {
   users: string[];
+}
+
+export interface PayloadReactionToggle {
+  note_id: string;
+  emoji: string;
+  value: boolean;
+}
+
+export interface PayloadNoteReactionsUpdated {
+  id: string;
+  reactions: Reaction[];
 }
 
 export function createSocketEvent(
