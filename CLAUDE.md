@@ -18,7 +18,8 @@ cd ui
 pnpm run dev    # Vite on :5173, proxying /api/* to :3000
 pnpm run build
 pnpm run lint
-pnpm test
+pnpm test       # Vitest
+pnpm test:e2e   # Playwright, against task run's production binary
 ```
 
 Before saying a change is done:

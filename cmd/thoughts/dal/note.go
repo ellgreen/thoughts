@@ -142,7 +142,8 @@ func NoteList(
 	retroID uuid.UUID,
 ) ([]*model.Note, error) {
 	notes := make([]*model.Note, 0)
-	if err := db.SelectContext(ctx, &notes, "select * from notes where retro_id = ?", retroID); err != nil {
+	if err := db.SelectContext(ctx, &notes,
+		"select * from notes where retro_id = ? order by created_at asc, id asc", retroID); err != nil {
 		return nil, fmt.Errorf("%w: failed to select notes: %w", ErrExecution, err)
 	}
 

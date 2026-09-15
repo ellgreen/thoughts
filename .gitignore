@@ -4,3 +4,6 @@ build/
 dist/
 .task/
 seed*.py
+ui/test-results/
+ui/playwright-report/
+ui/blob-report/
