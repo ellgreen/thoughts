@@ -127,14 +127,22 @@ function notesReducer(state: NotesState, event: SocketEvent): NotesState {
 
     case "note_created": {
       const payload = event.payload as Note & Partial<Ref>;
+      const confirmed = toNote(payload);
 
-      const notes = payload.ref
-        ? state.notes.filter((note) => note.id !== payload.ref)
-        : state.notes;
+      // Swapped in at the placeholder's own index rather than filtered out
+      // and appended, so it doesn't jump past a note that got confirmed
+      // while this one was in flight. Falls back to upsert when there is no
+      // placeholder to swap (e.g. the ref already resolved).
+      const hasPlaceholder =
+        !!payload.ref && state.notes.some((note) => note.id === payload.ref);
+
+      const notes = hasPlaceholder
+        ? state.notes.map((note) => (note.id === payload.ref ? confirmed : note))
+        : upsert(state.notes, confirmed);
 
       return {
         ...state,
-        notes: upsert(notes, toNote(payload)),
+        notes,
         rollbacks: forget(state.rollbacks, payload.ref),
       };
     }
@@ -286,13 +294,23 @@ export function useNotesState(loaded: Note[]): NotesValue {
     [send, user?.name],
   );
 
-  useSocketEvent(dispatch);
-
   const load = useCallback(() => {
     api.get<Note[]>(`/api/retros/${retro.id}/notes`).then((res) => {
       dispatch({ name: "note_index", payload: res.data });
     });
   }, [retro.id]);
+
+  useSocketEvent((event: SocketEvent) => {
+    dispatch(event);
+
+    // Obfuscation is decided per-request from the retro's current status, and
+    // nothing re-sends a note's content when that status changes - without
+    // this, another person's notes stay stuck showing whatever was obfuscated
+    // (or not) as of the last fetch, straight through a stage change.
+    if (event.name === "status_updated") {
+      load();
+    }
+  });
 
   // Nothing replays what the socket missed while it was down, and this hook no
   // longer remounts per stage to refetch by accident, so a reconnect has to ask

@@ -84,6 +84,25 @@ describe("notesReducer", () => {
     expect(state.rollbacks).toEqual({});
   });
 
+  it("keeps a confirmed note in its own slot even when another note is confirmed first", () => {
+    const state = replay(
+      { name: "note_create", payload: { column_id: "column-1", content: "mine", ref: "ref-1" } },
+      { name: "note_created", payload: note({ id: "theirs", created_by_me: false }) },
+      { name: "note_created", payload: { ...note({ id: "server-1" }), ref: "ref-1" } },
+    );
+
+    expect(state.notes.map((n) => n.id)).toEqual(["server-1", "theirs"]);
+  });
+
+  it("still appends a confirmed note with no matching placeholder", () => {
+    const state = replay({
+      name: "note_created",
+      payload: { ...note({ id: "server-1" }), ref: "ref-1" },
+    });
+
+    expect(state.notes.map((n) => n.id)).toEqual(["server-1"]);
+  });
+
   it("does not leak the ref onto the stored note", () => {
     const state = replay({
       name: "note_created",

@@ -157,7 +157,10 @@ function NoteBody({
             size={16}
           />
         )}
-        <p className="min-w-0 flex-1 py-1.5 break-words text-foreground">
+        <p
+          data-testid="note-content"
+          className="min-w-0 flex-1 py-1.5 break-words text-foreground"
+        >
           {note.content}
         </p>
       </div>
