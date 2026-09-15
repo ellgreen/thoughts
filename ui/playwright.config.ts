@@ -20,7 +20,10 @@ export default defineConfig({
     trace: "retain-on-failure",
   },
   webServer: {
-    command: "task run",
+    // The app never creates its own data directory (task dev/run rely on the
+    // committed ./data, and the Dockerfile does its own mkdir), so this has
+    // to exist before the binary starts.
+    command: "mkdir -p tmp/e2e-data && task run",
     cwd: "..",
     url: baseURL,
     reuseExistingServer: !process.env.CI,
