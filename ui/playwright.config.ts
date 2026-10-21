@@ -1,37 +1,21 @@
-import { defineConfig } from "@playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
-// Runs against the real production binary (task build && task run) rather
-// than the Vite dev server, so the WebSocket/session/obfuscation behaviour
-// under test is exactly what ships.
-//
-// Override THOUGHTS_E2E_PORT locally if 3000 is already taken by a dev
-// server - task run picks it up as THOUGHTS_ADDRESS.
-const port = process.env.THOUGHTS_E2E_PORT ?? "3000";
-const baseURL = `http://localhost:${port}`;
+const port = Number(process.env.THOUGHTS_E2E_PORT ?? 3100);
 
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
-  reporter: "line",
-  use: {
-    baseURL,
-    trace: "retain-on-failure",
-  },
+  reporter: process.env.CI ? "github" : "list",
+  use: { baseURL: `http://localhost:${port}`, trace: "retain-on-failure" },
+  projects: [
+    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+    { name: "phone", use: { ...devices["Pixel 7"] } },
+  ],
   webServer: {
-    // The app never creates its own data directory (task dev/run rely on the
-    // committed ./data, and the Dockerfile does its own mkdir), so this has
-    // to exist before the binary starts.
-    command: "mkdir -p tmp/e2e-data && task run",
-    cwd: "..",
-    url: baseURL,
+    command: `cd .. && THOUGHTS_ADDRESS=localhost:${port} THOUGHTS_DATA_PATH="$(mktemp -d)" ./build/thoughts`,
+    port,
     reuseExistingServer: !process.env.CI,
-    timeout: 120_000,
-    env: {
-      // Keeps e2e runs off a real dev database.
-      THOUGHTS_DATA_PATH: "./tmp/e2e-data",
-      THOUGHTS_ADDRESS: `localhost:${port}`,
-    },
   },
 });

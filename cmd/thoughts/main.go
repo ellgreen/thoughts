@@ -1,129 +1,35 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log/slog"
-	"net/http"
 	"os"
-	"path/filepath"
+	"os/signal"
+	"syscall"
 
-	"github.com/ellgreen/thoughts/cmd/thoughts/ai"
-	"github.com/ellgreen/thoughts/cmd/thoughts/gif"
-	"github.com/ellgreen/thoughts/cmd/thoughts/session"
-	"github.com/ellgreen/thoughts/migrations"
-	"github.com/gorilla/mux"
-	"github.com/jmoiron/sqlx"
-	"github.com/pressly/goose/v3"
-	"github.com/rs/cors"
-	_ "modernc.org/sqlite"
+	"github.com/ellgreen/thoughts/internal/config"
+	"github.com/ellgreen/thoughts/internal/logging"
+	"github.com/ellgreen/thoughts/internal/server"
 )
 
-var (
-	cfg *config
-	db  *sqlx.DB
-)
+var version = "dev"
 
 func main() {
-	var err error
-	cfg, err = loadConfig()
+	cfg, err := config.Load()
 	if err != nil {
-		slog.Error("failed to load config", "err", err)
+		slog.Error("config", "err", err)
 		os.Exit(1)
 	}
-
-	slogLevel := slog.LevelInfo
+	level := slog.LevelInfo
 	if cfg.Verbose {
-		slogLevel = slog.LevelDebug
+		level = slog.LevelDebug
 	}
+	slog.SetDefault(logging.New(os.Stdout, cfg.LogFormat, level))
 
-	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slogLevel,
-	})))
-
-	if err := initialiseDatabase(); err != nil {
-		slog.Error("database initialisation failed", "err", err)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if err := server.Run(ctx, cfg, version); err != nil {
+		slog.Error("exiting", "err", err)
 		os.Exit(1)
 	}
-
-	servesTLS := cfg.TLSCertPath != "" && cfg.TLSKeyPath != ""
-
-	sessionKeyPath := filepath.Join(cfg.DataPath, cfg.SessionKeyFile)
-	sessionProvider, err := session.LoadSessionProvider(sessionKeyPath, servesTLS)
-	if err != nil {
-		slog.Error("failed to load session provider", "err", err)
-		os.Exit(1)
-	}
-
-	if cfg.TenorAPIKey != "" {
-		slog.Warn("THOUGHTS_TENOR_API_KEY is set but the Tenor API was shut down on 2026-06-30; " +
-			"use THOUGHTS_GIF_PROVIDER and THOUGHTS_GIF_API_KEY instead")
-	}
-
-	gifProvider, err := gif.Resolve(cfg.GIFProvider, cfg.GIFAPIKey)
-	if err != nil {
-		slog.Error("failed to configure gif provider", "err", err)
-		os.Exit(1)
-	}
-
-	router := mux.NewRouter()
-
-	applyRoutes(
-		router,
-		sessionProvider,
-		ai.ResolveModel(cfg.OpenAIAPIKey),
-		gifProvider,
-	)
-
-	// Always credential-aware, bundled or not. A wildcard origin cannot carry
-	// credentials at all, so a browser pointed at the Vite dev server while a
-	// bundled binary served the API would silently drop the session cookie:
-	// the login looked like a 200 in the network tab and every request after
-	// it came back 401.
-	handler := cors.New(cors.Options{
-		AllowedOrigins:   []string{cfg.UIAddress},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Authorization", "Content-Type"},
-		AllowCredentials: true,
-	}).Handler(router)
-
-	if servesTLS {
-		slog.Info("starting server (with tls)", "addr", cfg.Address)
-
-		if err := http.ListenAndServeTLS(cfg.Address, cfg.TLSCertPath, cfg.TLSKeyPath, handler); err != nil {
-			slog.Error("failed to start server", "err", err)
-			os.Exit(1)
-		}
-
-		return
-	}
-
-	slog.Info("starting server (no tls)", "addr", cfg.Address)
-
-	if err := http.ListenAndServe(cfg.Address, handler); err != nil {
-		slog.Error("failed to start server", "err", err)
-		os.Exit(1)
-	}
-}
-
-func initialiseDatabase() error {
-	databasePath := filepath.Join(cfg.DataPath, cfg.DatabaseFile)
-	dsn := fmt.Sprintf("file:%s?_foreign_keys=on&_journal_mode=WAL", databasePath)
-
-	var err error
-	db, err = sqlx.Open("sqlite", dsn)
-	if err != nil {
-		return fmt.Errorf("failed to open database: %w", err)
-	}
-
-	goose.SetBaseFS(migrations.Embedded)
-
-	if err := goose.SetDialect("sqlite3"); err != nil {
-		return fmt.Errorf("failed to set dialect: %w", err)
-	}
-
-	if err := goose.Up(db.DB, "."); err != nil {
-		return fmt.Errorf("failed migrate database: %w", err)
-	}
-
-	return nil
 }

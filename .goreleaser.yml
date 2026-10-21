@@ -7,13 +7,14 @@ version: 2
 before:
   hooks:
     - go mod tidy
-    - pnpm --prefix=ui install
-    - pnpm --prefix=ui run build
+    - pnpm --dir ui install --frozen-lockfile
+    - pnpm --dir ui build
 
 builds:
   - main: ./cmd/thoughts
     binary: thoughts
-    ldflags: -s -w
+    ldflags: -s -w -X main.version={{ .Version }}
+    flags: [-trimpath]
     tags: bundled
     env:
       - CGO_ENABLED=0
@@ -21,6 +22,9 @@ builds:
       - linux
       - windows
       - darwin
+    goarch:
+      - amd64
+      - arm64
 
 archives:
   - formats: [tar.gz]

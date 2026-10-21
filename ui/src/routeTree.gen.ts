@@ -9,78 +9,95 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SignedinRouteImport } from './routes/_signedin'
 import { Route as LoginRouteImport } from './routes/login'
-import { Route as AuthRouteImport } from './routes/_auth'
-import { Route as AuthIndexRouteImport } from './routes/_auth.index'
-import { Route as AuthTagsTagRouteImport } from './routes/_auth.tags.$tag'
-import { Route as AuthRetrosRetroIdRouteImport } from './routes/_auth.retros.$retroId'
+import { Route as SignedinIndexRouteImport } from './routes/_signedin.index'
+import { Route as SignedinRetrosRetroIdRouteImport } from './routes/_signedin.retros.$retroId'
+import { Route as SignedinTSlugRouteImport } from './routes/_signedin.t.$slug'
+import { Route as SignedinTagsTagRouteImport } from './routes/_signedin.tags.$tag'
 
+const SignedinRoute = SignedinRouteImport.update({
+  id: '/_signedin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/_auth',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthIndexRoute = AuthIndexRouteImport.update({
+const SignedinIndexRoute = SignedinIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => AuthRoute,
+  getParentRoute: () => SignedinRoute,
 } as any)
-const AuthTagsTagRoute = AuthTagsTagRouteImport.update({
-  id: '/tags/$tag',
-  path: '/tags/$tag',
-  getParentRoute: () => AuthRoute,
-} as any)
-const AuthRetrosRetroIdRoute = AuthRetrosRetroIdRouteImport.update({
+const SignedinRetrosRetroIdRoute = SignedinRetrosRetroIdRouteImport.update({
   id: '/retros/$retroId',
   path: '/retros/$retroId',
-  getParentRoute: () => AuthRoute,
+  getParentRoute: () => SignedinRoute,
+} as any)
+const SignedinTSlugRoute = SignedinTSlugRouteImport.update({
+  id: '/t/$slug',
+  path: '/t/$slug',
+  getParentRoute: () => SignedinRoute,
+} as any)
+const SignedinTagsTagRoute = SignedinTagsTagRouteImport.update({
+  id: '/tags/$tag',
+  path: '/tags/$tag',
+  getParentRoute: () => SignedinRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthIndexRoute
+  '/': typeof SignedinIndexRoute
   '/login': typeof LoginRoute
-  '/retros/$retroId': typeof AuthRetrosRetroIdRoute
-  '/tags/$tag': typeof AuthTagsTagRoute
+  '/retros/$retroId': typeof SignedinRetrosRetroIdRoute
+  '/t/$slug': typeof SignedinTSlugRoute
+  '/tags/$tag': typeof SignedinTagsTagRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
-  '/': typeof AuthIndexRoute
-  '/retros/$retroId': typeof AuthRetrosRetroIdRoute
-  '/tags/$tag': typeof AuthTagsTagRoute
+  '/': typeof SignedinIndexRoute
+  '/retros/$retroId': typeof SignedinRetrosRetroIdRoute
+  '/t/$slug': typeof SignedinTSlugRoute
+  '/tags/$tag': typeof SignedinTagsTagRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/_auth': typeof AuthRouteWithChildren
+  '/_signedin': typeof SignedinRouteWithChildren
   '/login': typeof LoginRoute
-  '/_auth/': typeof AuthIndexRoute
-  '/_auth/retros/$retroId': typeof AuthRetrosRetroIdRoute
-  '/_auth/tags/$tag': typeof AuthTagsTagRoute
+  '/_signedin/': typeof SignedinIndexRoute
+  '/_signedin/retros/$retroId': typeof SignedinRetrosRetroIdRoute
+  '/_signedin/t/$slug': typeof SignedinTSlugRoute
+  '/_signedin/tags/$tag': typeof SignedinTagsTagRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/retros/$retroId' | '/tags/$tag'
+  fullPaths: '/' | '/login' | '/retros/$retroId' | '/t/$slug' | '/tags/$tag'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/' | '/retros/$retroId' | '/tags/$tag'
+  to: '/login' | '/' | '/retros/$retroId' | '/t/$slug' | '/tags/$tag'
   id:
     | '__root__'
-    | '/_auth'
+    | '/_signedin'
     | '/login'
-    | '/_auth/'
-    | '/_auth/retros/$retroId'
-    | '/_auth/tags/$tag'
+    | '/_signedin/'
+    | '/_signedin/retros/$retroId'
+    | '/_signedin/t/$slug'
+    | '/_signedin/tags/$tag'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  AuthRoute: typeof AuthRouteWithChildren
+  SignedinRoute: typeof SignedinRouteWithChildren
   LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_signedin': {
+      id: '/_signedin'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof SignedinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -88,53 +105,57 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_auth': {
-      id: '/_auth'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_auth/': {
-      id: '/_auth/'
+    '/_signedin/': {
+      id: '/_signedin/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof AuthIndexRouteImport
-      parentRoute: typeof AuthRoute
+      preLoaderRoute: typeof SignedinIndexRouteImport
+      parentRoute: typeof SignedinRoute
     }
-    '/_auth/tags/$tag': {
-      id: '/_auth/tags/$tag'
-      path: '/tags/$tag'
-      fullPath: '/tags/$tag'
-      preLoaderRoute: typeof AuthTagsTagRouteImport
-      parentRoute: typeof AuthRoute
-    }
-    '/_auth/retros/$retroId': {
-      id: '/_auth/retros/$retroId'
+    '/_signedin/retros/$retroId': {
+      id: '/_signedin/retros/$retroId'
       path: '/retros/$retroId'
       fullPath: '/retros/$retroId'
-      preLoaderRoute: typeof AuthRetrosRetroIdRouteImport
-      parentRoute: typeof AuthRoute
+      preLoaderRoute: typeof SignedinRetrosRetroIdRouteImport
+      parentRoute: typeof SignedinRoute
+    }
+    '/_signedin/t/$slug': {
+      id: '/_signedin/t/$slug'
+      path: '/t/$slug'
+      fullPath: '/t/$slug'
+      preLoaderRoute: typeof SignedinTSlugRouteImport
+      parentRoute: typeof SignedinRoute
+    }
+    '/_signedin/tags/$tag': {
+      id: '/_signedin/tags/$tag'
+      path: '/tags/$tag'
+      fullPath: '/tags/$tag'
+      preLoaderRoute: typeof SignedinTagsTagRouteImport
+      parentRoute: typeof SignedinRoute
     }
   }
 }
 
-interface AuthRouteChildren {
-  AuthIndexRoute: typeof AuthIndexRoute
-  AuthRetrosRetroIdRoute: typeof AuthRetrosRetroIdRoute
-  AuthTagsTagRoute: typeof AuthTagsTagRoute
+interface SignedinRouteChildren {
+  SignedinIndexRoute: typeof SignedinIndexRoute
+  SignedinRetrosRetroIdRoute: typeof SignedinRetrosRetroIdRoute
+  SignedinTSlugRoute: typeof SignedinTSlugRoute
+  SignedinTagsTagRoute: typeof SignedinTagsTagRoute
 }
 
-const AuthRouteChildren: AuthRouteChildren = {
-  AuthIndexRoute: AuthIndexRoute,
-  AuthRetrosRetroIdRoute: AuthRetrosRetroIdRoute,
-  AuthTagsTagRoute: AuthTagsTagRoute,
+const SignedinRouteChildren: SignedinRouteChildren = {
+  SignedinIndexRoute: SignedinIndexRoute,
+  SignedinRetrosRetroIdRoute: SignedinRetrosRetroIdRoute,
+  SignedinTSlugRoute: SignedinTSlugRoute,
+  SignedinTagsTagRoute: SignedinTagsTagRoute,
 }
 
-const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
+const SignedinRouteWithChildren = SignedinRoute._addFileChildren(
+  SignedinRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
-  AuthRoute: AuthRouteWithChildren,
+  SignedinRoute: SignedinRouteWithChildren,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport

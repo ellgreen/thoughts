@@ -1,84 +1,94 @@
-# Thoughts 💭
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/brand/logo-dark.svg">
+  <img alt="thoughts" src="docs/brand/logo.svg" width="320">
+</picture>
 
-**Thoughts** is a simple self-hosted tool for facilitating retrospectives.
+Retros where everyone writes first and reads later.
 
-- Simple authentication, enter your name and start using the app
-- Create a retrospective using one of the templates provided or
-  use your own custom columns
-- Add thoughts to the retrospective, only visible to you
-- Group similar thoughts together
-- Vote on thoughts to prioritize them
-- Discuss thoughts with your team
-- Add tasks to document action items
+thoughts is a self-hosted retrospective board for teams. Everyone writes on
+their own, nobody can read anyone else's notes until the room moves on, and
+the retro ends with actions that the team's next retro opens with. It's one
+small Docker image with SQLite inside, so there's nothing else to run.
 
-> [!NOTE]
-> Thoughts has live updates so that you can ensure everyone is on the same page ⚡️
+![A retro being grouped: notes stacked in piles, where the pink and blue inks overlap](docs/screenshots/group.png)
 
-![Thoughts](./.assets/discuss-2026-03.webp)
+## What it does
 
-## Getting Started
+- **Reflect, group, vote, discuss.** Notes stay hidden, author and all,
+  until everyone moves on. Then they're grouped by dragging, or by keyboard,
+  and voted on with votes that stack like dot stickers. Discussion takes the
+  groups in order of votes.
+- **Actions that don't get lost.** A team's next retro opens with what the
+  last one left unfinished: tick it off, carry it over or drop it.
+- **Run the room together.** A shared timer, an "I'm done" count, and a
+  spotlight that brings everyone to the group being discussed. There's no
+  host: anyone can do anything.
+- **Keys for the common things.** `[` `]` between stages, `a` for an
+  action, `t` for the timer. `?` lists them, `⌘K` finds anything else.
+- **Sign in your way.** With just a name (the default, as in v1), your
+  directory over LDAP with no service account, or any OpenID Connect
+  provider.
+- **AI if you want it.** Columns for a theme, suggested groups and names,
+  drafted actions and a recap, from Anthropic, OpenAI, any OpenAI-compatible
+  server, or GitHub Copilot. Suggestions change nothing until someone applies
+  them, and the model never sees who wrote what.
+- **Markdown export**, GIFs and images on notes, light and dark.
 
-The easiest ways to get started with Thoughts is to use the
-standalone binary release or the docker image.
+| | |
+|---|---|
+| ![Discussing, with the most-voted group in the spotlight](docs/screenshots/discuss.png) | ![The same retro in dark mode](docs/screenshots/discuss-dark.png) |
+| ![Reflecting: other people's notes are hidden](docs/screenshots/reflect.png) | ![On a phone](docs/screenshots/phone.png) |
 
-### Standalone Binary
+## Run it
 
-Go to the [releases page](https://github.com/ellgreen/thoughts/releases) and download
-the latest release for your platform.
-
-```shell
-./thoughts
+```bash
+docker run -p 3000:3000 -v "$PWD/data:/data" ghcr.io/ellgreen/thoughts:2
 ```
 
-### Docker Image
+Then open <http://localhost:3000>. Everything thoughts keeps is in
+`/data/thoughts.sqlite`; back up that file.
 
-```shell
-docker run -p 3000:3000 -v $PWD/data:/data ghcr.io/ellgreen/thoughts:latest
+Binaries for Linux, macOS and Windows are on the
+[releases page](https://github.com/ellgreen/thoughts/releases) if you'd rather
+not use Docker.
+
+### Upgrading from v1
+
+Change the tag to `2` and restart. v2 copies your v1 database, converts it in
+one go, and keeps your links and sessions working.
+[docs/upgrading.md](docs/upgrading.md) has the details, and how to go back.
+
+## Settings
+
+All settings are environment variables. The common ones:
+
+| Variable | Default | |
+|---|---|---|
+| `THOUGHTS_ADDRESS` | `localhost:3000` (`:3000` in Docker) | Where to listen |
+| `THOUGHTS_DATA_PATH` | `./data` (`/data` in Docker) | Where the database lives |
+| `THOUGHTS_TLS_CERT_PATH`, `THOUGHTS_TLS_KEY_PATH` | unset | Serve HTTPS directly |
+| `THOUGHTS_AUTH` | `name` | Ways to sign in: any of `name`, `ldap`, `oidc`, in order |
+| `THOUGHTS_PUBLIC_URL` | unset | Where people open thoughts; needed for OIDC |
+| `THOUGHTS_AI_DRIVER` | unset | `anthropic`, `openai`, `openai-compatible` or `copilot` |
+| `THOUGHTS_GIF_API_KEY` | unset | Turns on GIF search ([Klipy](https://klipy.com/developers) by default; `THOUGHTS_GIF_PROVIDER=giphy` for Giphy). Pasting an image link works without it |
+| `THOUGHTS_LOG_FORMAT` | `text` (`json` in Docker) | |
+
+More in [docs/sign-in.md](docs/sign-in.md) (LDAP, OIDC) and
+[docs/ai.md](docs/ai.md) (AI drivers and what the model sees).
+
+## Develop
+
+You need Go, Node and pnpm, and [Task](https://taskfile.dev).
+
+```bash
+task dev           # the API on :3000, rebuilt on change
+pnpm --dir ui dev  # the UI on :5173, proxying to the API
+task check         # everything CI runs
 ```
 
-#### Want to terminate TLS in the container?
+[CLAUDE.md](CLAUDE.md) describes how the code is laid out and the rules it
+follows; [docs/](docs) holds the design, decisions and roadmap.
 
-```shell
-docker run -p 3000:3000 \
-  -v $PWD/data:/data \
-  -e THOUGHTS_TLS_CERT_PATH="/path/to/your/tls.crt" \
-  -e THOUGHTS_TLS_KEY_PATH="/path/to/your/tls.key" \
-  ghcr.io/ellgreen/thoughts:latest
-```
+## Licence
 
-### Features
-
-#### AI
-
-To enable AI features, you will need to set the `THOUGHTS_OPENAI_API_KEY`
-environment variable.
-
-You can follow the instructions to get an API key here:
-
-<https://platform.openai.com/api-keys>
-
-#### Images and GIFs
-
-Adding an image to a thought always works — paste any `https` image or GIF
-link and you get a preview before it is attached. No configuration needed.
-
-To also get in-app GIF **search**, set `THOUGHTS_GIF_API_KEY`. The default
-provider is [Klipy](https://klipy.com/developers), which is free for life:
-a test key works immediately, and a production key (a form in their partner
-panel) lifts the rate limit.
-
-```shell
-docker run -p 3000:3000 \
-  -v $PWD/data:/data \
-  -e THOUGHTS_GIF_API_KEY="your-key" \
-  ghcr.io/ellgreen/thoughts:latest
-```
-
-| Variable | Values | Default |
-| --- | --- | --- |
-| `THOUGHTS_GIF_API_KEY` | Your provider's API key | unset — search disabled |
-| `THOUGHTS_GIF_PROVIDER` | `klipy`, `giphy`, `none` | auto: `klipy` when a key is set |
-
-> [!NOTE]
-> Google shut the Tenor API down on 30 June 2026, so `THOUGHTS_TENOR_API_KEY`
-> no longer does anything. Thoughts logs a warning if it is still set.
+GPL-3.0. See [COPYING](COPYING).

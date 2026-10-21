@@ -1,0 +1,24 @@
+# Real directory and identity servers for the live sign-in tests:
+# task test:auth-live
+services:
+  openldap:
+    image: bitnamilegacy/openldap:2.6
+    ports: ["127.0.0.1:1389:1389"]
+    environment:
+      LDAP_ROOT: dc=example,dc=org
+      LDAP_ADMIN_USERNAME: admin
+      LDAP_ADMIN_PASSWORD: admin-password
+      LDAP_USER_OU: people
+      LDAP_GROUP_OU: groups
+      LDAP_USERS: priya,sam
+      LDAP_PASSWORDS: priya-password,sam-password
+      LDAP_GROUP: retro-people
+    healthcheck:
+      test: ["CMD", "ldapsearch", "-x", "-H", "ldap://localhost:1389", "-b", "dc=example,dc=org", "-D", "cn=admin,dc=example,dc=org", "-w", "admin-password", "cn=priya"]
+      interval: 2s
+      retries: 30
+  dex:
+    image: ghcr.io/dexidp/dex:v2.46.0
+    command: ["dex", "serve", "/etc/dex/config.yml"]
+    ports: ["127.0.0.1:5556:5556"]
+    volumes: ["./dex.yml:/etc/dex/config.yml:ro"]

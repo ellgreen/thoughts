@@ -1,39 +1,30 @@
-ARG THOUGHTS_VERSION="0.1.0"
+# syntax=docker/dockerfile:1
 
-# Pull binary
-FROM alpine:latest AS setup
+FROM --platform=$BUILDPLATFORM node:26-alpine AS ui
+WORKDIR /src/ui
+RUN npm install --global pnpm@11.24.0
+COPY ui/package.json ui/pnpm-lock.yaml ui/pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY ui/ ./
+RUN pnpm build
 
-ARG THOUGHTS_VERSION
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS go
+WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
+COPY . .
+COPY --from=ui /src/internal/web/dist ./internal/web/dist
+ARG TARGETOS TARGETARCH VERSION=dev
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+    go build -tags bundled -trimpath -ldflags "-s -w -X main.version=${VERSION}" -o /out/thoughts ./cmd/thoughts
 
-RUN apk add wget tar
-
-WORKDIR /app
-
-RUN wget -qO /app/thoughts.tar.gz "https://github.com/ellgreen/thoughts/releases/download/${THOUGHTS_VERSION}/thoughts_Linux_x86_64.tar.gz" && \
-    tar -xzf thoughts.tar.gz && \
-    chmod +x thoughts && \
-    mv thoughts /thoughts
-
-# Final Image
-FROM alpine:latest
-
-ENV THOUGHTS_ADDRESS=":3000"
-# The config key is data_path, so THOUGHTS_DATA was never read and the database
-# landed in the container's working directory instead of the mounted volume.
-ENV THOUGHTS_DATA_PATH="/data"
-
-ENV THOUGHTS_TLS_CERT_PATH=""
-ENV THOUGHTS_TLS_KEY_PATH=""
-
-# Optional integrations, pass with -e to enable.
-ENV THOUGHTS_GIF_PROVIDER=""
-ENV THOUGHTS_GIF_API_KEY=""
-ENV THOUGHTS_OPENAI_API_KEY=""
-
-COPY --from=setup /thoughts /usr/local/bin/
-
-RUN mkdir -p /data
-
+# Root, like v1's image: volumes v1 wrote are owned by root, and a non-root
+# v2 couldn't open them after an upgrade. Run with --user to opt out.
+FROM gcr.io/distroless/static-debian13
+COPY --from=go /out/thoughts /usr/local/bin/thoughts
+ENV THOUGHTS_ADDRESS=":3000" \
+    THOUGHTS_DATA_PATH="/data" \
+    THOUGHTS_LOG_FORMAT="json"
+VOLUME /data
 EXPOSE 3000
-
-CMD ["thoughts"]
+ENTRYPOINT ["/usr/local/bin/thoughts"]

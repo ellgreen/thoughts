@@ -1,153 +1,128 @@
 @import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
-@custom-variant dark (&:is(.dark *));
+/* Screens use these tokens, never raw colours. The palette is cleared so a
+   stray text-white or bg-purple-500 does nothing rather than slipping in. */
+@theme {
+  --color-*: initial;
+  --color-paper: oklch(0.972 0.004 250);
+  --color-ink: oklch(0.36 0.14 262);
+  --color-ink-soft: oklch(0.45 0.1 262);
+  --color-blue: oklch(0.55 0.15 255);
+  --color-pink: oklch(0.7 0.24 355);
+  --color-pink-tint: oklch(0.86 0.1 355);
+  --color-blue-tint: oklch(0.85 0.06 250);
+  --color-alert: oklch(0.93 0.06 355);
+  --color-scrim: oklch(0.15 0.04 262 / 0.5);
+  --color-transparent: transparent;
 
-@theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-ring: var(--ring);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  --color-surface: var(--surface);
-  --color-surface-raised: var(--surface-raised);
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --font-heading: var(--font-sans);
-  --font-sans: 'Inter Variable', sans-serif;
-  --font-display: 'Space Grotesk Variable', 'Inter Variable', sans-serif;
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --font-*: initial;
+  --font-display: "Bagel Fat One", "Familjen Grotesk Variable", sans-serif;
+  --font-sans: "Familjen Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-*: initial;
+  --radius-key: 4px;
+  --radius-stamp: 9999px;
+
+  --shadow-*: initial;
 }
 
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.491 0.27 292.581);
-  --primary-foreground: oklch(0.969 0.016 293.756);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
-
-  /* Column accents. Five hues at matched lightness and chroma so no column
-     shouts louder than its neighbours. Assigned by position, not stored. */
-  --chart-1: oklch(0.58 0.19 292);
-  --chart-2: oklch(0.6 0.15 220);
-  --chart-3: oklch(0.62 0.15 165);
-  --chart-4: oklch(0.68 0.15 65);
-  --chart-5: oklch(0.6 0.18 15);
-
-  /* Layered backgrounds, so cards do not have to sit on flat white. */
-  --surface: oklch(0.985 0.002 286);
-  --surface-raised: oklch(1 0 0);
-
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.541 0.281 293.009);
-  --sidebar-primary-foreground: oklch(0.969 0.016 293.756);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
-}
-
-.dark {
-  --background: oklch(0.141 0.005 285.823);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.21 0.006 285.885);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.21 0.006 285.885);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.432 0.232 292.759);
-  --primary-foreground: oklch(0.969 0.016 293.756);
-  --secondary: oklch(0.274 0.006 286.033);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.274 0.006 286.033);
-  --muted-foreground: oklch(0.705 0.015 286.067);
-  --accent: oklch(0.274 0.006 286.033);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.552 0.016 285.938);
-
-  /* Lifted and slightly desaturated: the same hues read as neon on a dark
-     background at the light-mode chroma. */
-  --chart-1: oklch(0.7 0.17 292);
-  --chart-2: oklch(0.72 0.13 220);
-  --chart-3: oklch(0.74 0.13 165);
-  --chart-4: oklch(0.79 0.13 65);
-  --chart-5: oklch(0.71 0.16 15);
-
-  --surface: oklch(0.176 0.005 285.8);
-  --surface-raised: oklch(0.235 0.006 285.9);
-
-  --sidebar: oklch(0.21 0.006 285.885);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.606 0.25 292.717);
-  --sidebar-primary-foreground: oklch(0.969 0.016 293.756);
-  --sidebar-accent: oklch(0.274 0.006 286.033);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.552 0.016 285.938);
-}
-
+/* Dark is the same two inks printed on dark stock: tints get deeper, and
+   overprint switches from multiply to screen so overlaps still read as a
+   third colour instead of going muddy. */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  :root {
+    --blend: multiply;
+    color-scheme: light;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --color-paper: oklch(0.2 0.03 262);
+      --color-ink: oklch(0.93 0.02 250);
+      --color-ink-soft: oklch(0.8 0.04 250);
+      --color-blue: oklch(0.72 0.12 250);
+      --color-pink-tint: oklch(0.42 0.13 355);
+      --color-blue-tint: oklch(0.38 0.09 255);
+      --color-alert: oklch(0.4 0.12 355);
+      --blend: screen;
+      color-scheme: dark;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --color-paper: oklch(0.2 0.03 262);
+    --color-ink: oklch(0.93 0.02 250);
+    --color-ink-soft: oklch(0.8 0.04 250);
+    --color-blue: oklch(0.72 0.12 250);
+    --color-pink-tint: oklch(0.42 0.13 355);
+    --color-blue-tint: oklch(0.38 0.09 255);
+    --color-alert: oklch(0.4 0.12 355);
+    --blend: screen;
+    color-scheme: dark;
+  }
+
+  html {
+    font-family: var(--font-sans);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
 
   body {
-    @apply bg-background text-foreground;
+    margin: 0;
+    min-height: 100dvh;
   }
 
-  button:not([disabled]),
-  [role="button"]:not([disabled]) {
-    cursor: pointer;
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
-  html {
-    @apply font-sans;
+
+  p {
+    text-wrap: pretty;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-pink);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@utility overprint {
+  mix-blend-mode: var(--blend);
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Paths animated with this need pathLength="1" and a 1 1 dash: the line
+   writes itself in, then rubs out from the start. */
+@keyframes scribble {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: -1;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
   }
 }

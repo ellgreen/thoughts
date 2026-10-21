@@ -1,9 +1,8 @@
-thoughts.sqlite
-tmp/
-build/
-dist/
+/tmp/
+/build/
+/dist/
+/data/
+/internal/web/dist/
 .task/
-seed*.py
-ui/test-results/
-ui/playwright-report/
-ui/blob-report/
+*.log
+.DS_Store
