@@ -1,0 +1,17 @@
+issuer: http://127.0.0.1:5556/dex
+storage:
+  type: memory
+web:
+  http: 0.0.0.0:5556
+oauth2:
+  skipApprovalScreen: true
+staticClients:
+  - id: thoughts
+    secret: thoughts-secret
+    name: thoughts
+    redirectURIs: ["http://127.0.0.1:3399/api/auth/oidc/callback"]
+# mockCallback signs in a fixed test user without a login page.
+connectors:
+  - type: mockCallback
+    id: mock
+    name: Test sign-in

@@ -1,21 +1,20 @@
+import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
-
-// Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 
-// Create a new router instance
+export const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
+});
+
 export const router = createRouter({
   routeTree,
+  context: { queryClient },
   defaultPreload: "intent",
-  defaultPendingMinMs: 0,
-  context: {
-    auth: undefined!,
-  },
+  defaultPreloadStaleTime: 0,
 });
 
 declare module "@tanstack/react-router" {
   interface Register {
-    // This infers the type of our router and registers it across your entire project
     router: typeof router;
   }
 }

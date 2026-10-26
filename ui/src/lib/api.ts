@@ -1,39 +1,33 @@
-import axios from "axios";
-import { toast } from "sonner";
+export class ApiError extends Error {
+  readonly status: number;
 
-export const api = axios.create({
-  withCredentials: true,
-  baseURL: import.meta.env.DEV ? "http://localhost:3000" : undefined,
-});
-
-const authEndpoints = ["/api/auth/self", "/api/auth/login"];
-
-type SessionExpiredHandler = () => void;
-
-let onSessionExpired: SessionExpiredHandler = () => {};
-
-export function setSessionExpiredHandler(handler: SessionExpiredHandler) {
-  onSessionExpired = handler;
+  constructor(status: number, message: string) {
+    super(message);
+    this.status = status;
+  }
 }
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const status = error.response?.status;
-    const url: string = error.config?.url ?? "";
+type Init = { method?: string; body?: unknown; signal?: AbortSignal };
 
-    if (status === 400) {
-      toast("There was a problem with the request", {
-        description: error.response.data,
-      });
+export async function api<T>(path: string, init: Init = {}): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(path, {
+      method: init.method ?? "GET",
+      signal: init.signal,
+      headers: init.body === undefined ? undefined : { "Content-Type": "application/json" },
+      body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === "AbortError") throw e;
+    throw new ApiError(0, "Can't reach thoughts right now. Check your connection and try again.");
+  }
+  if (res.status === 204) return undefined as T;
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new ApiError(res.status, body.error ?? "Something broke on the server. Try again in a moment.");
+  return body as T;
+}
 
-      return Promise.reject(error);
-    }
-
-    if (status === 401 && !authEndpoints.some((path) => url.startsWith(path))) {
-      onSessionExpired();
-    }
-
-    return Promise.reject(error);
-  },
-);
+export function messageOf(e: unknown): string {
+  return e instanceof Error ? e.message : String(e);
+}

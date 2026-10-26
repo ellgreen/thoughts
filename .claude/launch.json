@@ -2,10 +2,42 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "app",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "task build && THOUGHTS_DATA_PATH=./tmp/data THOUGHTS_VERBOSE=true ./build/thoughts"
+      ],
+      "port": 3000
+    },
+    {
       "name": "ui",
       "runtimeExecutable": "pnpm",
-      "runtimeArgs": ["--dir", "ui", "run", "dev"],
+      "runtimeArgs": [
+        "--dir",
+        "ui",
+        "run",
+        "dev"
+      ],
       "port": 5173
+    },
+    {
+      "name": "app-auth",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "task build && THOUGHTS_ADDRESS=127.0.0.1:3399 THOUGHTS_DATA_PATH=./tmp/data-auth THOUGHTS_AUTH=oidc,ldap,name THOUGHTS_PUBLIC_URL=http://127.0.0.1:3399 THOUGHTS_LDAP_URL=ldap://127.0.0.1:1389 THOUGHTS_LDAP_ALLOW_PLAINTEXT=true THOUGHTS_LDAP_BIND='cn={username},ou=people,dc=example,dc=org' THOUGHTS_LDAP_GROUP=cn=retro-people,ou=groups,dc=example,dc=org THOUGHTS_OIDC_ISSUER=http://127.0.0.1:5556/dex THOUGHTS_OIDC_CLIENT_ID=thoughts THOUGHTS_OIDC_CLIENT_SECRET=thoughts-secret THOUGHTS_OIDC_LABEL=\"Example SSO\" ./build/thoughts"
+      ],
+      "port": 3399
+    },
+    {
+      "name": "app-ai",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "task build && THOUGHTS_ADDRESS=127.0.0.1:3500 THOUGHTS_DATA_PATH=./tmp/data-ai THOUGHTS_AI_DRIVER=copilot ./build/thoughts"
+      ],
+      "port": 3500
     }
   ]
 }

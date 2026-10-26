@@ -1,85 +1,158 @@
 # CLAUDE.md
 
 Thoughts is a self-hosted, real-time collaborative retrospective tool: a Go
-backend serving a React/TypeScript SPA. In production the binary embeds the
-built UI; in development the two run separately.
+backend serving a React/TypeScript SPA, shipped as one binary and one Docker
+image, on SQLite. v2 was rebuilt from scratch; v1 lives on the `1.x`
+branch. Plans, design and decisions live in `docs/`. Read `docs/roadmap.md`
+before starting a piece of work and tick it off when it lands.
+
+Thoughts is open source. Keep it self-contained: no code, names or links from
+other projects.
 
 ## Commands
 
 ```bash
-task dev        # Hot-reload backend (Air, watches *.go + migrations/)
-task build      # Bundles the UI, then compiles with -tags bundled
-task run        # Build and run the production binary
-task tools      # Installs goose + goreleaser
+task dev          # API on :3000, rebuilt on change (Air)
+task build        # UI into internal/web/dist, then one binary in build/thoughts
+task run          # build and run it
+task check        # vet, lint, unit tests, build, e2e: what CI runs
+task docker       # build the image locally
 ```
 
 ```bash
 cd ui
-pnpm run dev    # Vite on :5173, proxying /api/* to :3000
-pnpm run build
-pnpm run lint
-pnpm test       # Vitest
-pnpm test:e2e   # Playwright, against task run's production binary
+pnpm dev          # Vite on :5173, proxying /api (and the socket) to :3000
+pnpm lint         # oxlint
+pnpm exec tsc -b  # TypeScript 7
+pnpm test         # Vitest
+pnpm test:e2e     # Playwright against build/thoughts on :3100
 ```
 
-Before saying a change is done:
+Before saying a change is done, `task check` is green.
 
-```bash
-go build ./... && go vet ./... && go test ./...
-cd ui && pnpm lint && pnpm exec tsc -b && pnpm test && pnpm build
-```
+`./data` is where v1 kept its database, and a dev checkout may still hold a
+real one; starting v2 on it converts it. The `app` launch config runs
+against `./tmp/data` instead.
 
 ## Architecture
 
 ```
-cmd/thoughts/
-├── main.go          Server setup, DB init, migration runner
-├── config.go        Viper config — every env var is defined here
-├── routes.go        All route registration (applyRoutes)
-├── controllers/     HTTP handlers
-├── model/           Entity structs (Retro, Note, Vote, Task, User)
-├── dal/             Raw sqlx queries, no ORM, one file per entity
-├── resources/       Outbound DTOs
-├── requests/        Inbound DTOs with go-playground/validator tags
-├── event/           Pub/sub broker for WebSocket events
-├── socket/          WebSocket upgrade and message dispatch
-├── session/         Gorilla session management
-├── auth/            Session cookie middleware
-├── ai/              OpenAI via langchaingo
-└── gif/             GIF search behind a swappable provider
+cmd/thoughts/       main: config, logging, signals. Nothing else.
+migrations/         NNNN_name.sql, embedded, applied in name order on startup
+internal/
+  config/           every THOUGHTS_* variable, defined here and nowhere else
+  logging/          slog, text or JSON
+  db/               opens SQLite (WAL, foreign keys, one connection), migrates,
+                    refuses to migrate a v1 database
+  v1import/         first start on a v1 database: back it up, convert it in
+                    one transaction; also reads v1 session cookies
+  store/            every query; rules and permission checks live here
+  auth/             sign-in drivers behind one Provider interface
+  live/             one hub per open retro: serialises changes, fans out frames
+  gif/              GIF search behind a provider (Klipy, Giphy), ported from v1
+  ai/               AI drivers (anthropic, openai, openai-compatible, copilot)
+                    and the features built on them; see docs/ai.md
+  server/           routes, handlers, the socket and its commands, resources;
+                    board.go decides what each person may see
+  web/              serves the UI; bundled.go embeds it under -tags bundled
+ui/                 Vite, React 19, TanStack Router (file-based, src/routes/)
+                    and Query, React Aria Components, Tailwind 4 tokens
+docs/               roadmap, design, decisions, brand assets
 ```
 
-HTTP requests flow routes → auth middleware → controller → DAL → SQLite.
-Real-time updates flow `event.Broker` → WebSocket → frontend.
+Routing is the standard library mux with method patterns. Anything under
+`/api/` that no route matches is a 404, never the SPA; everything else falls
+through to `index.html`, so client routes deep-link. Cross-origin POSTs are
+refused by `http.CrossOriginProtection`.
 
-Migrations live in `migrations/*.sql` with `-- +goose Up` / `-- +goose Down`,
-are embedded with `//go:embed`, and run automatically on startup.
+A retro is live over `GET /api/retros/{id}/socket`. The client sends
+commands (`{ref, name, args}`, listed in `server/commands.go`); after each
+one the hub sends every connection a `board` frame projected for that person
+(`server/board.go`), then the sender an `ack` or an `error` with the same
+ref. While reflecting, other people's notes carry no text, author or image;
+vote totals appear only once discussion starts. Keep those rules in
+`project` and its tests.
 
-Frontend routing is TanStack Router, file-based under `ui/src/routes/`. HTTP is
-axios, the socket is react-use-websocket, shared state is React context in
-`ui/src/hooks/`.
+Keyboard shortcuts are registered with `useShortcut` (`ui/src/keys/`); the
+`?` sheet and the ⌘K palette list whatever is registered, so a shortcut
+defined there is documented automatically.
 
-## Conventions
+`ui/src/routeTree.gen.ts` is generated by the router plugin and committed so
+`tsc -b` works without a Vite run. Do not edit it.
 
-Config is environment variables with a `THOUGHTS_` prefix, defaulted in
-`config.go`. `THOUGHTS_GIF_API_KEY` and `THOUGHTS_GIF_PROVIDER` control GIF
-search; pasting a link works without either. `THOUGHTS_OPENAI_API_KEY` enables
-AI template generation.
+## Data
 
-Never return a model struct from a handler; map it through `resources/`.
+`modernc.org/sqlite` (pure Go, so `CGO_ENABLED=0` gives one static binary),
+`database/sql` with hand-written queries. Migrations are append-only once
+released; before 2.0.0 ships they may still be edited.
 
-When a mutation should reach other people in the retro, publish to
-`event.Broker` after the DAL write. Payloads are `map[string]any` and are
-decoded by `requests.FromMap`, which handles only flat scalars — no nested
-structs or slices of structs.
+IDs are UUID text (v7 for new rows, v1's v4 ids kept as they are). Times are
+RFC 3339 UTC, dates `YYYY-MM-DD`. Secrets are stored hashed.
 
-Auth is name-only, no passwords. **A name is a label, not an account.** Each
-login creates a new user row, so two people called Alex are two people, and one
-person entering their name twice gets two sessions. Do not add uniqueness to
-`users.name` or try to reuse a row by name.
+Handlers never return a store struct; they map it to a `*Resource` type.
+Something that belongs to someone else is `store.ErrNotFound`.
 
-Migrations are append-only once merged. A migration that changes or deletes
-existing rows needs asking about first.
+## Compatibility with v1
+
+Upgrading must be a tag bump. Keep, without changing their meaning:
+
+- v1's URLs: `/`, `/login?redirect=`, `/retros/{uuid}`, `/tags/{tag}`.
+  (`/t/{slug}`, team pages, is new in v2.)
+- v1's environment variables (`THOUGHTS_ADDRESS`, `_DATA_PATH`,
+  `_DATABASE_FILE`, `_SESSION_KEY_FILE`, `_TLS_*`, `_GIF_*`,
+  `_OPENAI_API_KEY`).
+- The image contract: port 3000, data in `/data`, running as root so volumes
+  v1 wrote stay readable.
+- v1's data and sessions: `internal/v1import` converts a v1 database on
+  first start and adopts v1 cookies. Its tests run against databases written
+  by real v1 releases in `internal/v1import/testdata`; don't hand-edit them.
+  See `docs/upgrading.md`.
+
+## Auth
+
+`THOUGHTS_AUTH` lists the drivers to offer (`name` by default; also `ldap`
+and `oidc`, configured as in `docs/sign-in.md`). A driver is an
+`auth.Form` (`POST /api/auth/{id}` with its fields) or an `auth.Redirect`
+(`GET /api/auth/{id}/start`, then `/callback`). `GET /api/auth/providers`
+tells the sign-in screen what to draw. `task test:auth-live` runs LDAP and
+OIDC against real servers in containers.
+
+**A name is a label, not an account.** Name sign-in creates a new user every
+time, so two people called Alex are two people, and one person entering their
+name twice gets two sessions. Do not add uniqueness to `users.name` or reuse a
+row by name. Drivers that can recognise someone (LDAP, OIDC) do it through
+`identities (provider, subject)`.
+
+Sessions are a random token, stored hashed, in an HttpOnly, SameSite=Lax
+cookie that is Secure whenever the request came over HTTPS.
+
+## Design
+
+The direction is the two-ink zine in `docs/design.md`: fluoro pink and riso
+blue on cool paper, Bagel Fat One for display, Familjen Grotesk for text. The
+one memorable element is overprint: where grouped notes overlap, the inks
+multiply into a third colour. Keep it for that; don't spend it on decoration.
+
+- Tokens live in `ui/src/index.css` `@theme`. Tailwind's palette is cleared,
+  so `text-white` does nothing; use `text-paper`, `text-ink` and friends.
+- Dark mode is the same inks on dark stock, with `--blend: screen`. Use the
+  `overprint` utility rather than a fixed blend mode.
+- Avoid the generated look: no gradients, glow, glass, emoji as icons, purple
+  as a brand colour, coloured side-stripes on cards, pulsing dots, one big
+  radius everywhere, or rows of identical cards. Icons are inline stroke SVG.
+- Phone first, 44px touch targets, 4.5:1 text contrast in both themes.
+- The common actions have a key (stages, new action, done, timer); the
+  rest are a click or ⌘K away. Add a key only when people will reach for it
+  many times a retro.
+
+## Copy
+
+Short, plain, sentence case, written like a person. Buttons say what happens
+("Join the retro"), and the result uses the same word. No exclamation marks,
+no emoji in interface text, no "Welcome back" or "Oops". Errors say what
+happened and what to do. Empty screens point at the next action. Avoid
+seamless, elevate, empower, unleash, delve, robust, leverage, "not just X but
+Y", and padding lists out to three.
 
 ## Writing code here
 
@@ -129,3 +202,9 @@ is available — say so plainly rather than implying it was tested.
 A test written from documentation proves the code agrees with the documentation,
 not with reality. Where an external API is involved, shape fixtures from a real
 response and keep a live contract test behind an env var.
+
+`TestSoak` (`internal/server/soak_test.go`) runs several retros at once over
+real sockets with people joining, leaving, dropping and reconnecting, and
+checks every board against the rules. A short run is part of `go test`; run
+`task test:soak` after touching the hub, the socket, commands or the board
+projection.

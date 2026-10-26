@@ -1,62 +1,77 @@
 # https://taskfile.dev
-
 version: "3"
 
-tasks:
-  dev:
-    cmds:
-      - go build -o ./tmp/ ./cmd/...
-    sources:
-      - "**/*.go"
-      - "migrations/*.sql"
-      - "go.mod"
-      - "go.sum"
-    generates:
-      - "./tmp/thoughts"
+vars:
+  VERSION:
+    sh: git describe --tags --always --dirty 2>/dev/null || echo dev
 
-  build-ui:
+tasks:
+  default:
+    cmds: [task --list]
+
+  dev:
+    desc: API on :3000, rebuilt on change (run `pnpm dev` in ui/ alongside it)
     cmds:
-      - pnpm --prefix=ui run build
-    sources:
-      - "ui/*.*"
-      - "ui/src/**"
-    generates:
-      - "ui/dist/**"
+      - air -build.cmd "go build -o ./tmp/thoughts ./cmd/thoughts" -build.bin ./tmp/thoughts -build.include_ext go,sql -build.exclude_dir ui,tmp,data,internal/web/dist
+
+  build:ui:
+    desc: Build the UI into internal/web/dist
+    dir: ui
+    cmds: [pnpm build]
+    sources: [src/**/*, public/**/*, index.html, package.json, pnpm-lock.yaml, vite.config.ts, tsconfig*.json, exclude: src/routeTree.gen.ts]
+    generates: [../internal/web/dist/index.html]
 
   build:
-    deps: [build-ui]
+    desc: One binary with the UI embedded, in build/thoughts
+    deps: [build:ui]
     cmds:
-      - go build -tags bundled -o ./build/ ./cmd/...
-    sources:
-      - "**/*.go"
-      - "ui/dist/**"
-      - "migrations/*.sql"
-      - "go.mod"
-      - "go.sum"
-    generates:
-      - "./build/thoughts"
+      - CGO_ENABLED=0 go build -tags bundled -ldflags "-s -w -X main.version={{.VERSION}}" -o ./build/thoughts ./cmd/thoughts
+    sources: ["**/*.go", "migrations/*.sql", internal/web/dist/**/*, go.mod, go.sum]
+    generates: [./build/thoughts]
 
   run:
+    desc: Build and run the production binary
     deps: [build]
-    cmds:
-      - ./build/thoughts
+    cmds: [./build/thoughts]
 
-  docker-build:
+  lint:
     cmds:
-      - docker build -t thoughts .
-      - docker image prune -f
+      - go vet ./...
+      - pnpm --dir ui lint
+      - pnpm --dir ui exec tsc -b
 
-  docker-run:
-    deps: [docker-build]
+  test:
     cmds:
-      - docker run -p 3000:3000 thoughts:latest
+      - go test -race ./...
+      - pnpm --dir ui test
 
-  tools:
-    cmds:
-      - go install github.com/pressly/goose/v3/cmd/goose@latest
-      - go install github.com/goreleaser/goreleaser/v2@latest
+  test:e2e:
+    desc: Playwright against the production binary
+    deps: [build]
+    dir: ui
+    cmds: [pnpm test:e2e]
 
-  release:
-    desc: "Test the release process"
+  check:
+    desc: Everything CI runs
     cmds:
-      - goreleaser build --single-target --snapshot --clean
+      - task: lint
+      - task: test
+      - task: build
+      - task: test:e2e
+
+  docker:
+    desc: Build the image for this machine
+    cmds:
+      - docker build --build-arg VERSION={{.VERSION}} -t thoughts:dev .
+
+  test:soak:
+    desc: Many retros at once with people joining, leaving and dropping, under the race detector
+    cmds:
+      - THOUGHTS_SOAK=1 go test -race -count=1 -timeout 10m -run Soak -v ./internal/server/
+
+  test:auth-live:
+    desc: LDAP and OIDC sign-in against real OpenLDAP and Dex containers
+    cmds:
+      - docker compose -f internal/auth/testdata/compose.yml up -d --wait
+      - defer: docker compose -f internal/auth/testdata/compose.yml down -v
+      - THOUGHTS_AUTH_LIVE_TEST=1 go test -count=1 -run 'Live' ./internal/auth/ ./internal/server/
