@@ -1,13 +1,27 @@
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
 import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
 import { Kbd, useShortcuts } from "@/keys/keys";
+import { meQuery, signOut } from "@/lib/session";
 import { popover } from "./menu";
 import { ThemeChoice } from "./theme-toggle";
 import { initials } from "./ui";
 
 const row = "flex min-h-11 items-center justify-between gap-3 px-1 text-left font-semibold hover:underline underline-offset-4";
 
-export function AccountMenu({ name, onSignOut }: { name: string; onSignOut: () => void }) {
+export function useSignOut() {
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  return async () => {
+    await signOut();
+    queryClient.setQueryData(meQuery.queryKey, null);
+    await navigate({ to: "/login" });
+  };
+}
+
+export function AccountMenu({ name }: { name: string }) {
   const shortcuts = useShortcuts();
+  const onSignOut = useSignOut();
   return (
     <DialogTrigger>
       <Button aria-label={`Account: ${name}`} className="inline-flex size-11 items-center justify-center">

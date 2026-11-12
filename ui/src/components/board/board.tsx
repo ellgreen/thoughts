@@ -6,11 +6,13 @@ import { useRetroSocket } from "@/lib/socket";
 import { Columns } from "./columns";
 import { BoardContext, type BoardApi } from "./context";
 import { Discuss } from "./discuss";
-import { BoardHeader, Settings, StageConfirm } from "./header";
+import { Bar } from "./bar";
+import { Dock } from "./dock";
+import { Settings, StageConfirm } from "./header";
 import { MovePicker } from "./move";
 import { NoteEditor } from "./note-editor";
 import { AIPanel, RecapBlock } from "./suggestions";
-import { LastTime, ReadyCheck, Timer } from "./facilitation";
+import { LastTime } from "./facilitation";
 
 export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me: string; gifSearch: boolean; ai: boolean }) {
   const { board, people, status, send } = useRetroSocket(retroId);
@@ -20,6 +22,7 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
   const [stageTo, setStageTo] = useState<Stage | null>(null);
   const [settings, setSettings] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
+  const [dockSlot, setDockSlot] = useState<HTMLElement | null>(null);
 
   const run = useCallback(
     async (name: string, args?: unknown) => {
@@ -48,8 +51,9 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
         moveNote: setMoving,
         dragging,
         setDragging,
+        dockSlot,
       },
-    [board, people, me, gifSearch, ai, send, run, dragging],
+    [board, people, me, gifSearch, ai, send, run, dragging, dockSlot],
   );
 
   const stage = board?.retro.stage;
@@ -63,17 +67,16 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
 
   return (
     <BoardContext.Provider value={api}>
-      <div className="mx-auto flex w-full max-w-[110rem] flex-col gap-8">
-        <BoardHeader status={status} onSettings={() => setSettings(true)} onStage={setStageTo} />
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y-[1.5px] border-line py-2">
-          <ReadyCheck />
-          <Timer />
+      <div className="-mt-5 flex flex-col gap-5 pb-28">
+        <Bar status={status} onSettings={() => setSettings(true)} onStage={setStageTo} />
+        <div className="mx-auto flex w-full max-w-[110rem] flex-col gap-5">
+          <LastTime />
+          {ai ? <AIPanel /> : null}
+          {board.retro.stage === "discuss" && <RecapBlock />}
+          {board.retro.stage === "discuss" ? <Discuss /> : <Columns />}
         </div>
-        <LastTime />
-        {ai ? <AIPanel /> : null}
-        {board.retro.stage === "discuss" && <RecapBlock />}
-        {board.retro.stage === "discuss" ? <Discuss /> : <Columns />}
       </div>
+      <Dock onSlot={setDockSlot} />
       {editing && <NoteEditor note={editing.note} columnId={editing.columnId} onClose={() => setEditing(null)} />}
       {moving && <MovePicker note={moving} onClose={() => setMoving(null)} />}
       {stageTo && <StageConfirm to={stageTo} onClose={() => setStageTo(null)} />}

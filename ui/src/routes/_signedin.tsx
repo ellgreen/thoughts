@@ -1,10 +1,10 @@
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
-import { Wordmark } from "@/components/brand";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { createFileRoute, Link, Outlet, redirect, useLocation } from "@tanstack/react-router";
 import { AccountMenu } from "@/components/account-menu";
+import { Wordmark } from "@/components/brand";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { KeyboardLayer } from "@/keys/layer";
-import { meQuery, signOut } from "@/lib/session";
+import { meQuery } from "@/lib/session";
 
 export const Route = createFileRoute("/_signedin")({
   beforeLoad: async ({ context, location }) => {
@@ -17,26 +17,21 @@ export const Route = createFileRoute("/_signedin")({
 
 function SignedIn() {
   const { data: me } = useSuspenseQuery(meQuery);
-  const queryClient = useQueryClient();
-  const navigate = useNavigate();
-
-  async function leave() {
-    await signOut();
-    queryClient.setQueryData(meQuery.queryKey, null);
-    await navigate({ to: "/login" });
-  }
+  const onBoard = useLocation({ select: (l) => l.pathname.startsWith("/retros/") });
 
   return (
     <div className="flex min-h-dvh flex-col gap-8 px-4 py-5 sm:px-6">
-      <header className="flex flex-wrap items-center justify-between gap-4">
-        <Link to="/" aria-label="thoughts, home">
-          <Wordmark />
-        </Link>
-        <div className="flex items-center gap-1">
-          <ThemeToggle />
-          <AccountMenu name={me?.user.name ?? ""} onSignOut={leave} />
-        </div>
-      </header>
+      {!onBoard && (
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <Link to="/" aria-label="thoughts, home">
+            <Wordmark />
+          </Link>
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
+            <AccountMenu name={me?.user.name ?? ""} />
+          </div>
+        </header>
+      )}
       <Outlet />
       <KeyboardLayer />
     </div>

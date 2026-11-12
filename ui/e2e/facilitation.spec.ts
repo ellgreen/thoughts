@@ -45,7 +45,8 @@ test("a team's next retro opens with last time's actions", async ({ browser }) =
   await priya.getByRole("link", { name: team }).click();
   await expect(priya.getByText("Write the payments runbook")).toBeVisible();
   await newRetro(priya, "Sprint 41");
-  const lastTime = priya.getByRole("region", { name: "From last time" });
+  await priya.getByRole("button", { name: "Settle them" }).click();
+  const lastTime = priya.getByRole("dialog", { name: "From last time" });
   await expect(lastTime.getByText("Write the payments runbook")).toBeVisible();
   await lastTime.getByRole("listitem").filter({ hasText: "runbook" }).getByRole("button", { name: "Carry over" }).click();
   await lastTime.getByRole("listitem").filter({ hasText: "Wednesday" }).getByRole("button", { name: "Drop" }).click();
@@ -65,8 +66,11 @@ test("timer, ready check and spotlight reach everyone", async ({ browser }) => {
   await priya.keyboard.press("t");
   await priya.getByRole("menuitem", { name: "2 minutes" }).click();
   await expect(sam.getByRole("timer")).toHaveText(/^(2:00|1:5\d)$/);
-  await priya.getByRole("button", { name: /^Pause/ }).click();
-  await expect(sam.getByRole("button", { name: /^Resume/ })).toBeVisible();
+  await priya.getByRole("button", { name: "Timer", exact: true }).click();
+  await priya.getByRole("menuitem", { name: /^Pause/ }).click();
+  await sam.getByRole("button", { name: "Timer", exact: true }).click();
+  await expect(sam.getByRole("menuitem", { name: /^Resume/ })).toBeVisible();
+  await sam.keyboard.press("Escape");
 
   await sam.keyboard.press("d");
   await expect(priya.getByText("1 of 2 done")).toBeVisible();

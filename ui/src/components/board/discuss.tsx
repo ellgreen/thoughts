@@ -5,6 +5,7 @@ import { Kbd, useShortcut } from "@/keys/keys";
 import { formatDueOn, type Action } from "@/lib/retro";
 import { Pile, Stamps } from "./columns";
 import { useBoard } from "./context";
+import { DockSlot } from "./dock";
 import { inkFor } from "./note";
 
 function readFollow() {
@@ -51,7 +52,7 @@ export function Discuss() {
   return (
     <div className="flex flex-wrap items-start gap-10">
       <div className="flex min-w-0 flex-[999_1_32rem] flex-col gap-6">
-        <div className="flex flex-wrap items-center gap-2">
+        <DockSlot>
           <ToggleButton isSelected={focus} onChange={setFocus} className={`${button.line} data-selected:bg-ink data-selected:text-paper`}>
             One at a time
           </ToggleButton>
@@ -74,7 +75,7 @@ export function Discuss() {
               )}
             </>
           )}
-          <Checkbox isSelected={follow} onChange={toggleFollow} className="group ml-auto flex min-h-11 items-center gap-2 text-sm font-semibold">
+          <Checkbox isSelected={follow} onChange={toggleFollow} className="group flex min-h-11 items-center gap-2 text-sm font-semibold">
             <span className="flex size-5 shrink-0 items-center justify-center border-[2.5px] border-ink group-data-selected:bg-ink">
               <svg viewBox="0 0 16 16" className="size-3.5 fill-none stroke-paper stroke-[2.5] opacity-0 group-data-selected:opacity-100" aria-hidden="true">
                 <path d="M3 8.5l3 3 7-7" />
@@ -82,7 +83,7 @@ export function Discuss() {
             </span>
             Follow the room
           </Checkbox>
-        </div>
+        </DockSlot>
         <ol className="flex flex-col gap-8" aria-label="Groups by votes">
           {ranked.length === 0 && <p className="text-ink-soft">Nothing came up this time.</p>}
           {shown.map((g) => {

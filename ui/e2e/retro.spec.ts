@@ -60,9 +60,9 @@ test("a whole retro, two people", async ({ browser }) => {
   await nextStage(sam, "Vote");
   const vote = sam.locator("[data-group-id]").filter({ hasText: "checkout test is flaky" }).getByRole("button", { name: "Vote", exact: true });
   for (let i = 0; i < 5; i++) await vote.click();
-  await expect(sam.getByText("0 of 5 votes left.")).toBeVisible();
+  await expect(sam.getByRole("img", { name: "0 of 5 votes left" })).toBeVisible();
   await expect(vote).toBeDisabled();
-  await expect(priya.getByText("5 of 5 votes left.")).toBeVisible();
+  await expect(priya.getByRole("img", { name: "5 of 5 votes left" })).toBeVisible();
 
   await nextStage(priya, "Discuss");
   await expect(priya.getByRole("img", { name: "5 votes" })).toBeVisible();

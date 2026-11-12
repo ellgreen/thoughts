@@ -16,6 +16,7 @@ export type BoardApi = {
   // dragging is the note being dragged right now, so drop zones can show.
   dragging: string | null;
   setDragging: (noteId: string | null) => void;
+  dockSlot: HTMLElement | null;
 };
 
 export const BoardContext = createContext<BoardApi | null>(null);
