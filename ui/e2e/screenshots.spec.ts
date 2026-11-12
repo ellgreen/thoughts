@@ -161,11 +161,6 @@ test("README screenshots", async ({ browser }) => {
   await settle(priya);
   await priya.screenshot({ path: out("group") });
 
-  const phone = await person(browser, "Kofi", { viewport: { width: 390, height: 844 } });
-  await phone.goto(url);
-  await settle(phone);
-  await phone.screenshot({ path: out("phone") });
-
   await send(priya, retro.id, [["stage.set", { stage: "vote" }]]);
   const votes: Record<string, string[]> = {
     Priya: ["The checkout test", "The checkout test", "Who owns the alerts"],
@@ -176,6 +171,9 @@ test("README screenshots", async ({ browser }) => {
   for (const [name, list] of Object.entries(votes)) {
     await send(people[name], retro.id, list.map((t) => ["vote.cast", { groupId: groupOf(board, t), delta: 1 }]));
   }
+  await priya.reload();
+  await settle(priya);
+  await priya.screenshot({ path: out("vote") });
   await send(priya, retro.id, [
     ["stage.set", { stage: "discuss" }],
     ["spotlight.set", { groupId: groupOf(board, "The checkout test") }],

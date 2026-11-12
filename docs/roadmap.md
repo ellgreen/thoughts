@@ -85,7 +85,7 @@ Each line is a phase in `ui-plan.md`; read that phase before starting it.
 - [x] Home, team pages, new retro and settings
 - [x] Motion: gliding notes, the reveal, the stage band, stamps
 - [ ] Instant sends for notes, votes, ready and reactions (optional)
-- [ ] Screenshots regenerated and a `design.md` entry
+- [x] Screenshots regenerated and a `design.md` entry
 
 ## Later
 
