@@ -5,6 +5,7 @@ import { Thinking } from "@/components/thinking";
 import { Kbd, useShortcut } from "@/keys/keys";
 import type { Suggestion } from "@/lib/retro";
 import { useBoard } from "./context";
+import { DockSlot } from "./dock";
 
 type Kind = "groups" | "names" | "actions" | "recap";
 
@@ -46,15 +47,14 @@ export function AIPanel() {
   return (
     <section aria-label="AI suggestions" className="flex flex-col gap-3">
       {kinds.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
+        <DockSlot>
           {kinds.map((k, i) => (
             <Button key={k} onPress={() => ask(k)} isDisabled={busy !== null && busy !== k} className={button.line}>
               {busy === k ? <Thinking label={asks[k].busy} /> : k === "recap" && board.retro.recap ? "Rewrite the recap" : asks[k].label}
               {i === 0 && busy !== k && <Kbd keys="s" />}
             </Button>
           ))}
-          <span className="text-sm text-ink-soft">The AI only sees the notes, never who wrote them.</span>
-        </div>
+        </DockSlot>
       )}
       {problem && (
         <div role="alert" className="flex flex-wrap items-center gap-x-4 gap-y-1 bg-alert px-4 py-2">
@@ -97,10 +97,10 @@ function SuggestionCard({ suggestion: s }: { suggestion: Suggestion }) {
         : s.items.map((x) => ({ title: x.what, detail: x.groupId && `From “${groupLabel(x.groupId)}”` }));
 
   return (
-    <article className="flex flex-col gap-3 border-[2.5px] border-ink bg-paper p-4" aria-label={heading}>
+    <article className="flex flex-col gap-3 border-[1.5px] border-line bg-paper p-4" aria-label={heading}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-display text-2xl leading-tight">{heading}</h2>
-        <span className="text-sm text-ink-soft">Everyone can see this. Nothing changes until someone applies it.</span>
+        <h2 className="text-xl leading-tight font-bold">{heading}</h2>
+        <span className="text-sm text-ink-soft">The AI saw the notes, never who wrote them. Nothing changes until someone applies it.</span>
       </div>
       <ul className="flex flex-col divide-y divide-ink/20">
         {rows.map((row, i) => (
@@ -131,18 +131,5 @@ function SuggestionCard({ suggestion: s }: { suggestion: Suggestion }) {
         </div>
       )}
     </article>
-  );
-}
-
-export function RecapBlock() {
-  const { board } = useBoard();
-  if (!board.retro.recap) return null;
-  return (
-    <section aria-labelledby="recap-heading" className="max-w-[70ch] bg-blue-tint p-5">
-      <h2 id="recap-heading" className="font-display text-2xl">
-        Recap
-      </h2>
-      <p className="mt-2 text-lg leading-relaxed">{board.retro.recap}</p>
-    </section>
   );
 }

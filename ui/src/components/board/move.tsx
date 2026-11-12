@@ -1,5 +1,6 @@
 import { Autocomplete, Header, Input, ListBox, ListBoxItem, ListBoxSection, SearchField, useFilter } from "react-aria-components";
 import { Sheet } from "@/components/dialog";
+import { input } from "@/components/ui";
 import type { Note } from "@/lib/retro";
 import { useBoard } from "./context";
 
@@ -33,7 +34,7 @@ export function MovePicker({ note, onClose }: { note: Note; onClose: () => void 
       <p className="text-ink-soft">“{note.content}”</p>
       <Autocomplete filter={contains}>
         <SearchField aria-label="Find a group or column" autoFocus onKeyDown={(e) => e.key === "Escape" && onClose()}>
-          <Input placeholder="Type to find a group" className="min-h-12 w-full border-[2.5px] border-ink bg-paper px-3 text-lg outline-none" />
+          <Input placeholder="Type to find a group" className={`${input} outline-none`} />
         </SearchField>
         <ListBox
           aria-label="Where to"
@@ -47,7 +48,7 @@ export function MovePicker({ note, onClose }: { note: Note; onClose: () => void 
         >
           {[...sections.entries()].map(([section, items]) => (
             <ListBoxSection key={section} id={section}>
-              <Header className="pt-3 pb-1 font-display text-lg">{section}</Header>
+              <Header className="pt-3 pb-1 text-sm font-bold text-ink-soft">{section}</Header>
               {items.map((o) => (
                 <ListBoxItem key={o.id} id={o.id} textValue={o.label} className="flex min-h-11 cursor-default items-center px-3 outline-none data-focused:bg-blue-tint">
                   <span className="line-clamp-2">{o.label}</span>

@@ -15,10 +15,10 @@ export function Sheet({ isOpen, onOpenChange, title, children, wide }: Props) {
       isOpen={isOpen}
       onOpenChange={onOpenChange}
       isDismissable
-      className="fixed inset-0 z-40 flex items-end justify-center bg-scrim p-0 data-entering:animate-[fade_120ms_ease-out] sm:items-center sm:p-6"
+      className="fixed inset-0 z-40 flex items-end justify-center bg-scrim p-0 data-entering:animate-[fade_120ms_ease-out] data-exiting:animate-[fade_120ms_ease-in_reverse] sm:items-center sm:p-6"
     >
       <Modal
-        className={`max-h-[92dvh] w-full overflow-y-auto bg-paper text-ink outline-none data-entering:animate-[rise_160ms_ease-out] ${wide ? "sm:max-w-3xl" : "sm:max-w-lg"} border-t-[3px] border-ink sm:border-[3px]`}
+        className={`max-h-[92dvh] w-full overflow-y-auto bg-paper text-ink outline-none data-entering:animate-[rise_160ms_ease-out] data-exiting:animate-[rise_120ms_ease-in_reverse] ${wide ? "sm:max-w-3xl" : "sm:max-w-lg"} border-t-[3px] border-ink sm:border-[3px]`}
       >
         <Dialog className="flex flex-col gap-5 p-5 outline-none sm:p-7">
           {({ close }) => (

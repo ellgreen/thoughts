@@ -8,6 +8,14 @@
     <meta name="description" content="Retrospectives for your team: write, group, vote and leave with actions." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <title>thoughts</title>
+    <!-- Inline so a chosen theme is set before first paint. If the server ever
+         sends a Content-Security-Policy, move this to public/theme.js. -->
+    <script>
+      try {
+        var t = localStorage.getItem("thoughts.theme");
+        if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -22,5 +22,6 @@ export const Route = createFileRoute("/_signedin/retros/$retroId")({
 function RetroPage() {
   const { retroId } = Route.useParams();
   const { data: me } = useSuspenseQuery(meQuery);
-  return <RetroBoard key={retroId} retroId={retroId} me={me!.user.id} gifSearch={me!.features.gifSearch} ai={me!.features.ai} />;
+  const retro = Route.useLoaderData();
+  return <RetroBoard key={retroId} retroId={retroId} title={retro.title} me={me!.user.id} gifSearch={me!.features.gifSearch} ai={me!.features.ai} />;
 }

@@ -12,36 +12,23 @@ export function Teams() {
   const [creating, setCreating] = useState(false);
 
   return (
-    <section aria-labelledby="teams" className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id="teams" className="font-display text-3xl">
-          Teams
-        </h2>
-        <Button onPress={() => setCreating(true)} className={button.quiet}>
+    <>
+      <nav aria-label="Teams" className="flex flex-wrap items-center gap-x-5 gap-y-1">
+        {teams.map((t) => (
+          <Link key={t.id} to="/t/$slug" params={{ slug: t.slug }} className="inline-flex min-h-11 items-baseline gap-2 py-2.5 font-bold underline-offset-4 hover:underline">
+            {t.name}
+            {t.openActions > 0 && <span className="text-sm font-normal text-ink-soft">{t.openActions} to do</span>}
+          </Link>
+        ))}
+        <Button onPress={() => setCreating(true)} className={`${button.quiet} px-0`}>
           New team
         </Button>
-      </div>
-      {teams.length === 0 ? (
-        <p className="max-w-[56ch] text-ink-soft">
-          A team keeps its retros together, and each new retro opens with the actions the last one left unfinished.
-        </p>
-      ) : (
-        <ul className="flex flex-wrap gap-3">
-          {teams.map((t) => (
-            <li key={t.id}>
-              <Link to="/t/$slug" params={{ slug: t.slug }} className="flex min-h-12 flex-col justify-center bg-blue-tint px-4 py-2 hover:bg-pink-tint">
-                <span className="font-display text-xl leading-tight">{t.name}</span>
-                <span className="text-sm">
-                  {t.retros} {t.retros === 1 ? "retro" : "retros"}
-                  {t.openActions > 0 && `, ${t.openActions} still to do`}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      </nav>
+      {teams.length === 0 && (
+        <p className="max-w-[56ch] text-ink-soft">A team keeps its retros together, and each new retro opens with the actions the last one left unfinished.</p>
       )}
       <NewTeam isOpen={creating} onOpenChange={setCreating} />
-    </section>
+    </>
   );
 }
 

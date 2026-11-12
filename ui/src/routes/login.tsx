@@ -3,6 +3,7 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
 import { Button, Form, Input, Label, Text, TextField } from "react-aria-components";
 import { Wordmark } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { button, input } from "@/components/ui";
 import { messageOf } from "@/lib/api";
 import { meQuery, providersQuery, safeRedirect, signIn, type Provider } from "@/lib/session";
@@ -38,6 +39,7 @@ function Login() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-6xl flex-wrap content-center items-center gap-x-16 gap-y-10 px-4 py-12 sm:px-6">
+      <ThemeToggle className="absolute top-3 right-3 sm:right-5" />
       <section className="min-w-0 flex-[1_1_440px]">
         <h1 className="m-0">
           <Wordmark size="lg" />

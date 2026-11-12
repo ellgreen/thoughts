@@ -11,11 +11,15 @@ export type BoardApi = {
   // run sends a command and reports a failure as a toast, for actions that
   // have nowhere better to show a problem.
   run: (name: string, args?: unknown) => Promise<boolean>;
-  editNote: (note: Note | null, columnId?: string) => void;
+  editNote: (note: Note) => void;
   moveNote: (note: Note) => void;
   // dragging is the note being dragged right now, so drop zones can show.
   dragging: string | null;
   setDragging: (noteId: string | null) => void;
+  dockSlot: HTMLElement | null;
+  // picked is a note lifted by a press, waiting for a press on where it goes.
+  picked: string | null;
+  setPicked: (noteId: string | null) => void;
 };
 
 export const BoardContext = createContext<BoardApi | null>(null);
@@ -25,6 +29,10 @@ export function useBoard() {
   if (!b) throw new Error("useBoard outside a board");
   return b;
 }
+
+// A press on one of these inside a note or pile is for that control, not
+// for picking up or putting down.
+export const CONTROLS = "button, a, textarea, input, [role=menu], [role=dialog]";
 
 export const NOTE_TYPE = "application/x-thoughts-note";
 

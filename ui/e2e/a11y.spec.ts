@@ -9,9 +9,16 @@ async function noViolations(page: Page, where: string) {
   ).toEqual([]);
 }
 
-for (const colorScheme of ["light", "dark"] as const) {
-  test(`every screen passes axe in ${colorScheme} mode`, async ({ page }) => {
+const looks = [
+  { name: "light", colorScheme: "light", chosen: null },
+  { name: "dark", colorScheme: "dark", chosen: null },
+  { name: "dark by the switch", colorScheme: "light", chosen: "dark" },
+] as const;
+
+for (const { name, colorScheme, chosen } of looks) {
+  test(`every screen passes axe in ${name} mode`, async ({ page }) => {
     await page.emulateMedia({ colorScheme });
+    if (chosen) await page.addInitScript((t) => localStorage.setItem("thoughts.theme", t), chosen);
     await page.goto("/login");
     await expect(page.getByLabel("Your name")).toBeVisible();
     await noViolations(page, "sign-in");
@@ -27,9 +34,9 @@ for (const colorScheme of ["light", "dark"] as const) {
     const { id } = await res.json();
     await page.goto(`/retros/${id}`);
     await expect(page.getByRole("heading", { level: 1, name: "Sprint 41" })).toBeVisible();
-    await page.getByRole("button", { name: "Add a thought" }).first().click();
-    await page.getByLabel("Note", { exact: true }).fill("Pairing worked");
+    await page.getByRole("textbox", { name: /^Add a thought to/ }).first().fill("Pairing worked");
     await page.keyboard.press("Enter");
+    await page.keyboard.press("Escape");
     await expect(page.getByTestId("note-content")).toBeVisible();
     await noViolations(page, "reflect");
 

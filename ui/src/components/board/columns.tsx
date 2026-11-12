@@ -1,8 +1,16 @@
-import { useRef, useState, type CSSProperties } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from "react";
+import { AnimatePresence, motion, useAnimate } from "motion/react";
+import { quick, thud } from "@/components/motion";
 import { Button, Input, isTextDropItem, TextField, useDrop, type DropItem } from "react-aria-components";
 import type { Column, Group } from "@/lib/retro";
+import { useShortcut } from "@/keys/keys";
+import { Composer, focusComposer } from "./composer";
+import { Icon } from "@/components/icons";
+import { button } from "@/components/ui";
+import { useChanges } from "./changes";
 import { NOTE_TYPE, noteById, useBoard } from "./context";
-import { HiddenNote, inkFor, NoteCard, type Ink } from "./note";
+import { DockSlot } from "./dock";
+import { exitFor, HiddenNote, inkFor, NoteCard, useLeaving, type Ink } from "./note";
 
 async function droppedNoteId(items: DropItem[]) {
   const item = items.find((i) => isTextDropItem(i) && i.types.has(NOTE_TYPE));
@@ -10,22 +18,36 @@ async function droppedNoteId(items: DropItem[]) {
 }
 
 export function Columns() {
-  const { board } = useBoard();
+  const { board, picked, setPicked } = useBoard();
+  useShortcut({ id: "put-back", keys: "esc", label: "Put the note back", section: "Retro", hidden: true, run: () => setPicked(null) }, !!picked);
+  const moving = picked ? (noteById(board, picked)?.note.content ?? "") : null;
   const n = board.retro.columns.length;
+  const lastUsed = useRef(0);
+  const writing = board.retro.stage === "reflect" || board.retro.stage === "group";
+  useShortcut({ id: "write", keys: "n", label: "Write a thought", section: "Retro", run: () => focusComposer(Math.min(lastUsed.current, n - 1)) }, writing);
+  const written = board.groups.some((g) => g.notes.some((x) => x.mine));
   return (
     <div
       className="grid snap-x snap-mandatory auto-cols-[minmax(16rem,82vw)] grid-flow-col gap-6 overflow-x-auto pb-4 sm:auto-cols-[minmax(17rem,1fr)] lg:grid-flow-row lg:grid-cols-[repeat(var(--columns),minmax(0,1fr))] lg:overflow-visible"
       style={{ "--columns": n } as CSSProperties}
     >
       {board.retro.columns.map((c, i) => (
-        <ColumnView key={c.id} column={c} index={i} groups={board.groups.filter((g) => g.columnId === c.id)} />
+        <ColumnView key={c.id} column={c} index={i} groups={board.groups.filter((g) => g.columnId === c.id)} first={!written} onUsed={(used) => (lastUsed.current = used)} />
       ))}
+      {moving !== null && (
+        <DockSlot>
+          <span className="max-w-[22rem] truncate text-sm font-semibold">Moving “{moving}”. Press a group or a column.</span>
+          <Button onPress={() => setPicked(null)} className={button.quiet}>
+            Put it back
+          </Button>
+        </DockSlot>
+      )}
     </div>
   );
 }
 
-function ColumnView({ column, index, groups }: { column: Column; index: number; groups: Group[] }) {
-  const { board, editNote, run, dragging } = useBoard();
+function ColumnView({ column, index, groups, first, onUsed }: { column: Column; index: number; groups: Group[]; first: boolean; onUsed: (index: number) => void }) {
+  const { board, run, dragging, picked } = useBoard();
   const stage = board.retro.stage;
   const ink = inkFor(index);
   const ref = useRef<HTMLDivElement>(null);
@@ -40,12 +62,13 @@ function ColumnView({ column, index, groups }: { column: Column; index: number; 
     },
   });
 
-  const mine = groups.flatMap((g) => g.notes.filter((n) => n.mine));
+  const mine = groups.flatMap((g) => g.notes.filter((n) => n.mine)).reverse();
   const hidden = groups.flatMap((g) => g.notes.filter((n) => n.hidden));
+  const { gone } = useChanges();
 
   return (
     <section data-column-id={column.id} data-column-index={index} className="flex min-w-0 snap-start flex-col gap-4" aria-labelledby={`col-${column.id}`}>
-      <header className="flex flex-col gap-1 border-b-[2.5px] border-ink pb-2">
+      <header className="flex flex-col gap-1 border-b-[1.5px] border-line pb-2">
         <div className="flex items-baseline justify-between gap-2">
           <h2 id={`col-${column.id}`} className="font-display text-2xl leading-tight xl:text-3xl">
             {column.title}
@@ -54,44 +77,51 @@ function ColumnView({ column, index, groups }: { column: Column; index: number; 
         {column.description && <p className="text-ink-soft">{column.description}</p>}
       </header>
 
+      {(stage === "reflect" || stage === "group") && <Composer column={column} index={index} first={first} onUsed={onUsed} />}
+
       <div ref={ref} {...dropProps} className={`flex min-h-24 flex-col gap-4 ${isDropTarget ? "outline-3 outline-offset-4 outline-pink outline-dashed" : ""}`}>
         {stage === "reflect" ? (
-          <>
-            {mine.map((n) => (
-              <NoteCard key={n.id} note={n} ink={ink} draggable showAuthor={false} canReact={false} />
-            ))}
+          <Fragment key="reflect">
+            <AnimatePresence initial={false} custom={gone}>
+              {mine.map((n) => (
+                <NoteCard key={n.id} note={n} ink={ink} draggable showAuthor={false} canReact={false} />
+              ))}
+            </AnimatePresence>
             {hidden.length > 0 && (
               <div className="grid grid-cols-2 gap-3" aria-label={`${hidden.length} hidden ${hidden.length === 1 ? "thought" : "thoughts"} from others`}>
-                {hidden.map((n) => (
-                  <HiddenNote key={n.id} size={n.size} ink={ink} />
-                ))}
+                <AnimatePresence initial={false} custom={gone}>
+                  {hidden.map((n) => (
+                    <HiddenNote key={n.id} id={n.id} size={n.size} ink={ink} />
+                  ))}
+                </AnimatePresence>
               </div>
             )}
             {mine.length === 0 && hidden.length === 0 && <p className="text-ink-soft">Nothing yet.</p>}
-          </>
+          </Fragment>
         ) : groups.length === 0 ? (
           <p className="text-ink-soft">Nothing came up here.</p>
         ) : (
-          groups.map((g) => <Pile key={g.id} group={g} ink={ink} />)
+          <AnimatePresence key="piles" initial={false} custom={gone}>
+            {groups.map((g) => (
+              <Pile key={g.id} group={g} ink={ink} />
+            ))}
+          </AnimatePresence>
         )}
       </div>
 
-      {dragging && stage === "group" ? (
-        <LooseDrop columnId={column.id} />
-      ) : (stage === "reflect" || stage === "group") && (
-        <Button
-          onPress={() => editNote(null, column.id)}
-          className="flex min-h-12 items-center justify-center gap-2 border-[2.5px] border-dashed border-ink font-bold hover:bg-blue-tint"
-        >
-          Add a thought
-        </Button>
-      )}
+      {(dragging || picked) && stage === "group" && <LooseDrop columnId={column.id} />}
     </section>
   );
 }
 
+// motion claims these names for its own gestures and animations.
+function forMotion<T extends object>(props: T) {
+  const { onDragStart: _a, onDrag: _b, onDragEnd: _c, onAnimationStart: _d, onAnimationEnd: _e, ...rest } = props as T & Record<string, unknown>;
+  return rest;
+}
+
 export function Pile({ group, ink }: { group: Group; ink: Ink }) {
-  const { board, run, dragging } = useBoard();
+  const { board, run, dragging, picked } = useBoard();
   const stage = board.retro.stage;
   const ref = useRef<HTMLDivElement>(null);
   // A pile never takes its own note back. useDrop stops every drag event it
@@ -108,16 +138,29 @@ export function Pile({ group, ink }: { group: Group; ink: Ink }) {
     },
   });
   const many = group.notes.length > 1;
+  const target = !!picked && !group.notes.some((n) => n.id === picked);
+  const [notes, dip] = useAnimate<HTMLDivElement>();
+  const leaving = useLeaving();
+  const votes = useRef(group.myVotes);
+  useEffect(() => {
+    if (group.myVotes > votes.current) dip(notes.current, { y: [0, 1, 0] }, { duration: 0.16 });
+    votes.current = group.myVotes;
+  }, [group.myVotes, dip, notes]);
 
   return (
-    <div
+    <motion.div
       ref={ref}
-      {...dropProps}
-      data-group-id={group.id}
-      className={`isolate flex flex-col ${isDropTarget ? "outline-3 outline-offset-4 outline-pink" : ""}`}
+      {...forMotion(dropProps)}
+      {...leaving}
+      layout="position"
+      layoutId={group.id}
+      exit="gone"
+      variants={exitFor(group.id)}
+      data-group-id={leaving.inert ? undefined : group.id}
+      className={`isolate flex flex-col outline-offset-4 transition-[outline-color] duration-[120ms] ease-out ${isDropTarget ? "outline-3 outline-pink" : target ? "cursor-pointer outline-2 outline-pink outline-dashed" : "outline-2 outline-transparent outline-dashed"}`}
     >
       {(many || group.title) && <GroupTitle group={group} />}
-      <div className="flex flex-col">
+      <div ref={notes} className="flex flex-col">
         {group.notes.map((n, i) => (
           <div key={n.id} style={i > 0 ? { marginTop: -20, marginLeft: i % 2 ? 16 : 6, marginRight: i % 2 ? 0 : 10 } : { marginRight: many ? 16 : 0 }}>
             <NoteCard
@@ -133,39 +176,57 @@ export function Pile({ group, ink }: { group: Group; ink: Ink }) {
         ))}
       </div>
       {stage === "vote" && <VoteControls group={group} />}
-    </div>
+    </motion.div>
   );
 }
 
 function VoteControls({ group }: { group: Group }) {
   const { board, run } = useBoard();
   const left = board.votes.max - board.votes.used;
+  const name = (group.title || group.notes[0]?.content || "this group").slice(0, 60);
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-2">
+    <div className="mt-2 flex items-center justify-end gap-1">
+      <AnimatePresence initial={false}>
+        {group.myVotes > 0 && (
+          <motion.span key="cast" exit={{ opacity: 0, scale: 1.2, transition: quick }} className="flex">
+            <Button onPress={() => run("vote.cast", { groupId: group.id, delta: -1 })} aria-label={`Take back a vote from ${name}, ${group.myVotes} cast`} className="flex min-h-11 items-center px-1 hover:opacity-60">
+              <Stamps count={group.myVotes} />
+            </Button>
+          </motion.span>
+        )}
+      </AnimatePresence>
       <Button
         onPress={() => run("vote.cast", { groupId: group.id, delta: 1 })}
         isDisabled={left === 0}
-        className="inline-flex min-h-11 items-center gap-2 border-[2.5px] border-ink px-3 font-bold hover:bg-pink-tint disabled:opacity-50"
+        aria-label={`Vote for ${name}`}
+        className="inline-flex size-11 items-center justify-center rounded-stamp border-[1.5px] border-dashed border-ink hover:bg-pink-tint disabled:opacity-40"
       >
-        Vote
+        <Icon name="plus" />
       </Button>
-      {group.myVotes > 0 && (
-        <Button onPress={() => run("vote.cast", { groupId: group.id, delta: -1 })} className="min-h-11 px-2 font-semibold underline-offset-4 hover:underline">
-          Take one back
-        </Button>
-      )}
-      <Stamps count={group.myVotes} label={`${group.myVotes} of your votes`} />
     </div>
   );
 }
 
-export function Stamps({ count, label, size = 30 }: { count: number; label: string; size?: number }) {
+const tilt = (i: number) => ((i * 7 + 5) % 25) - 12;
+
+// land is a delay in seconds: the stamps already there land too, after it.
+export function Stamps({ count, label, size = 30, land }: { count: number; label?: string; size?: number; land?: number }) {
   if (count === 0) return null;
   return (
-    <span role="img" aria-label={label} className="isolate ml-auto flex flex-wrap">
-      {Array.from({ length: count }, (_, i) => (
-        <span key={i} className="overprint rounded-stamp bg-pink" style={{ width: size, height: size, marginLeft: i ? -size / 2.5 : 0 }} />
-      ))}
+    <span role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true} className="isolate ml-auto flex flex-wrap">
+      <AnimatePresence initial={land !== undefined}>
+        {Array.from({ length: count }, (_, i) => (
+          <motion.span
+            key={i}
+            initial={{ scale: 1.5, rotate: tilt(i), opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            exit={{ scale: 1.2, opacity: 0, transition: quick }}
+            transition={{ ...thud, delay: land, opacity: { duration: 0.06, delay: land } }}
+            className="overprint rounded-stamp bg-pink"
+            style={{ width: size, height: size, marginLeft: i ? -size / 2.5 : 0 }}
+          />
+        ))}
+      </AnimatePresence>
     </span>
   );
 }
@@ -186,13 +247,13 @@ function GroupTitle({ group }: { group: Group }) {
         }}
       >
         <TextField aria-label="Group name" value={draft} onChange={setDraft} autoFocus onKeyDown={(e) => e.key === "Escape" && setEditing(false)}>
-          <Input onBlur={() => setEditing(false)} className="w-full border-b-[2.5px] border-ink bg-transparent font-display text-xl outline-none" />
+          <Input onBlur={() => setEditing(false)} className="w-full border-b-[2.5px] border-ink bg-transparent text-xl font-bold outline-none" />
         </TextField>
       </form>
     );
   }
   if (!canName) {
-    return group.title ? <h3 className="mb-2 font-display text-xl leading-tight">{group.title}</h3> : null;
+    return group.title ? <h3 className="mb-2 text-xl leading-tight font-bold">{group.title}</h3> : null;
   }
   return (
     <Button
@@ -200,7 +261,7 @@ function GroupTitle({ group }: { group: Group }) {
         setDraft(group.title);
         setEditing(true);
       }}
-      className="mb-2 self-start text-left font-display text-xl leading-tight hover:underline"
+      className="mb-2 self-start text-left text-xl leading-tight font-bold hover:underline"
     >
       {group.title || <span className="font-sans text-base font-semibold text-ink-soft">Name this group</span>}
     </Button>
@@ -210,7 +271,7 @@ function GroupTitle({ group }: { group: Group }) {
 // LooseDrop stands in for "Add a thought" while a note is being dragged, so
 // there's always a big target for taking a note out of its group.
 function LooseDrop({ columnId }: { columnId: string }) {
-  const { run, setDragging } = useBoard();
+  const { run, setDragging, picked, setPicked } = useBoard();
   const ref = useRef<HTMLDivElement>(null);
   const { dropProps, isDropTarget } = useDrop({
     ref,
@@ -227,7 +288,19 @@ function LooseDrop({ columnId }: { columnId: string }) {
       {...dropProps}
       className={`flex min-h-24 items-center justify-center border-[2.5px] border-dashed border-ink px-4 text-center font-bold ${isDropTarget ? "bg-pink-tint" : ""}`}
     >
-      Drop here for a pile of its own
+      {picked ? (
+        <Button
+          className="min-h-24 w-full font-bold"
+          onPress={() => {
+            run("note.move", { id: picked, columnId });
+            setPicked(null);
+          }}
+        >
+          Drop here for a pile of its own
+        </Button>
+      ) : (
+        "Drop here for a pile of its own"
+      )}
     </div>
   );
 }

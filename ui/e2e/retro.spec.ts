@@ -30,9 +30,9 @@ test("a whole retro, two people", async ({ browser }) => {
   await expect(priya.getByRole("heading", { level: 1, name: "Sprint 41" })).toBeVisible();
   const url = new URL(priya.url()).pathname;
 
-  await priya.getByRole("button", { name: "Add a thought" }).first().click();
-  await priya.getByLabel("Note", { exact: true }).fill("The checkout test is flaky");
+  await priya.getByRole("textbox", { name: /^Add a thought to/ }).first().fill("The checkout test is flaky");
   await key(priya, "Enter");
+  await priya.keyboard.press("Escape");
   await expect(priya.getByTestId("note-content")).toHaveText("The checkout test is flaky");
 
   const sam = await signedIn(browser, "Sam", `/login?redirect=${encodeURIComponent(url)}`);
@@ -42,9 +42,9 @@ test("a whole retro, two people", async ({ browser }) => {
   await expect(sam.getByText("Priya")).toHaveCount(0);
   await expect(priya.getByText("2 here")).toBeVisible();
 
-  await sam.getByRole("button", { name: "Add a thought" }).first().click();
-  await sam.getByLabel("Note", { exact: true }).fill("Reruns cost us two days");
+  await sam.getByRole("textbox", { name: /^Add a thought to/ }).first().fill("Reruns cost us two days");
   await key(sam, "Enter");
+  await sam.keyboard.press("Escape");
   await expect(priya.getByRole("img", { name: "Someone's thought, hidden until grouping" })).toHaveCount(1);
 
   await nextStage(priya, "Group");
@@ -58,18 +58,20 @@ test("a whole retro, two people", async ({ browser }) => {
   await expect(priya.getByRole("button", { name: "Name this group" })).toBeVisible();
 
   await nextStage(sam, "Vote");
-  const vote = sam.locator("[data-group-id]").filter({ hasText: "checkout test is flaky" }).getByRole("button", { name: "Vote", exact: true });
+  const vote = sam.locator("[data-group-id]").filter({ hasText: "checkout test is flaky" }).getByRole("button", { name: /^Vote for/ });
   for (let i = 0; i < 5; i++) await vote.click();
-  await expect(sam.getByText("0 of 5 votes left.")).toBeVisible();
+  await expect(sam.getByRole("img", { name: "0 of 5 votes left" })).toBeVisible();
   await expect(vote).toBeDisabled();
-  await expect(priya.getByText("5 of 5 votes left.")).toBeVisible();
+  await expect(priya.getByRole("img", { name: "5 of 5 votes left" })).toBeVisible();
 
   await nextStage(priya, "Discuss");
   await expect(priya.getByRole("img", { name: "5 votes" })).toBeVisible();
   await key(priya, "a");
-  await priya.getByLabel("What's going to happen?").fill("Quarantine flaky tests");
+  await priya.getByRole("textbox", { name: "Add an action" }).fill("Quarantine flaky tests");
+  await key(priya, "Enter");
+  await priya.getByRole("button", { name: "Edit" }).click();
   await priya.getByLabel("Who").fill("Sam");
-  await priya.getByRole("button", { name: "Add it" }).click();
+  await priya.getByRole("button", { name: "Save" }).click();
   await expect(sam.getByText("Quarantine flaky tests")).toBeVisible();
 
   const md = await (await priya.request.get(`/api/retros/${url.split("/").pop()}/export.md`)).text();

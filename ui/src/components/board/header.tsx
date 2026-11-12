@@ -1,121 +1,11 @@
-import { useState } from "react";
-import { Button, Checkbox, Input, Label, TextField, Tooltip, TooltipTrigger } from "react-aria-components";
+import { useState, type KeyboardEvent } from "react";
+import { Button, Checkbox, Input, Label, TextField } from "react-aria-components";
 import { Sheet } from "@/components/dialog";
+import { IconButton } from "@/components/icon-button";
 import { button, input } from "@/components/ui";
-import { Kbd } from "@/keys/keys";
-import type { Status } from "@/lib/socket";
 import { cleanTag, stages, type Stage } from "@/lib/retro";
 import { TeamPicker } from "@/components/team-picker";
 import { useBoard } from "./context";
-
-export function BoardHeader({ status, onSettings, onStage }: { status: Status; onSettings: () => void; onStage: (to: Stage) => void }) {
-  const { board } = useBoard();
-  const r = board.retro;
-  const at = stages.findIndex((s) => s.id === r.stage);
-
-  return (
-    <header className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
-        <div className="flex min-w-0 flex-col">
-          <h1 className="font-display text-4xl leading-tight break-words sm:text-5xl">{r.title}</h1>
-          {(r.tags.length > 0 || board.team) && (
-            <p className="flex flex-wrap gap-x-3 font-semibold text-ink-soft">
-              {board.team && (
-                <a href={`/t/${board.team.slug}`} className="text-ink hover:underline">
-                  {board.team.name}
-                </a>
-              )}
-              {r.tags.map((t) => (
-                <a key={t} href={`/tags/${encodeURIComponent(t)}`} className="hover:underline">
-                  #{t}
-                </a>
-              ))}
-            </p>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <Presence status={status} />
-          {r.stage !== "reflect" && (
-            <a href={`/api/retros/${r.id}/export.md`} className={button.quiet}>
-              Export
-            </a>
-          )}
-          <Button onPress={onSettings} className={button.quiet}>
-            Settings
-          </Button>
-        </div>
-      </div>
-
-      <nav aria-label="Stages" className="flex flex-wrap items-center gap-2">
-        <ol className="flex flex-wrap gap-1.5">
-          {stages.map((s, i) => (
-            <li key={s.id}>
-              <span
-                aria-current={i === at ? "step" : undefined}
-                className={`inline-flex min-h-10 items-center border-[2.5px] border-ink px-3 font-bold ${i === at ? "bg-ink text-paper" : i < at ? "text-ink-soft" : ""}`}
-              >
-                {s.label}
-              </span>
-            </li>
-          ))}
-        </ol>
-        <div className="ml-auto flex flex-wrap gap-2">
-          {at > 0 && (
-            <Button onPress={() => onStage(stages[at - 1].id)} className={button.quiet}>
-              Back to {stages[at - 1].label.toLowerCase()} <Kbd keys="[" />
-            </Button>
-          )}
-          {at < stages.length - 1 && (
-            <Button onPress={() => onStage(stages[at + 1].id)} className={button.solid}>
-              {stages[at + 1].next} <Kbd keys="]" />
-            </Button>
-          )}
-        </div>
-      </nav>
-      {r.stage === "vote" && (
-        <p className="font-semibold" role="status">
-          {board.votes.max - board.votes.used} of {board.votes.max} votes left. Votes can stack on one group. Totals show when you start discussing.
-        </p>
-      )}
-      {status === "reconnecting" && (
-        <p role="status" className="bg-alert px-3 py-2 font-semibold">
-          Lost the connection. Reconnecting…
-        </p>
-      )}
-    </header>
-  );
-}
-
-function Presence({ status }: { status: Status }) {
-  const { people } = useBoard();
-  const shown = people.slice(0, 5);
-  const label = `${people.length} here: ${people.map((p) => p.name).join(", ")}`;
-  return (
-    <TooltipTrigger delay={200}>
-      <Button aria-label={label} className="flex min-h-11 items-center gap-2 px-1">
-        <span className="isolate flex">
-          {shown.map((p, i) => (
-            <span
-              key={p.id}
-              aria-hidden="true"
-              className={`overprint flex size-9 items-center justify-center rounded-stamp font-display text-sm text-ink ${i % 2 ? "bg-blue-tint" : "bg-pink-tint"}`}
-              style={{ marginLeft: i ? -10 : 0 }}
-            >
-              {initials(p.name)}
-            </span>
-          ))}
-        </span>
-        <span className="text-sm font-semibold">{status === "open" ? `${people.length} here` : "Connecting…"}</span>
-      </Button>
-      <Tooltip className="max-w-xs border-[2.5px] border-ink bg-paper px-3 py-2 text-sm">{people.map((p) => p.name).join(", ") || "Nobody else yet"}</Tooltip>
-    </TooltipTrigger>
-  );
-}
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
-}
 
 const arriving: Record<Stage, string> = {
   reflect: "",
@@ -191,11 +81,15 @@ export function Settings({ onClose }: { onClose: () => void }) {
     <Sheet isOpen onOpenChange={(o) => !o && onClose()} title="Retro settings" wide>
       <form
         className="flex flex-col gap-4"
+        aria-labelledby="settings-retro"
         onSubmit={(e) => {
           e.preventDefault();
           save();
         }}
       >
+        <h3 id="settings-retro" className="text-xl font-bold">
+          This retro
+        </h3>
         <TextField value={title} onChange={setTitle} isRequired className="flex flex-col gap-1">
           <Label className="font-bold">Title</Label>
           <Input className={input} />
@@ -240,8 +134,8 @@ function ColumnSettings() {
   const { board, run } = useBoard();
   const [title, setTitle] = useState("");
   return (
-    <section className="flex flex-col gap-3 border-t-[2.5px] border-ink pt-5">
-      <h3 className="font-display text-2xl">Columns</h3>
+    <section className="flex flex-col gap-3 border-t-[1.5px] border-line pt-5">
+      <h3 className="text-xl font-bold">Columns</h3>
       <ul className="flex flex-col gap-2">
         {board.retro.columns.map((c) => (
           <ColumnRow key={c.id} id={c.id} title={c.title} description={c.description} canRemove={board.retro.columns.length > 2} />
@@ -271,25 +165,19 @@ function ColumnRow({ id, title, description, canRemove }: { id: string; title: s
   const { run } = useBoard();
   const [t, setT] = useState(title);
   const [d, setD] = useState(description);
-  const changed = t !== title || d !== description;
+  const save = () => {
+    if (t !== title || d !== description) run("column.update", { id, title: t, description: d });
+  };
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && e.currentTarget.blur();
   return (
-    <li className="flex flex-wrap items-center gap-2 bg-blue-tint p-2">
+    <li className="flex flex-wrap items-center gap-2 border-b-[1.5px] border-line pb-2">
       <TextField aria-label="Column title" value={t} onChange={setT} className="min-w-0 flex-[1_1_10rem]">
-        <Input className={`${input} min-h-11 text-base`} />
+        <Input onBlur={save} onKeyDown={onKeyDown} className={`${input} min-h-11 text-base`} />
       </TextField>
       <TextField aria-label="Column prompt" value={d} onChange={setD} className="min-w-0 flex-[2_1_14rem]">
-        <Input className={`${input} min-h-11 text-base`} placeholder="Prompt" />
+        <Input onBlur={save} onKeyDown={onKeyDown} className={`${input} min-h-11 text-base`} placeholder="Prompt" />
       </TextField>
-      {changed && (
-        <Button onPress={() => run("column.update", { id, title: t, description: d })} className={button.line}>
-          Save
-        </Button>
-      )}
-      {canRemove && (
-        <Button onPress={() => run("column.delete", { id })} className={button.quiet}>
-          Remove
-        </Button>
-      )}
+      {canRemove && <IconButton icon="trash" label={`Remove ${title || "this column"}`} onPress={() => run("column.delete", { id })} />}
     </li>
   );
 }

@@ -140,7 +140,10 @@ multiply into a third colour. Keep it for that; don't spend it on decoration.
 - Avoid the generated look: no gradients, glow, glass, emoji as icons, purple
   as a brand colour, coloured side-stripes on cards, pulsing dots, one big
   radius everywhere, or rows of identical cards. Icons are inline stroke SVG.
-- Phone first, 44px touch targets, 4.5:1 text contrast in both themes.
+- Desktop only. Thoughts is used on a laptop in a meeting. Do not design,
+  build, test or verify for phones or touch, and do not spend time on a
+  phone layout. The one requirement at narrow widths is that the page does
+  not break. 4.5:1 text contrast in both themes.
 - The common actions have a key (stages, new action, done, timer); the
   rest are a click or ⌘K away. Add a key only when people will reach for it
   many times a retro.

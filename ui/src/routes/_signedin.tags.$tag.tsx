@@ -21,7 +21,7 @@ function TagPage() {
   const [teaming, setTeaming] = useState(false);
 
   return (
-    <main className="flex flex-col gap-8">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Link to="/" className="font-semibold text-ink-soft hover:underline">
@@ -40,7 +40,7 @@ function TagPage() {
       </div>
 
       <section className="flex flex-col gap-3 bg-pink-tint p-5" aria-labelledby="open-actions">
-        <h2 id="open-actions" className="font-display text-3xl">
+        <h2 id="open-actions" className="text-2xl font-bold">
           Still to do
         </h2>
         {data.openActions.length === 0 ? (
@@ -48,7 +48,7 @@ function TagPage() {
         ) : (
           <ul className="flex flex-col">
             {data.openActions.map((a) => (
-              <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-x-4 border-b-[2px] border-ink py-2">
+              <li key={a.id} className="flex flex-wrap items-baseline justify-between gap-x-4 border-b-[1.5px] border-line py-2">
                 <span className="font-semibold">{a.what}</span>
                 <span className="text-sm">
                   {[a.who, a.dueOn && `by ${formatDueOn(a.dueOn)}`].filter(Boolean).join(", ")}

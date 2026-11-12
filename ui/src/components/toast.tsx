@@ -26,11 +26,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <Ctx.Provider value={show}>
       {children}
-      <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4">
+      <div role="status" aria-live="polite" className="pointer-events-none fixed inset-x-0 bottom-0 z-50 flex flex-col items-center gap-2 p-4 [body:has([data-dock])_&]:bottom-20">
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto flex max-w-md items-center gap-4 border-[2.5px] border-ink px-4 py-3 font-semibold ${t.tone === "problem" ? "bg-alert" : "bg-paper"}`}
+            className={`pointer-events-auto flex max-w-md items-center gap-4 border-[1.5px] border-ink px-4 py-3 font-semibold ${t.tone === "problem" ? "bg-alert" : "bg-paper"}`}
           >
             <span>{t.message}</span>
             {t.action && (

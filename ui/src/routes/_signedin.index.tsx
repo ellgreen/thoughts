@@ -21,7 +21,7 @@ function Home() {
   useShortcut({ id: "new-retro", keys: "c", label: "Start a new retro", section: "Anywhere", run: () => setCreating(true) });
 
   return (
-    <main className="flex flex-col gap-6">
+    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <h1 className="font-display text-5xl leading-none">Retros</h1>
         <Button onPress={() => setCreating(true)} className={button.solid}>
@@ -29,7 +29,6 @@ function Home() {
         </Button>
       </div>
       <Teams />
-      <h2 className="font-display text-3xl">Recent retros</h2>
       {retros.length === 0 ? (
         <p className="max-w-[48ch] text-lg">Nothing here yet. Start a retro, then send its link to your team. They sign in and land straight in it.</p>
       ) : (

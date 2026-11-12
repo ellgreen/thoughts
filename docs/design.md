@@ -68,3 +68,47 @@ italic serif display, cream grounds.
   https://peopleofprint.com/best-of/pop-member-showcase-21-riso-prints/
 - Dot voting background: https://en.wikipedia.org/wiki/Dot-voting and
   https://guides.18f.gov/methods/discover/dot-voting
+
+## 2026-11-12: the calm board
+
+The zine stays; there is less chrome around it. Worked through in
+`ui-plan.md`, measured against the board as it was: four stacked header
+rows, a text button on every note and group, display type on a dozen kinds
+of heading.
+
+**Bar and dock.** Chrome is one bar at the top and one dock at the bottom.
+The bar holds what the room shares: the retro's title, the stages with the
+next one as the single solid button, the timer, who is here and the retro
+menu. The dock holds what is yours: whether you are done, the votes you
+have left, and whatever the stage adds (moving a note, one at a time,
+follow the room). Everything between them is thoughts.
+
+**The line token.** `--color-line` is ink at 18%, for hairlines between
+rows and under column titles. The 2.5px ink rule is kept for the bar's
+edge, focused inputs, outline buttons and sheets. Lists separate with
+space and a `line` hairline rather than tinted rows.
+
+**Type budget.** Bagel Fat One is for the wordmark, one title per screen,
+column titles, numerals (rank and timer) and sheet titles. Group titles,
+team names, initials and labels are Familjen Grotesk bold.
+
+**The pink offset.** A solid button's hover is a 3px pink block offset
+down and to the right, and pressing moves the button onto it. It is a
+misregistered second ink, a hard edge with no blur, not a shadow; a picked
+up note gets the same block. Retro titles in lists do the same with their
+letters.
+
+**Motion.** Motion explains a change someone else made and never delays
+input. Notes and piles glide to where a frame puts them; new notes print
+in from the top; at the reveal the halftone dots develop into flat ink;
+a band carries the new stage name across under the bar; votes land as
+stamps. Everything goes through `motion/react` under `reducedMotion="user"`,
+and a board over 120 notes swaps without moving.
+
+**Desktop only.** Thoughts is used on a laptop in a meeting. Phones are out
+of scope: the "phone first" line in the first entry no longer holds.
+Narrow windows only have to not break.
+
+Informed by: the measurements in `ui-plan.md`, print vocabulary (registration,
+halftone, rubber stamps, the roller pass) and how the board read with four
+people at once in the seeded retros.

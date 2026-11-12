@@ -15,16 +15,19 @@ small Docker image with SQLite inside, so there's nothing else to run.
 ## What it does
 
 - **Reflect, group, vote, discuss.** Notes stay hidden, author and all,
-  until everyone moves on. Then they're grouped by dragging, or by keyboard,
-  and voted on with votes that stack like dot stickers. Discussion takes the
-  groups in order of votes.
+  until everyone moves on. Then they're grouped by dragging, by picking one
+  up and putting it down, or by keyboard, and voted on with votes that stack
+  like dot stickers. Discussion takes the groups in order of votes. One bar
+  at the top holds what the room shares; a dock at the bottom holds what's
+  yours.
 - **Actions that don't get lost.** A team's next retro opens with what the
   last one left unfinished: tick it off, carry it over or drop it.
 - **Run the room together.** A shared timer, an "I'm done" count, and a
   spotlight that brings everyone to the group being discussed. There's no
   host: anyone can do anything.
-- **Keys for the common things.** `[` `]` between stages, `a` for an
-  action, `t` for the timer. `?` lists them, `⌘K` finds anything else.
+- **Keys for the common things.** `n` to write, `[` `]` between stages,
+  `d` when you're done, `a` for an action, `t` for the timer. `?` lists
+  them, `⌘K` finds anything else.
 - **Sign in your way.** With just a name (the default, as in v1), your
   directory over LDAP with no service account, or any OpenID Connect
   provider.
@@ -37,7 +40,7 @@ small Docker image with SQLite inside, so there's nothing else to run.
 | | |
 |---|---|
 | ![Discussing, with the most-voted group in the spotlight](docs/screenshots/discuss.png) | ![The same retro in dark mode](docs/screenshots/discuss-dark.png) |
-| ![Reflecting: other people's notes are hidden](docs/screenshots/reflect.png) | ![On a phone](docs/screenshots/phone.png) |
+| ![Reflecting: other people's notes are hidden](docs/screenshots/reflect.png) | ![Voting: each vote lands as a stamp, and the dock counts what's left](docs/screenshots/vote.png) |
 
 ## Run it
 
