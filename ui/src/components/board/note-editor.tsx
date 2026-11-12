@@ -7,23 +7,20 @@ import { api } from "@/lib/api";
 import type { Note } from "@/lib/retro";
 import { useBoard } from "./context";
 
-type Props = { note: Note | null; columnId?: string; onClose: () => void };
+type Props = { note: Note; onClose: () => void };
 
-export function NoteEditor({ note, columnId, onClose }: Props) {
-  const { board } = useBoard();
-  const column = board.retro.columns.find((c) => c.id === columnId);
-  const title = note ? "Edit your thought" : `Add to ${column?.title ?? "the board"}`;
+export function NoteEditor({ note, onClose }: Props) {
   return (
-    <Sheet isOpen onOpenChange={(o) => !o && onClose()} title={title}>
-      <EditorForm note={note} columnId={columnId} onClose={onClose} />
+    <Sheet isOpen onOpenChange={(o) => !o && onClose()} title="Edit your thought">
+      <EditorForm note={note} onClose={onClose} />
     </Sheet>
   );
 }
 
-function EditorForm({ note, columnId, onClose }: Props) {
+function EditorForm({ note, onClose }: Props) {
   const { board, send, gifSearch } = useBoard();
-  const [content, setContent] = useState(note?.content ?? "");
-  const [imgUrl, setImgUrl] = useState(note?.imgUrl ?? "");
+  const [content, setContent] = useState(note.content ?? "");
+  const [imgUrl, setImgUrl] = useState(note.imgUrl ?? "");
   const [picking, setPicking] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
   const reflecting = board.retro.stage === "reflect";
@@ -32,11 +29,7 @@ function EditorForm({ note, columnId, onClose }: Props) {
     e?.preventDefault();
     setProblem(null);
     try {
-      if (note) {
-        await send("note.edit", { id: note.id, content, imgUrl });
-      } else {
-        await send("note.add", { columnId, content });
-      }
+      await send("note.edit", { id: note.id, content, imgUrl });
       onClose();
     } catch (err) {
       setProblem(err instanceof Error ? err.message : String(err));
@@ -63,25 +56,23 @@ function EditorForm({ note, columnId, onClose }: Props) {
         {reflecting ? "Nobody else can read this until everyone moves on to grouping. " : ""}Enter saves, Shift+Enter starts a new line.
       </p>
 
-      {note && (
-        <div className="flex flex-col gap-3">
-          {imgUrl && (
-            <div className="flex items-start gap-3">
-              <img src={imgUrl} alt="" className="max-h-40 max-w-[60%] object-cover" referrerPolicy="no-referrer" />
-              <Button onPress={() => setImgUrl("")} className={button.quiet}>
-                Remove image
-              </Button>
-            </div>
-          )}
-          {picking ? (
-            <ImagePicker gifSearch={gifSearch} onPick={(url) => (setImgUrl(url), setPicking(false))} onCancel={() => setPicking(false)} />
-          ) : (
-            <Button onPress={() => setPicking(true)} className={`${button.line} self-start`}>
-              {imgUrl ? "Change the image" : "Add an image"}
+      <div className="flex flex-col gap-3">
+        {imgUrl && (
+          <div className="flex items-start gap-3">
+            <img src={imgUrl} alt="" className="max-h-40 max-w-[60%] object-cover" referrerPolicy="no-referrer" />
+            <Button onPress={() => setImgUrl("")} className={button.quiet}>
+              Remove image
             </Button>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+        {picking ? (
+          <ImagePicker gifSearch={gifSearch} onPick={(url) => (setImgUrl(url), setPicking(false))} onCancel={() => setPicking(false)} />
+        ) : (
+          <Button onPress={() => setPicking(true)} className={`${button.line} self-start`}>
+            {imgUrl ? "Change the image" : "Add an image"}
+          </Button>
+        )}
+      </div>
 
       {problem && (
         <p role="alert" className="bg-alert px-3 py-2 font-semibold">

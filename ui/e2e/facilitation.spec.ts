@@ -75,9 +75,9 @@ test("timer, ready check and spotlight reach everyone", async ({ browser }) => {
   await sam.keyboard.press("d");
   await expect(priya.getByText("1 of 2 done")).toBeVisible();
 
-  await priya.getByRole("button", { name: "Add a thought" }).first().click();
-  await priya.getByLabel("Note", { exact: true }).fill("Deploys were calm");
+  await priya.getByRole("textbox", { name: /^Add a thought to/ }).first().fill("Deploys were calm");
   await priya.keyboard.press("Enter");
+  await priya.keyboard.press("Escape");
   await expect(priya.getByTestId("note-content")).toHaveText("Deploys were calm");
   await nextStage(priya, "Group");
   await expect(priya.getByText("0 of 2 done")).toBeVisible();
@@ -97,9 +97,9 @@ test("one at a time steps through groups with the arrow keys", async ({ browser 
   const priya = await signedIn(browser, "Priya");
   await newRetro(priya, "Stepping");
   for (const text of ["Deploys were calm", "Flaky checkout test"]) {
-    await priya.getByRole("button", { name: "Add a thought" }).first().click();
-    await priya.getByLabel("Note", { exact: true }).fill(text);
+    await priya.getByRole("textbox", { name: /^Add a thought to/ }).first().fill(text);
     await priya.keyboard.press("Enter");
+    await priya.keyboard.press("Escape");
     await expect(priya.getByRole("dialog")).toHaveCount(0);
   }
   for (const stage of ["Group", "Vote", "Discuss"]) await nextStage(priya, stage);

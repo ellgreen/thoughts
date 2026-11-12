@@ -17,7 +17,7 @@ import { LastTime } from "./facilitation";
 export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me: string; gifSearch: boolean; ai: boolean }) {
   const { board, people, status, send } = useRetroSocket(retroId);
   const toast = useToast();
-  const [editing, setEditing] = useState<{ note: Note | null; columnId?: string } | null>(null);
+  const [editing, setEditing] = useState<Note | null>(null);
   const [moving, setMoving] = useState<Note | null>(null);
   const [stageTo, setStageTo] = useState<Stage | null>(null);
   const [settings, setSettings] = useState(false);
@@ -47,7 +47,7 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
         ai,
         send,
         run,
-        editNote: (note, columnId) => setEditing({ note, columnId }),
+        editNote: setEditing,
         moveNote: setMoving,
         dragging,
         setDragging,
@@ -77,7 +77,7 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
         </div>
       </div>
       <Dock onSlot={setDockSlot} />
-      {editing && <NoteEditor note={editing.note} columnId={editing.columnId} onClose={() => setEditing(null)} />}
+      {editing && <NoteEditor note={editing} onClose={() => setEditing(null)} />}
       {moving && <MovePicker note={moving} onClose={() => setMoving(null)} />}
       {stageTo && <StageConfirm to={stageTo} onClose={() => setStageTo(null)} />}
       {settings && <Settings onClose={() => setSettings(false)} />}

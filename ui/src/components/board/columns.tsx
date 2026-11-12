@@ -1,6 +1,8 @@
 import { useRef, useState, type CSSProperties } from "react";
 import { Button, Input, isTextDropItem, TextField, useDrop, type DropItem } from "react-aria-components";
 import type { Column, Group } from "@/lib/retro";
+import { useShortcut } from "@/keys/keys";
+import { Composer, focusComposer } from "./composer";
 import { NOTE_TYPE, noteById, useBoard } from "./context";
 import { HiddenNote, inkFor, NoteCard, type Ink } from "./note";
 
@@ -12,20 +14,24 @@ async function droppedNoteId(items: DropItem[]) {
 export function Columns() {
   const { board } = useBoard();
   const n = board.retro.columns.length;
+  const lastUsed = useRef(0);
+  const writing = board.retro.stage === "reflect" || board.retro.stage === "group";
+  useShortcut({ id: "write", keys: "n", label: "Write a thought", section: "Retro", run: () => focusComposer(Math.min(lastUsed.current, n - 1)) }, writing);
+  const written = board.groups.some((g) => g.notes.some((x) => x.mine));
   return (
     <div
       className="grid snap-x snap-mandatory auto-cols-[minmax(16rem,82vw)] grid-flow-col gap-6 overflow-x-auto pb-4 sm:auto-cols-[minmax(17rem,1fr)] lg:grid-flow-row lg:grid-cols-[repeat(var(--columns),minmax(0,1fr))] lg:overflow-visible"
       style={{ "--columns": n } as CSSProperties}
     >
       {board.retro.columns.map((c, i) => (
-        <ColumnView key={c.id} column={c} index={i} groups={board.groups.filter((g) => g.columnId === c.id)} />
+        <ColumnView key={c.id} column={c} index={i} groups={board.groups.filter((g) => g.columnId === c.id)} first={!written} onUsed={(used) => (lastUsed.current = used)} />
       ))}
     </div>
   );
 }
 
-function ColumnView({ column, index, groups }: { column: Column; index: number; groups: Group[] }) {
-  const { board, editNote, run, dragging } = useBoard();
+function ColumnView({ column, index, groups, first, onUsed }: { column: Column; index: number; groups: Group[]; first: boolean; onUsed: (index: number) => void }) {
+  const { board, run, dragging } = useBoard();
   const stage = board.retro.stage;
   const ink = inkFor(index);
   const ref = useRef<HTMLDivElement>(null);
@@ -40,7 +46,7 @@ function ColumnView({ column, index, groups }: { column: Column; index: number; 
     },
   });
 
-  const mine = groups.flatMap((g) => g.notes.filter((n) => n.mine));
+  const mine = groups.flatMap((g) => g.notes.filter((n) => n.mine)).reverse();
   const hidden = groups.flatMap((g) => g.notes.filter((n) => n.hidden));
 
   return (
@@ -53,6 +59,8 @@ function ColumnView({ column, index, groups }: { column: Column; index: number; 
         </div>
         {column.description && <p className="text-ink-soft">{column.description}</p>}
       </header>
+
+      {(stage === "reflect" || stage === "group") && <Composer column={column} index={index} first={first} onUsed={onUsed} />}
 
       <div ref={ref} {...dropProps} className={`flex min-h-24 flex-col gap-4 ${isDropTarget ? "outline-3 outline-offset-4 outline-pink outline-dashed" : ""}`}>
         {stage === "reflect" ? (
@@ -76,16 +84,7 @@ function ColumnView({ column, index, groups }: { column: Column; index: number; 
         )}
       </div>
 
-      {dragging && stage === "group" ? (
-        <LooseDrop columnId={column.id} />
-      ) : (stage === "reflect" || stage === "group") && (
-        <Button
-          onPress={() => editNote(null, column.id)}
-          className="flex min-h-12 items-center justify-center gap-2 border-[1.5px] border-dashed border-ink-soft font-bold hover:bg-blue-tint"
-        >
-          Add a thought
-        </Button>
-      )}
+      {dragging && stage === "group" && <LooseDrop columnId={column.id} />}
     </section>
   );
 }

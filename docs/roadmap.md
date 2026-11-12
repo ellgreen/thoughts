@@ -79,7 +79,7 @@ Each line is a phase in `ui-plan.md`; read that phase before starting it.
 - [x] Theme switch: system, light, dark
 - [x] Quieter foundations: rule weights, type budget, icon buttons, account menu
 - [x] The bar and the dock in place of the stacked board header
-- [ ] Inline composer and in-place editing; `n` to write
+- [x] Inline composer and in-place editing; `n` to write
 - [ ] Pick up and put down to group; stamp slots to vote
 - [ ] Discussion: unvoted groups, spotlight icon, one-line actions
 - [ ] Home, team pages, new retro and settings

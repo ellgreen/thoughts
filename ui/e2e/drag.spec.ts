@@ -28,9 +28,9 @@ test("notes drag into a group and back out", async ({ page }) => {
   await page.goto(`/retros/${id}`);
   await expect(page.getByRole("heading", { level: 1, name: "Dragging" })).toBeVisible();
   for (const text of ["Flaky checkout test", "CI reruns"]) {
-    await page.getByRole("button", { name: "Add a thought" }).first().click();
-    await page.getByLabel("Note", { exact: true }).fill(text);
+    await page.getByRole("textbox", { name: /^Add a thought to/ }).first().fill(text);
     await page.keyboard.press("Enter");
+    await page.keyboard.press("Escape");
     await expect(page.getByRole("dialog")).toHaveCount(0);
   }
   await page.keyboard.press("]");

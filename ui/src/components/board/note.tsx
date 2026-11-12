@@ -1,8 +1,9 @@
-import { useRef } from "react";
+import { useRef, useState, type KeyboardEvent } from "react";
 import { Button, Menu, MenuItem, useDrag } from "react-aria-components";
 import { Item, QuickMenu } from "@/components/menu";
 import { reactions, type Note } from "@/lib/retro";
 import { useToast } from "@/components/toast";
+import { field, useGrow } from "./composer";
 import { NOTE_TYPE, noteById, useBoard } from "./context";
 
 export type Ink = "pink" | "blue";
@@ -40,18 +41,19 @@ type Props = {
 
 export function NoteCard({ note, ink, draggable, showAuthor, canReact, stacked, ungroupTo }: Props) {
   const { board, editNote, moveNote, run, setDragging } = useBoard();
+  const [editing, setEditing] = useState(false);
   const toast = useToast();
   const ref = useRef<HTMLElement>(null);
   const { dragProps, isDragging } = useDrag({
     getItems: () => [{ [NOTE_TYPE]: note.id, "text/plain": note.content ?? "" }],
     getAllowedDropOperations: () => ["move"],
-    isDisabled: !draggable,
+    isDisabled: !draggable || editing,
     onDragStart: () => setDragging(note.id),
     onDragEnd: () => setDragging(null),
   });
   // Only the pointer half of useDrag: its keyboard drag starts on Enter,
   // which fights the board's shortcuts. Keyboard users move notes with M.
-  const pointerDrag = draggable
+  const pointerDrag = draggable && !editing
     ? { draggable: dragProps.draggable, onDragStart: dragProps.onDragStart, onDrag: dragProps.onDrag, onDragEnd: dragProps.onDragEnd }
     : {};
   const stage = board.retro.stage;
@@ -72,18 +74,22 @@ export function NoteCard({ note, ink, draggable, showAuthor, canReact, stacked, 
       {...pointerDrag}
       className={`group/note relative flex flex-col gap-2 p-4 text-[17px] leading-snug font-medium outline-offset-2 ${tint[ink]} ${stacked ? "overprint" : ""} ${isDragging ? "opacity-40" : ""} ${draggable ? "cursor-grab" : ""}`}
     >
-      {note.content && <p data-testid="note-content" className="break-words whitespace-pre-wrap">{note.content}</p>}
+      {editing ? (
+        <EditField note={note} onDone={() => setEditing(false)} />
+      ) : (
+        note.content && <p data-testid="note-content" className="break-words whitespace-pre-wrap">{note.content}</p>
+      )}
       {note.imgUrl && <img src={note.imgUrl} alt="" className="max-h-56 w-full object-cover" loading="lazy" referrerPolicy="no-referrer" />}
       {(showAuthor && note.author) || editable || canReact ? (
         <div className="flex min-h-8 flex-wrap items-center gap-x-3 gap-y-1">
-          {showAuthor && note.author && <span className="text-sm font-bold">{note.mine ? "You" : note.author.name}</span>}
+          {showAuthor && note.author && <span className={`text-[13px] ${note.mine ? "font-bold" : "font-semibold"}`}>{note.mine ? "You" : note.author.name}</span>}
           {canReact && <Reactions note={note} />}
           {(editable || (stage === "group" && draggable)) && (
             <QuickMenu
               placement="bottom end"
               className="min-w-48"
               trigger={
-                <Button aria-label="Note options" className="ml-auto inline-flex size-9 items-center justify-center hover:bg-paper/60">
+                <Button aria-label="Note options" className="ml-auto inline-flex size-9 items-center justify-center opacity-40 hover:bg-paper/60 focus-visible:opacity-100! aria-expanded:opacity-100! pointer-fine:opacity-0 group-focus-within/note:opacity-100! group-hover/note:opacity-100!">
                   <svg viewBox="0 0 20 20" className="size-5 fill-current" aria-hidden="true">
                     <circle cx="4" cy="10" r="1.8" />
                     <circle cx="10" cy="10" r="1.8" />
@@ -95,14 +101,16 @@ export function NoteCard({ note, ink, draggable, showAuthor, canReact, stacked, 
                 <Menu
                   className="flex flex-col outline-none"
                   onAction={(key) => {
-                    if (key === "edit") editNote(note);
+                    if (key === "edit") setEditing(true);
+                    if (key === "image") editNote(note);
                     if (key === "move") moveNote(note);
                     if (key === "ungroup") run("note.move", { id: note.id, columnId: ungroupTo });
                     if (key === "unimage") run("note.edit", { id: note.id, imgUrl: "" });
                     if (key === "delete") remove();
                   }}
                 >
-                  {editable && <Item id="edit" label={note.imgUrl ? "Edit" : "Edit or add an image"} />}
+                  {editable && <Item id="edit" label="Edit" />}
+                  {editable && <Item id="image" label={note.imgUrl ? "Change the image" : "Add an image"} />}
                   <Item id="move" label="Move to…" />
                   {stage === "group" && ungroupTo && <Item id="ungroup" label="Take out of this group" />}
                   {editable && note.imgUrl && <Item id="unimage" label="Remove the image" />}
@@ -113,6 +121,47 @@ export function NoteCard({ note, ink, draggable, showAuthor, canReact, stacked, 
         </div>
       ) : null}
     </article>
+  );
+}
+
+function EditField({ note, onDone }: { note: Note; onDone: () => void }) {
+  const { run } = useBoard();
+  const [text, setText] = useState(note.content ?? "");
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useGrow(ref);
+  const cancelled = useRef(false);
+
+  async function save() {
+    if (cancelled.current) return;
+    const content = text.trim();
+    if (!content || content === note.content) return onDone();
+    if (await run("note.edit", { id: note.id, content })) onDone();
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
+      e.preventDefault();
+      save();
+    } else if (e.key === "Escape") {
+      cancelled.current = true;
+      onDone();
+    }
+  }
+
+  return (
+    <textarea
+      ref={ref}
+      autoFocus
+      rows={1}
+      maxLength={500}
+      value={text}
+      aria-label="Edit your thought"
+      onChange={(e) => setText(e.target.value)}
+      onKeyDown={onKeyDown}
+      onBlur={save}
+      onFocus={(e) => e.currentTarget.setSelectionRange(text.length, text.length)}
+      className={`${field} bg-paper/60 pr-2`}
+    />
   );
 }
 

@@ -34,9 +34,9 @@ for (const { name, colorScheme, chosen } of looks) {
     const { id } = await res.json();
     await page.goto(`/retros/${id}`);
     await expect(page.getByRole("heading", { level: 1, name: "Sprint 41" })).toBeVisible();
-    await page.getByRole("button", { name: "Add a thought" }).first().click();
-    await page.getByLabel("Note", { exact: true }).fill("Pairing worked");
+    await page.getByRole("textbox", { name: /^Add a thought to/ }).first().fill("Pairing worked");
     await page.keyboard.press("Enter");
+    await page.keyboard.press("Escape");
     await expect(page.getByTestId("note-content")).toBeVisible();
     await noViolations(page, "reflect");
 

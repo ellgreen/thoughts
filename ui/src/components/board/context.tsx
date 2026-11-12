@@ -11,7 +11,7 @@ export type BoardApi = {
   // run sends a command and reports a failure as a toast, for actions that
   // have nowhere better to show a problem.
   run: (name: string, args?: unknown) => Promise<boolean>;
-  editNote: (note: Note | null, columnId?: string) => void;
+  editNote: (note: Note) => void;
   moveNote: (note: Note) => void;
   // dragging is the note being dragged right now, so drop zones can show.
   dragging: string | null;
