@@ -45,7 +45,7 @@ function ColumnView({ column, index, groups }: { column: Column; index: number; 
 
   return (
     <section data-column-id={column.id} data-column-index={index} className="flex min-w-0 snap-start flex-col gap-4" aria-labelledby={`col-${column.id}`}>
-      <header className="flex flex-col gap-1 border-b-[2.5px] border-ink pb-2">
+      <header className="flex flex-col gap-1 border-b-[1.5px] border-line pb-2">
         <div className="flex items-baseline justify-between gap-2">
           <h2 id={`col-${column.id}`} className="font-display text-2xl leading-tight xl:text-3xl">
             {column.title}
@@ -81,7 +81,7 @@ function ColumnView({ column, index, groups }: { column: Column; index: number; 
       ) : (stage === "reflect" || stage === "group") && (
         <Button
           onPress={() => editNote(null, column.id)}
-          className="flex min-h-12 items-center justify-center gap-2 border-[2.5px] border-dashed border-ink font-bold hover:bg-blue-tint"
+          className="flex min-h-12 items-center justify-center gap-2 border-[1.5px] border-dashed border-ink-soft font-bold hover:bg-blue-tint"
         >
           Add a thought
         </Button>
@@ -186,13 +186,13 @@ function GroupTitle({ group }: { group: Group }) {
         }}
       >
         <TextField aria-label="Group name" value={draft} onChange={setDraft} autoFocus onKeyDown={(e) => e.key === "Escape" && setEditing(false)}>
-          <Input onBlur={() => setEditing(false)} className="w-full border-b-[2.5px] border-ink bg-transparent font-display text-xl outline-none" />
+          <Input onBlur={() => setEditing(false)} className="w-full border-b-[2.5px] border-ink bg-transparent text-xl font-bold outline-none" />
         </TextField>
       </form>
     );
   }
   if (!canName) {
-    return group.title ? <h3 className="mb-2 font-display text-xl leading-tight">{group.title}</h3> : null;
+    return group.title ? <h3 className="mb-2 text-xl leading-tight font-bold">{group.title}</h3> : null;
   }
   return (
     <Button
@@ -200,7 +200,7 @@ function GroupTitle({ group }: { group: Group }) {
         setDraft(group.title);
         setEditing(true);
       }}
-      className="mb-2 self-start text-left font-display text-xl leading-tight hover:underline"
+      className="mb-2 self-start text-left text-xl leading-tight font-bold hover:underline"
     >
       {group.title || <span className="font-sans text-base font-semibold text-ink-soft">Name this group</span>}
     </Button>

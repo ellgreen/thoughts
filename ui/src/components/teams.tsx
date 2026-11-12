@@ -14,7 +14,7 @@ export function Teams() {
   return (
     <section aria-labelledby="teams" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id="teams" className="font-display text-3xl">
+        <h2 id="teams" className="text-xl font-bold">
           Teams
         </h2>
         <Button onPress={() => setCreating(true)} className={button.quiet}>
@@ -30,7 +30,7 @@ export function Teams() {
           {teams.map((t) => (
             <li key={t.id}>
               <Link to="/t/$slug" params={{ slug: t.slug }} className="flex min-h-12 flex-col justify-center bg-blue-tint px-4 py-2 hover:bg-pink-tint">
-                <span className="font-display text-xl leading-tight">{t.name}</span>
+                <span className="text-lg leading-tight font-bold">{t.name}</span>
                 <span className="text-sm">
                   {t.retros} {t.retros === 1 ? "retro" : "retros"}
                   {t.openActions > 0 && `, ${t.openActions} still to do`}

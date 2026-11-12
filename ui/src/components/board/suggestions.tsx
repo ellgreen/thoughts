@@ -97,9 +97,9 @@ function SuggestionCard({ suggestion: s }: { suggestion: Suggestion }) {
         : s.items.map((x) => ({ title: x.what, detail: x.groupId && `From “${groupLabel(x.groupId)}”` }));
 
   return (
-    <article className="flex flex-col gap-3 border-[2.5px] border-ink bg-paper p-4" aria-label={heading}>
+    <article className="flex flex-col gap-3 border-[1.5px] border-line bg-paper p-4" aria-label={heading}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="font-display text-2xl leading-tight">{heading}</h2>
+        <h2 className="text-xl leading-tight font-bold">{heading}</h2>
         <span className="text-sm text-ink-soft">Everyone can see this. Nothing changes until someone applies it.</span>
       </div>
       <ul className="flex flex-col divide-y divide-ink/20">
@@ -139,7 +139,7 @@ export function RecapBlock() {
   if (!board.retro.recap) return null;
   return (
     <section aria-labelledby="recap-heading" className="max-w-[70ch] bg-blue-tint p-5">
-      <h2 id="recap-heading" className="font-display text-2xl">
+      <h2 id="recap-heading" className="text-xl font-bold">
         Recap
       </h2>
       <p className="mt-2 text-lg leading-relaxed">{board.retro.recap}</p>

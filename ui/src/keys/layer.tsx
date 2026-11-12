@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Autocomplete, Input, ListBox, ListBoxItem, ListBoxSection, Header, SearchField, useFilter } from "react-aria-components";
 import { Sheet } from "@/components/dialog";
+import { input } from "@/components/ui";
 import { retrosQuery } from "@/lib/retro";
 import { setTheme } from "@/lib/theme";
 import { isMac, Kbd, useShortcut, useShortcuts, type Shortcut } from "./keys";
@@ -41,10 +42,10 @@ function ShortcutHelp({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange:
       <div className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
         {grouped(list.filter((s) => s.keys)).map(([section, items]) => (
           <section key={section}>
-            <h3 className="mb-2 font-display text-xl">{section}</h3>
+            <h3 className="mb-2 font-bold">{section}</h3>
             <dl className="flex flex-col">
               {items.map((s) => (
-                <div key={s.id} className="flex items-center justify-between gap-4 border-b-[1.5px] border-blue-tint py-1.5">
+                <div key={s.id} className="flex items-center justify-between gap-4 border-b-[1.5px] border-line py-1.5">
                   <dt>{s.label}</dt>
                   <dd className="flex gap-1">
                     {s.keys.split(" ").map((k) => (
@@ -83,7 +84,7 @@ function Palette({ onClose }: { onClose: () => void }) {
     <Sheet isOpen onOpenChange={(o) => !o && onClose()} title="Do something">
       <Autocomplete filter={contains}>
         <SearchField aria-label="Search commands and retros" autoFocus onKeyDown={(e) => e.key === "Escape" && onClose()} className="flex">
-          <Input placeholder="Type to search" className="min-h-12 w-full border-[2.5px] border-ink bg-paper px-3 text-lg outline-none" />
+          <Input placeholder="Type to search" className={`${input} outline-none`} />
         </SearchField>
         <ListBox
           aria-label="Commands"
@@ -97,7 +98,7 @@ function Palette({ onClose }: { onClose: () => void }) {
         >
           {[...sections.entries()].map(([section, items]) => (
             <ListBoxSection key={section} id={section}>
-              <Header className="pt-3 pb-1 font-display text-lg">{section}</Header>
+              <Header className="pt-3 pb-1 text-sm font-bold text-ink-soft">{section}</Header>
               {items.map((c) => (
                 <ListBoxItem
                   key={c.id}

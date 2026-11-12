@@ -130,7 +130,7 @@ function Actions() {
 
   return (
     <aside className="flex min-w-[min(100%,18rem)] flex-[1_1_22rem] flex-col gap-4 bg-pink-tint p-5 lg:sticky lg:top-4" aria-labelledby="actions-heading">
-      <h2 id="actions-heading" className="font-display text-3xl leading-tight">
+      <h2 id="actions-heading" className="text-2xl leading-tight font-bold">
         What we'll do
       </h2>
       {board.actions.length === 0 && !adding && <p>No actions yet. Add one for anything someone's going to do about what you've discussed.</p>}
@@ -141,7 +141,7 @@ function Actions() {
               <ActionForm action={a} onDone={() => setEditing(null)} />
             </li>
           ) : (
-            <li key={a.id} className="flex items-start gap-3 border-b-[2px] border-ink py-3">
+            <li key={a.id} className="flex items-start gap-3 border-b-[1.5px] border-line py-3">
               <Checkbox
                 isSelected={a.done}
                 onChange={(checked) => run("action.done", { id: a.id, done: checked })}
@@ -189,7 +189,7 @@ function ActionForm({ action, onDone }: { action?: Action; onDone: () => void })
   }
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-3 border-[2.5px] border-ink bg-paper p-3">
+    <form onSubmit={submit} className="flex flex-col gap-3 border-[1.5px] border-ink bg-paper p-3">
       <TextField value={what} onChange={setWhat} isRequired autoFocus className="flex flex-col gap-1">
         <Label className="font-bold">What's going to happen?</Label>
         <Input className={input} />

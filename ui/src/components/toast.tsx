@@ -30,7 +30,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto flex max-w-md items-center gap-4 border-[2.5px] border-ink px-4 py-3 font-semibold ${t.tone === "problem" ? "bg-alert" : "bg-paper"}`}
+            className={`pointer-events-auto flex max-w-md items-center gap-4 border-[1.5px] border-ink px-4 py-3 font-semibold ${t.tone === "problem" ? "bg-alert" : "bg-paper"}`}
           >
             <span>{t.message}</span>
             {t.action && (

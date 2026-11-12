@@ -12,6 +12,7 @@
   --color-pink-tint: oklch(0.86 0.1 355);
   --color-blue-tint: oklch(0.85 0.06 250);
   --color-alert: oklch(0.93 0.06 355);
+  --color-line: color-mix(in oklch, var(--color-ink) 18%, transparent);
   --color-scrim: oklch(0.15 0.04 262 / 0.5);
   --color-transparent: transparent;
 

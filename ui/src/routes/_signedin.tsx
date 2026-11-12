@@ -1,10 +1,8 @@
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
-import { Button } from "react-aria-components";
 import { Wordmark } from "@/components/brand";
+import { AccountMenu } from "@/components/account-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { button } from "@/components/ui";
-import { Kbd } from "@/keys/keys";
 import { KeyboardLayer } from "@/keys/layer";
 import { meQuery, signOut } from "@/lib/session";
 
@@ -29,20 +27,14 @@ function SignedIn() {
   }
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-8 px-4 py-5 sm:px-6">
+    <div className="flex min-h-dvh flex-col gap-8 px-4 py-5 sm:px-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <Link to="/" aria-label="thoughts, home">
           <Wordmark />
         </Link>
-        <div className="flex items-center gap-2">
-          <span className="hidden items-center gap-1.5 text-sm text-ink-soft sm:flex">
-            <Kbd keys="?" /> shortcuts
-          </span>
+        <div className="flex items-center gap-1">
           <ThemeToggle />
-          <span className="font-semibold">{me?.user.name}</span>
-          <Button onPress={leave} className={button.quiet}>
-            Sign out
-          </Button>
+          <AccountMenu name={me?.user.name ?? ""} onSignOut={leave} />
         </div>
       </header>
       <Outlet />

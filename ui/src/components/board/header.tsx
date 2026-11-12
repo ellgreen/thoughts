@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button, Checkbox, Input, Label, TextField, Tooltip, TooltipTrigger } from "react-aria-components";
 import { Sheet } from "@/components/dialog";
-import { button, input } from "@/components/ui";
+import { button, initials, input } from "@/components/ui";
 import { Kbd } from "@/keys/keys";
 import type { Status } from "@/lib/socket";
 import { cleanTag, stages, type Stage } from "@/lib/retro";
@@ -98,7 +98,7 @@ function Presence({ status }: { status: Status }) {
             <span
               key={p.id}
               aria-hidden="true"
-              className={`overprint flex size-9 items-center justify-center rounded-stamp font-display text-sm text-ink ${i % 2 ? "bg-blue-tint" : "bg-pink-tint"}`}
+              className={`overprint flex size-9 items-center justify-center rounded-stamp text-sm font-bold text-ink ${i % 2 ? "bg-blue-tint" : "bg-pink-tint"}`}
               style={{ marginLeft: i ? -10 : 0 }}
             >
               {initials(p.name)}
@@ -107,14 +107,9 @@ function Presence({ status }: { status: Status }) {
         </span>
         <span className="text-sm font-semibold">{status === "open" ? `${people.length} here` : "Connecting…"}</span>
       </Button>
-      <Tooltip className="max-w-xs border-[2.5px] border-ink bg-paper px-3 py-2 text-sm">{people.map((p) => p.name).join(", ") || "Nobody else yet"}</Tooltip>
+      <Tooltip className="max-w-xs border-[1.5px] border-ink bg-paper px-3 py-2 text-sm">{people.map((p) => p.name).join(", ") || "Nobody else yet"}</Tooltip>
     </TooltipTrigger>
   );
-}
-
-function initials(name: string) {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase();
 }
 
 const arriving: Record<Stage, string> = {
@@ -240,8 +235,8 @@ function ColumnSettings() {
   const { board, run } = useBoard();
   const [title, setTitle] = useState("");
   return (
-    <section className="flex flex-col gap-3 border-t-[2.5px] border-ink pt-5">
-      <h3 className="font-display text-2xl">Columns</h3>
+    <section className="flex flex-col gap-3 border-t-[1.5px] border-line pt-5">
+      <h3 className="text-xl font-bold">Columns</h3>
       <ul className="flex flex-col gap-2">
         {board.retro.columns.map((c) => (
           <ColumnRow key={c.id} id={c.id} title={c.title} description={c.description} canRemove={board.retro.columns.length > 2} />

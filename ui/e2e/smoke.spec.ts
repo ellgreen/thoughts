@@ -21,8 +21,9 @@ test("signed out, any page asks for a name and comes back after", async ({ page 
   await page.getByLabel("Your name").fill("Priya");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByRole("heading", { name: "Retros", exact: true })).toBeVisible();
-  await expect(page.getByText("Priya")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Account: Priya" })).toBeVisible();
 
+  await page.getByRole("button", { name: /^Account/ }).click();
   await page.getByRole("button", { name: "Sign out" }).click();
   await expect(page).toHaveURL(/\/login$/);
 });

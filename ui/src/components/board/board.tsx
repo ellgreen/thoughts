@@ -63,9 +63,9 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
 
   return (
     <BoardContext.Provider value={api}>
-      <div className="flex flex-col gap-8">
+      <div className="mx-auto flex w-full max-w-[110rem] flex-col gap-8">
         <BoardHeader status={status} onSettings={() => setSettings(true)} onStage={setStageTo} />
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y-[2.5px] border-ink py-2">
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 border-y-[1.5px] border-line py-2">
           <ReadyCheck />
           <Timer />
         </div>

@@ -236,7 +236,7 @@ function ThemeColumns({ onColumns }: { onColumns: (cols: { title: string; descri
   }
 
   return (
-    <div className="flex flex-col gap-2 border-[2.5px] border-dashed border-ink p-3">
+    <div className="flex flex-col gap-2 border-[1.5px] border-dashed border-ink-soft p-3">
       <TextField value={theme} onChange={setTheme} className="flex flex-col gap-1">
         <Label className="font-semibold">Or make columns for a theme</Label>
         <div className="flex flex-wrap gap-2">

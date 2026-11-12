@@ -119,7 +119,7 @@ function ImagePicker({ gifSearch, onPick, onCancel }: { gifSearch: boolean; onPi
   const linkOK = /^https:\/\/\S+$/.test(link.trim());
 
   return (
-    <div className="flex flex-col gap-4 border-[2.5px] border-ink p-3">
+    <div className="flex flex-col gap-4 border-[1.5px] border-line p-3">
       {gifSearch && (
         <>
           <SearchField value={q} onChange={setQ} aria-label="Search GIFs" className="flex">

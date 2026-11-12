@@ -6,9 +6,9 @@ const dateFormat = new Intl.DateTimeFormat(undefined, { day: "numeric", month: "
 
 export function RetroList({ retros }: { retros: RetroSummary[] }) {
   return (
-    <ol className="flex flex-col border-t-[2.5px] border-ink">
+    <ol className="flex flex-col border-t-[1.5px] border-line">
       {retros.map((r) => (
-        <li key={r.id} className="border-b-[2.5px] border-ink">
+        <li key={r.id} className="border-b-[1.5px] border-line">
           <Link
             to="/retros/$retroId"
             params={{ retroId: r.id }}
@@ -18,7 +18,7 @@ export function RetroList({ retros }: { retros: RetroSummary[] }) {
             <span className="text-right font-semibold sm:text-left">{stages.find((s) => s.id === r.stage)?.label}</span>
             <span className="text-ink-soft">
               {r.notes} {r.notes === 1 ? "thought" : "thoughts"}
-              {r.actions > 0 && `, ${r.actionsDone} of ${r.actions} actions done`}
+              {r.actions > 0 && `, ${r.actionsDone} of ${r.actions} ${r.actions === 1 ? "action" : "actions"} done`}
             </span>
             <span className="text-ink-soft sm:text-right">{dateFormat.format(new Date(r.createdAt))}</span>
             {r.tags.length > 0 && (

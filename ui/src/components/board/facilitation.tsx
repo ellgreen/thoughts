@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Button, Menu, MenuItem, MenuTrigger, Popover, ToggleButton } from "react-aria-components";
+import { popover } from "@/components/menu";
 import { button } from "@/components/ui";
 import { Kbd, useShortcut } from "@/keys/keys";
 import { formatDueOn } from "@/lib/retro";
@@ -98,7 +99,7 @@ export function Timer() {
         <span
           role="timer"
           aria-live={done ? "assertive" : "off"}
-          className={`min-w-[4ch] font-display text-3xl leading-none tabular-nums ${done ? "text-pink" : ""}`}
+          className={`min-w-[4ch] font-display text-3xl leading-none tabular-nums`}
         >
           {done ? "Time's up" : format(remaining)}
         </span>
@@ -108,7 +109,7 @@ export function Timer() {
           <Button className={button.quiet}>
             {done ? "Start again" : "Timer"} <Kbd keys="t" />
           </Button>
-          <Popover className="border-[2.5px] border-ink bg-paper">
+          <Popover className={popover}>
             <Menu aria-label="Timer length" className="flex flex-col outline-none" onAction={(k) => run("timer.start", { seconds: Number(k) * 60 })}>
               {presets.map((m) => (
                 <MenuItem key={m} id={String(m)} className="flex min-h-11 cursor-default items-center px-4 font-semibold outline-none data-focused:bg-blue-tint">
@@ -170,16 +171,16 @@ export function LastTime() {
   const { board, run } = useBoard();
   if (board.lastTime.length === 0) return null;
   return (
-    <section aria-labelledby="last-time" className="flex flex-col gap-2 border-[2.5px] border-ink p-4">
+    <section aria-labelledby="last-time" className="flex flex-col gap-2 border-[1.5px] border-line p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="last-time" className="font-display text-2xl leading-tight">
+        <h2 id="last-time" className="text-xl leading-tight font-bold">
           From last time
         </h2>
         <span className="text-sm text-ink-soft">Still open from earlier {board.team?.name} retros. Settle each one.</span>
       </div>
       <ul className="flex flex-col">
         {board.lastTime.map((a) => (
-          <li key={a.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t-[1.5px] border-blue-tint py-2">
+          <li key={a.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t-[1.5px] border-line py-2">
             <span className="min-w-0 flex-[1_1_16rem]">
               <span className="font-semibold">{a.what}</span>
               <span className="block text-sm text-ink-soft">{[a.who, a.dueOn && `by ${formatDueOn(a.dueOn)}`, `from ${a.retroTitle}`].filter(Boolean).join(" · ")}</span>
