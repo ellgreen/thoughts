@@ -1,6 +1,7 @@
 import { useState, type KeyboardEvent } from "react";
 import { Button, Checkbox, Input, Label, TextField } from "react-aria-components";
 import { Sheet } from "@/components/dialog";
+import { IconButton } from "@/components/icon-button";
 import { button, input } from "@/components/ui";
 import { cleanTag, stages, type Stage } from "@/lib/retro";
 import { TeamPicker } from "@/components/team-picker";
@@ -169,18 +170,14 @@ function ColumnRow({ id, title, description, canRemove }: { id: string; title: s
   };
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && e.currentTarget.blur();
   return (
-    <li className="flex flex-wrap items-center gap-2 bg-blue-tint p-2">
+    <li className="flex flex-wrap items-center gap-2 border-b-[1.5px] border-line pb-2">
       <TextField aria-label="Column title" value={t} onChange={setT} className="min-w-0 flex-[1_1_10rem]">
         <Input onBlur={save} onKeyDown={onKeyDown} className={`${input} min-h-11 text-base`} />
       </TextField>
       <TextField aria-label="Column prompt" value={d} onChange={setD} className="min-w-0 flex-[2_1_14rem]">
         <Input onBlur={save} onKeyDown={onKeyDown} className={`${input} min-h-11 text-base`} placeholder="Prompt" />
       </TextField>
-      {canRemove && (
-        <Button onPress={() => run("column.delete", { id })} className={button.quiet}>
-          Remove
-        </Button>
-      )}
+      {canRemove && <IconButton icon="trash" label={`Remove ${title || "this column"}`} onPress={() => run("column.delete", { id })} />}
     </li>
   );
 }

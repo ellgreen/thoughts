@@ -1,7 +1,7 @@
 # Roadmap
 
 Each milestone is usable on its own. A milestone is done when `task check` is
-green and it has been looked at on a phone and a desktop.
+green and it has been looked at on a desktop. Phones are out of scope.
 
 ## M0: Direction
 
@@ -83,7 +83,7 @@ Each line is a phase in `ui-plan.md`; read that phase before starting it.
 - [x] Pick up and put down to group; stamp slots to vote
 - [x] Discussion: unvoted groups, spotlight icon, one-line actions
 - [x] Home, team pages, new retro and settings
-- [ ] Motion: gliding notes, the reveal, the stage band, stamps
+- [x] Motion: gliding notes, the reveal, the stage band, stamps
 - [ ] Instant sends for notes, votes, ready and reactions (optional)
 - [ ] Screenshots regenerated and a `design.md` entry
 

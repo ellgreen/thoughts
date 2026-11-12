@@ -1,9 +1,12 @@
 import { useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { Button, Menu, MenuItem, useDrag } from "react-aria-components";
+import { motion, useIsPresent, useReducedMotionConfig, type Variants } from "motion/react";
+import { enter, move, printed, printIn, quick } from "@/components/motion";
 import { Item, QuickMenu } from "@/components/menu";
 import { reactions, type Note } from "@/lib/retro";
 import { useToast } from "@/components/toast";
 import { field, useGrow } from "./composer";
+import { useChanges } from "./changes";
 import { CONTROLS, NOTE_TYPE, noteById, useBoard } from "./context";
 
 export type Ink = "pink" | "blue";
@@ -11,18 +14,62 @@ export const inkFor = (columnIndex: number): Ink => (columnIndex % 2 === 0 ? "pi
 
 const tint = { pink: "bg-pink-tint", blue: "bg-blue-tint" };
 const halftone = { pink: "var(--color-pink)", blue: "var(--color-blue)" };
+const dots = (ink: Ink) => `radial-gradient(${halftone[ink]} 28%, transparent 31%)`;
 
-export function HiddenNote({ size = 1, ink }: { size?: number; ink: Ink }) {
+// A moved note's old copy stays until its new one has travelled into place;
+// it must not be found, read or pressed meanwhile.
+export function useLeaving() {
+  const present = useIsPresent();
+  return present ? {} : { inert: true, "aria-hidden": true };
+}
+
+// The variant runs once the element has left the board, with the newest
+// board's answer passed through AnimatePresence's custom: deleted things
+// fade, moved things go at once because they reappear somewhere else.
+export const exitFor = (id: string): Variants => ({
+  gone: (gone: (id: string) => boolean) => (gone(id) ? { opacity: 0, scale: 0.96, transition: quick } : { opacity: 0, transition: { duration: 0 } }),
+});
+
+export function useArrival(id: string) {
+  const { fresh } = useChanges();
+  const [arrived] = useState(() => fresh.has(id));
+  return { initial: arrived ? printIn : false, animate: arrived ? printed : undefined } as const;
+}
+
+export function HiddenNote({ id, size = 1, ink }: { id: string; size?: number; ink: Ink }) {
+  const arrival = useArrival(id);
+  const leaving = useLeaving();
   return (
-    <div
+    <motion.div
+      {...leaving}
+      layout="position"
+      layoutId={id}
+      {...arrival}
+      exit="gone"
+      variants={exitFor(id)}
+      transition={{ default: move, clipPath: enter }}
       role="img"
       aria-label="Someone's thought, hidden until grouping"
       className="w-full opacity-60"
       style={{
         height: 28 + size * 22,
-        backgroundImage: `radial-gradient(${halftone[ink]} 28%, transparent 31%)`,
+        backgroundImage: dots(ink),
         backgroundSize: "9px 9px",
       }}
+    />
+  );
+}
+
+function Develop({ ink, delay }: { ink: Ink; delay: number }) {
+  if (useReducedMotionConfig()) return null;
+  return (
+    <motion.span
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0"
+      style={{ backgroundImage: dots(ink) }}
+      initial={{ backgroundSize: "9px 9px", opacity: 0.6 }}
+      animate={{ backgroundSize: "3px 3px", opacity: 0 }}
+      transition={{ duration: 0.26, delay }}
     />
   );
 }
@@ -77,17 +124,32 @@ export function NoteCard({ note, ink, draggable, showAuthor, canReact, stacked, 
     toast("Note deleted", { action: undo });
   }
 
+  const develop = useChanges().reveal?.get(note.id);
+  const arrival = useArrival(note.id);
+  const leaving = useLeaving();
+
   return (
-    // The press is on the card rather than a button inside it: Firefox won't
-    // start a drag from a button. "Move to…" in the menu is the keyboard way.
-    // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
+    <motion.div
+      {...leaving}
+      layout="position"
+      layoutId={note.id}
+      initial={arrival.initial}
+      animate={{ ...arrival.animate, rotate: isPicked ? 2 : 0, y: isPicked ? -4 : 0 }}
+      exit="gone"
+      variants={exitFor(note.id)}
+      transition={{ default: move, clipPath: enter }}
+      className={isPicked ? "relative z-10" : undefined}
+    >
+    {/* The press is on the card rather than a button inside it: Firefox won't
+    start a drag from a button. "Move to…" in the menu is the keyboard way. */}
+    {/* oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions */}
     <article
       ref={ref}
-      data-note-id={note.id}
+      data-note-id={leaving.inert ? undefined : note.id}
       aria-label={`${note.content ?? ""}${showAuthor && note.author ? `, by ${note.author.name}` : ""}`}
       {...pointerDrag}
       onClick={pick}
-      className={`group/note relative flex flex-col gap-2 p-4 text-[17px] leading-snug font-medium outline-offset-2 ${tint[ink]} ${stacked ? "overprint" : ""} ${isDragging ? "opacity-40" : ""} ${draggable ? "cursor-grab transition-[rotate,translate,box-shadow] duration-150" : ""} ${isPicked ? "z-10 -translate-y-1 rotate-2 shadow-[4px_4px_0_var(--color-pink)]" : ""}`}
+      className={`group/note relative flex flex-col gap-2 p-4 text-[17px] leading-snug font-medium outline-offset-2 ${tint[ink]} ${stacked ? "overprint" : ""} ${isDragging ? "opacity-40" : ""} ${draggable ? "cursor-grab transition-shadow duration-150" : ""} ${isPicked ? "shadow-[4px_4px_0_var(--color-pink)]" : ""}`}
     >
       {editing ? (
         <EditField note={note} onDone={() => setEditing(false)} />
@@ -135,7 +197,9 @@ export function NoteCard({ note, ink, draggable, showAuthor, canReact, stacked, 
           )}
         </div>
       ) : null}
+      {develop !== undefined && <Develop ink={ink} delay={develop} />}
     </article>
+    </motion.div>
   );
 }
 

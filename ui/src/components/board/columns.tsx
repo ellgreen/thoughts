@@ -1,13 +1,16 @@
-import { useRef, useState, type CSSProperties } from "react";
+import { Fragment, useEffect, useRef, useState, type CSSProperties } from "react";
+import { AnimatePresence, motion, useAnimate } from "motion/react";
+import { quick, thud } from "@/components/motion";
 import { Button, Input, isTextDropItem, TextField, useDrop, type DropItem } from "react-aria-components";
 import type { Column, Group } from "@/lib/retro";
 import { useShortcut } from "@/keys/keys";
 import { Composer, focusComposer } from "./composer";
 import { Icon } from "@/components/icons";
 import { button } from "@/components/ui";
+import { useChanges } from "./changes";
 import { NOTE_TYPE, noteById, useBoard } from "./context";
 import { DockSlot } from "./dock";
-import { HiddenNote, inkFor, NoteCard, type Ink } from "./note";
+import { exitFor, HiddenNote, inkFor, NoteCard, useLeaving, type Ink } from "./note";
 
 async function droppedNoteId(items: DropItem[]) {
   const item = items.find((i) => isTextDropItem(i) && i.types.has(NOTE_TYPE));
@@ -61,6 +64,7 @@ function ColumnView({ column, index, groups, first, onUsed }: { column: Column; 
 
   const mine = groups.flatMap((g) => g.notes.filter((n) => n.mine)).reverse();
   const hidden = groups.flatMap((g) => g.notes.filter((n) => n.hidden));
+  const { gone } = useChanges();
 
   return (
     <section data-column-id={column.id} data-column-index={index} className="flex min-w-0 snap-start flex-col gap-4" aria-labelledby={`col-${column.id}`}>
@@ -77,29 +81,43 @@ function ColumnView({ column, index, groups, first, onUsed }: { column: Column; 
 
       <div ref={ref} {...dropProps} className={`flex min-h-24 flex-col gap-4 ${isDropTarget ? "outline-3 outline-offset-4 outline-pink outline-dashed" : ""}`}>
         {stage === "reflect" ? (
-          <>
-            {mine.map((n) => (
-              <NoteCard key={n.id} note={n} ink={ink} draggable showAuthor={false} canReact={false} />
-            ))}
+          <Fragment key="reflect">
+            <AnimatePresence initial={false} custom={gone}>
+              {mine.map((n) => (
+                <NoteCard key={n.id} note={n} ink={ink} draggable showAuthor={false} canReact={false} />
+              ))}
+            </AnimatePresence>
             {hidden.length > 0 && (
               <div className="grid grid-cols-2 gap-3" aria-label={`${hidden.length} hidden ${hidden.length === 1 ? "thought" : "thoughts"} from others`}>
-                {hidden.map((n) => (
-                  <HiddenNote key={n.id} size={n.size} ink={ink} />
-                ))}
+                <AnimatePresence initial={false} custom={gone}>
+                  {hidden.map((n) => (
+                    <HiddenNote key={n.id} id={n.id} size={n.size} ink={ink} />
+                  ))}
+                </AnimatePresence>
               </div>
             )}
             {mine.length === 0 && hidden.length === 0 && <p className="text-ink-soft">Nothing yet.</p>}
-          </>
+          </Fragment>
         ) : groups.length === 0 ? (
           <p className="text-ink-soft">Nothing came up here.</p>
         ) : (
-          groups.map((g) => <Pile key={g.id} group={g} ink={ink} />)
+          <AnimatePresence key="piles" initial={false} custom={gone}>
+            {groups.map((g) => (
+              <Pile key={g.id} group={g} ink={ink} />
+            ))}
+          </AnimatePresence>
         )}
       </div>
 
       {(dragging || picked) && stage === "group" && <LooseDrop columnId={column.id} />}
     </section>
   );
+}
+
+// motion claims these names for its own gestures and animations.
+function forMotion<T extends object>(props: T) {
+  const { onDragStart: _a, onDrag: _b, onDragEnd: _c, onAnimationStart: _d, onAnimationEnd: _e, ...rest } = props as T & Record<string, unknown>;
+  return rest;
 }
 
 export function Pile({ group, ink }: { group: Group; ink: Ink }) {
@@ -121,16 +139,28 @@ export function Pile({ group, ink }: { group: Group; ink: Ink }) {
   });
   const many = group.notes.length > 1;
   const target = !!picked && !group.notes.some((n) => n.id === picked);
+  const [notes, dip] = useAnimate<HTMLDivElement>();
+  const leaving = useLeaving();
+  const votes = useRef(group.myVotes);
+  useEffect(() => {
+    if (group.myVotes > votes.current) dip(notes.current, { y: [0, 1, 0] }, { duration: 0.16 });
+    votes.current = group.myVotes;
+  }, [group.myVotes, dip, notes]);
 
   return (
-    <div
+    <motion.div
       ref={ref}
-      {...dropProps}
-      data-group-id={group.id}
-      className={`isolate flex flex-col ${isDropTarget ? "outline-3 outline-offset-4 outline-pink" : target ? "cursor-pointer outline-2 outline-offset-4 outline-pink outline-dashed" : ""}`}
+      {...forMotion(dropProps)}
+      {...leaving}
+      layout="position"
+      layoutId={group.id}
+      exit="gone"
+      variants={exitFor(group.id)}
+      data-group-id={leaving.inert ? undefined : group.id}
+      className={`isolate flex flex-col outline-offset-4 transition-[outline-color] duration-[120ms] ease-out ${isDropTarget ? "outline-3 outline-pink" : target ? "cursor-pointer outline-2 outline-pink outline-dashed" : "outline-2 outline-transparent outline-dashed"}`}
     >
       {(many || group.title) && <GroupTitle group={group} />}
-      <div className="flex flex-col">
+      <div ref={notes} className="flex flex-col">
         {group.notes.map((n, i) => (
           <div key={n.id} style={i > 0 ? { marginTop: -20, marginLeft: i % 2 ? 16 : 6, marginRight: i % 2 ? 0 : 10 } : { marginRight: many ? 16 : 0 }}>
             <NoteCard
@@ -146,7 +176,7 @@ export function Pile({ group, ink }: { group: Group; ink: Ink }) {
         ))}
       </div>
       {stage === "vote" && <VoteControls group={group} />}
-    </div>
+    </motion.div>
   );
 }
 
@@ -156,11 +186,15 @@ function VoteControls({ group }: { group: Group }) {
   const name = (group.title || group.notes[0]?.content || "this group").slice(0, 60);
   return (
     <div className="mt-2 flex items-center justify-end gap-1">
-      {group.myVotes > 0 && (
-        <Button onPress={() => run("vote.cast", { groupId: group.id, delta: -1 })} aria-label={`Take back a vote from ${name}, ${group.myVotes} cast`} className="flex min-h-11 items-center px-1 hover:opacity-60">
-          <Stamps count={group.myVotes} />
-        </Button>
-      )}
+      <AnimatePresence initial={false}>
+        {group.myVotes > 0 && (
+          <motion.span key="cast" exit={{ opacity: 0, scale: 1.2, transition: quick }} className="flex">
+            <Button onPress={() => run("vote.cast", { groupId: group.id, delta: -1 })} aria-label={`Take back a vote from ${name}, ${group.myVotes} cast`} className="flex min-h-11 items-center px-1 hover:opacity-60">
+              <Stamps count={group.myVotes} />
+            </Button>
+          </motion.span>
+        )}
+      </AnimatePresence>
       <Button
         onPress={() => run("vote.cast", { groupId: group.id, delta: 1 })}
         isDisabled={left === 0}
@@ -173,13 +207,26 @@ function VoteControls({ group }: { group: Group }) {
   );
 }
 
-export function Stamps({ count, label, size = 30 }: { count: number; label?: string; size?: number }) {
+const tilt = (i: number) => ((i * 7 + 5) % 25) - 12;
+
+// land is a delay in seconds: the stamps already there land too, after it.
+export function Stamps({ count, label, size = 30, land }: { count: number; label?: string; size?: number; land?: number }) {
   if (count === 0) return null;
   return (
     <span role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true} className="isolate ml-auto flex flex-wrap">
-      {Array.from({ length: count }, (_, i) => (
-        <span key={i} className="overprint rounded-stamp bg-pink" style={{ width: size, height: size, marginLeft: i ? -size / 2.5 : 0 }} />
-      ))}
+      <AnimatePresence initial={land !== undefined}>
+        {Array.from({ length: count }, (_, i) => (
+          <motion.span
+            key={i}
+            initial={{ scale: 1.5, rotate: tilt(i), opacity: 0 }}
+            animate={{ scale: 1, rotate: 0, opacity: 1 }}
+            exit={{ scale: 1.2, opacity: 0, transition: quick }}
+            transition={{ ...thud, delay: land, opacity: { duration: 0.06, delay: land } }}
+            className="overprint rounded-stamp bg-pink"
+            style={{ width: size, height: size, marginLeft: i ? -size / 2.5 : 0 }}
+          />
+        ))}
+      </AnimatePresence>
     </span>
   );
 }

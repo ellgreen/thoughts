@@ -72,6 +72,7 @@ test("timer, ready check and spotlight reach everyone", async ({ browser }) => {
   await sam.getByRole("button", { name: "Timer", exact: true }).click();
   await expect(sam.getByRole("menuitem", { name: /^Resume/ })).toBeVisible();
   await sam.keyboard.press("Escape");
+  await expect(sam.getByRole("menu")).toHaveCount(0);
 
   await sam.keyboard.press("d");
   await expect(priya.getByText("1 of 2 done")).toBeVisible();

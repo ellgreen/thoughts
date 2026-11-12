@@ -1,15 +1,19 @@
+import { useState } from "react";
 import { Link } from "@tanstack/react-router";
+import { AnimatePresence, motion } from "motion/react";
 import { Button, Menu, MenuItem, MenuTrigger, Popover, Tooltip, TooltipTrigger, type Key } from "react-aria-components";
 import { useSignOut } from "@/components/account-menu";
 import { Mark } from "@/components/brand";
 import { IconButton } from "@/components/icon-button";
 import { Icon } from "@/components/icons";
+import { move, pass, thud } from "@/components/motion";
 import { popover } from "@/components/menu";
 import { button, initials } from "@/components/ui";
 import { Kbd, useShortcuts } from "@/keys/keys";
 import { stages, type Stage } from "@/lib/retro";
 import type { Status } from "@/lib/socket";
 import { setTheme, useShowing } from "@/lib/theme";
+import { useChanges, type StageChange } from "./changes";
 import { useBoard } from "./context";
 import { Timer } from "./timer";
 
@@ -30,7 +34,9 @@ export function Bar({ status, onSettings, onStage }: Props) {
           <Mark size={30} />
         </Link>
         <div className="flex min-w-0 flex-col">
-          <h1 className="truncate font-display text-2xl leading-tight">{r.title}</h1>
+          <h1 className="truncate font-display text-2xl leading-tight" style={{ viewTransitionName: `retro-${r.id}` }}>
+            {r.title}
+          </h1>
           {(r.tags.length > 0 || board.team) && (
             <p className="hidden gap-x-2 truncate text-[13px] leading-tight font-semibold text-ink-soft lg:flex">
               {board.team && (
@@ -65,7 +71,42 @@ export function Bar({ status, onSettings, onStage }: Props) {
         <Presence status={status} />
         <More onSettings={onSettings} />
       </div>
+      <StageBand />
     </header>
+  );
+}
+
+const label = (id: string) => stages.find((s) => s.id === id)?.label ?? id;
+
+function StageBand() {
+  const change = useChanges().stage;
+  return (
+    <>
+      <span className="sr-only" aria-live="polite">
+        {change ? `${label(change.to)} stage` : ""}
+      </span>
+      <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-full overflow-hidden">
+        {change && <Band key={change.n} change={change} />}
+      </div>
+    </>
+  );
+}
+
+function Band({ change }: { change: StageChange }) {
+  const [done, setDone] = useState(() => document.hidden);
+  if (done) return null;
+  const back = stages.findIndex((s) => s.id === change.to) < stages.findIndex((s) => s.id === change.from);
+  const [from, to] = back ? ["100%", "-100%"] : ["-100%", "100%"];
+  return (
+    <motion.div
+      initial={{ x: from }}
+      animate={{ x: [from, "0%", "0%", to] }}
+      transition={{ duration: pass, times: [0, 0.25 / pass, 0.45 / pass, 1], ease: "easeInOut" }}
+      onAnimationComplete={() => setDone(true)}
+      className="bg-ink py-2 text-center font-display text-3xl text-paper"
+    >
+      {label(change.to)}
+    </motion.div>
   );
 }
 
@@ -120,16 +161,33 @@ function Presence({ status }: { status: Status }) {
     <TooltipTrigger delay={200}>
       <Button aria-label={`${people.length} here: ${names(people)}`} className="flex min-h-11 items-center gap-2 px-1">
         <span className="flex max-sm:hidden" aria-hidden="true">
-          {people.slice(0, 5).map((p, i) => (
-            <span
-              key={p.id}
-              className={`relative flex size-8 items-center justify-center rounded-stamp text-xs font-bold text-ink ring-2 ring-paper ${i % 2 ? "bg-blue-tint" : "bg-pink-tint"}`}
-              style={{ marginLeft: i ? -8 : 0 }}
-            >
-              {initials(p.name)}
-              {checking && ready.has(p.id) && <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-stamp bg-pink ring-2 ring-paper" />}
-            </span>
-          ))}
+          <AnimatePresence initial={false}>
+            {people.slice(0, 5).map((p, i) => (
+              <motion.span
+                key={p.id}
+                layout="position"
+                initial={{ x: 12, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={move}
+                className={`relative flex size-8 items-center justify-center rounded-stamp text-xs font-bold text-ink ring-2 ring-paper ${i % 2 ? "bg-blue-tint" : "bg-pink-tint"}`}
+                style={{ marginLeft: i ? -8 : 0 }}
+              >
+                {initials(p.name)}
+                <AnimatePresence initial={false}>
+                  {checking && ready.has(p.id) && (
+                    <motion.span
+                      initial={{ scale: 1.5 }}
+                      animate={{ scale: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={thud}
+                      className="absolute -right-0.5 -bottom-0.5 size-3 rounded-stamp bg-pink ring-2 ring-paper"
+                    />
+                  )}
+                </AnimatePresence>
+              </motion.span>
+            ))}
+          </AnimatePresence>
         </span>
         <Icon name="people" className="size-5 sm:hidden" />
         <span className="text-sm font-semibold whitespace-nowrap">

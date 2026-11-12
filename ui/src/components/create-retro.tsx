@@ -8,6 +8,7 @@ import { Thinking } from "@/components/thinking";
 import { messageOf } from "@/lib/api";
 import { cleanTag, createRetro, tagsQuery, templates, themedTemplate } from "@/lib/retro";
 import { meQuery } from "@/lib/session";
+import { IconButton } from "@/components/icon-button";
 import { TeamPicker } from "./team-picker";
 
 const summary = "min-h-11 cursor-pointer py-2.5 font-bold underline-offset-4 hover:underline";
@@ -121,98 +122,97 @@ function Form({ close, tag, teamId: initialTeam }: { close: () => void; tag?: st
         <summary className={summary}>
           Change the columns <span className="font-normal text-ink-soft">({columns.length} of 5)</span>
         </summary>
-      <fieldset className="mt-3 flex flex-col gap-3">
-        <legend className="sr-only">Columns</legend>
-        <ol className="flex flex-col gap-3">
-          {columns.map((c, i) => (
-            <li key={c.key} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 bg-blue-tint p-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]">
-              <TextField aria-label={`Column ${i + 1} title`} value={c.title} onChange={(v) => edit(c.key, { title: v })} isRequired className="col-start-1 row-start-1">
-                <Input className={`${input} min-h-11 text-base`} />
-              </TextField>
-              <TextField
-                aria-label={`Column ${i + 1} prompt`}
-                value={c.description}
-                onChange={(v) => edit(c.key, { description: v })}
-                className="col-span-2 col-start-1 row-start-2 sm:col-span-1 sm:col-start-2 sm:row-start-1"
-              >
-                <Input className={`${input} min-h-11 text-base`} placeholder="A question to prompt people" />
-              </TextField>
-              <Button
-                aria-label={`Remove column ${i + 1}`}
-                isDisabled={columns.length <= 2}
-                onPress={() => {
-                  setTemplate(-1);
-                  setColumns(columns.filter((x) => x.key !== c.key));
-                }}
-                className={`${button.quiet} col-start-2 row-start-1 sm:col-start-3`}
-              >
-                Remove
-              </Button>
-            </li>
-          ))}
-        </ol>
-        {columns.length < 5 && (
-          <Button
-            onPress={() => {
-              setTemplate(-1);
-              setColumns([...columns, { key: ++nextKey, title: "", description: "" }]);
-            }}
-            className={`${button.line} self-start`}
-          >
-            Add a column
-          </Button>
-        )}
-      </fieldset>
+        <fieldset className="mt-3 flex flex-col gap-3">
+          <legend className="sr-only">Columns</legend>
+          <ol className="flex flex-col gap-3">
+            {columns.map((c, i) => (
+              <li key={c.key} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 border-b-[1.5px] border-line pb-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]">
+                <TextField aria-label={`Column ${i + 1} title`} value={c.title} onChange={(v) => edit(c.key, { title: v })} isRequired className="col-start-1 row-start-1">
+                  <Input className={`${input} min-h-11 text-base`} />
+                </TextField>
+                <TextField
+                  aria-label={`Column ${i + 1} prompt`}
+                  value={c.description}
+                  onChange={(v) => edit(c.key, { description: v })}
+                  className="col-span-2 col-start-1 row-start-2 sm:col-span-1 sm:col-start-2 sm:row-start-1"
+                >
+                  <Input className={`${input} min-h-11 text-base`} placeholder="A question to prompt people" />
+                </TextField>
+                <IconButton
+                  icon="trash"
+                  label={`Remove column ${i + 1}`}
+                  isDisabled={columns.length <= 2}
+                  onPress={() => {
+                    setTemplate(-1);
+                    setColumns(columns.filter((x) => x.key !== c.key));
+                  }}
+                  className="col-start-2 row-start-1 sm:col-start-3"
+                />
+              </li>
+            ))}
+          </ol>
+          {columns.length < 5 && (
+            <Button
+              onPress={() => {
+                setTemplate(-1);
+                setColumns([...columns, { key: ++nextKey, title: "", description: "" }]);
+              }}
+              className={`${button.line} self-start`}
+            >
+              Add a column
+            </Button>
+          )}
+        </fieldset>
       </details>
 
       <details>
         <summary className={summary}>Team, tags and visibility</summary>
         <div className="mt-3 flex flex-col gap-6">
-      <TeamPicker value={teamId} onChange={setTeamId} />
+          <TeamPicker value={teamId} onChange={setTeamId} />
 
-      <div className="flex flex-col gap-2">
-        <TextField value={tagDraft} onChange={setTagDraft} className="flex flex-col gap-2">
-          <Label className="font-bold">
-            Tags <span className="font-normal text-ink-soft">(a team or project, so you can find it later)</span>
-          </Label>
-          <Input
-            className={input}
-            placeholder="platform-team"
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === ",") {
-                e.preventDefault();
-                addTag(tagDraft);
-              } else if (e.key === "Backspace" && !tagDraft && tags.length) {
-                setTags(tags.slice(0, -1));
-              }
-            }}
-          />
-        </TextField>
-        <div className="flex flex-wrap gap-2">
-          {tags.map((t) => (
-            <Button key={t} onPress={() => setTags(tags.filter((x) => x !== t))} aria-label={`Remove tag ${t}`} className="min-h-9 bg-pink-tint px-3 text-sm font-semibold">
-              #{t} <span aria-hidden="true">×</span>
-            </Button>
-          ))}
-          {tagDraft &&
-            suggestions.map((t) => (
-              <Button key={t} onPress={() => addTag(t)} className="min-h-9 border-[1.5px] border-ink px-3 text-sm">
-                Add #{t}
-              </Button>
-            ))}
-        </div>
-      </div>
+          <div className="flex flex-col gap-2">
+            <TextField value={tagDraft} onChange={setTagDraft} className="flex flex-col gap-2">
+              <Label className="font-bold">
+                Tags <span className="font-normal text-ink-soft">(a team or project, so you can find it later)</span>
+              </Label>
+              <Input
+                className={input}
+                placeholder="platform-team"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === ",") {
+                    e.preventDefault();
+                    addTag(tagDraft);
+                  } else if (e.key === "Backspace" && !tagDraft && tags.length) {
+                    setTags(tags.slice(0, -1));
+                  }
+                }}
+              />
+            </TextField>
+            <div className="flex flex-wrap gap-2">
+              {tags.map((t) => (
+                <Button key={t} onPress={() => setTags(tags.filter((x) => x !== t))} aria-label={`Remove tag ${t}`} className="min-h-9 bg-pink-tint px-3 text-sm font-semibold">
+                  #{t} <span aria-hidden="true">×</span>
+                </Button>
+              ))}
+              {tagDraft &&
+                suggestions.map((t) => (
+                  <Button key={t} onPress={() => addTag(t)} className="min-h-9 border-[1.5px] border-ink px-3 text-sm">
+                    Add #{t}
+                  </Button>
+                ))}
+            </div>
+          </div>
 
-      <Checkbox isSelected={unlisted} onChange={setUnlisted} className="group flex min-h-11 items-center gap-3">
-        <span className="flex size-6 shrink-0 items-center justify-center border-[2.5px] border-ink group-data-selected:bg-ink">
-          <svg viewBox="0 0 16 16" className="size-4 fill-none stroke-paper stroke-[2.5] opacity-0 group-data-selected:opacity-100" aria-hidden="true">
-            <path d="M3 8.5l3 3 7-7" />
-          </svg>
-        </span>
-        <span>
-          Keep it off the home page. <span className="text-ink-soft">Anyone with the link can still join.</span>
-        </span>
-      </Checkbox>
+          <Checkbox isSelected={unlisted} onChange={setUnlisted} className="group flex min-h-11 items-center gap-3">
+            <span className="flex size-6 shrink-0 items-center justify-center border-[2.5px] border-ink group-data-selected:bg-ink">
+              <svg viewBox="0 0 16 16" className="size-4 fill-none stroke-paper stroke-[2.5] opacity-0 group-data-selected:opacity-100" aria-hidden="true">
+                <path d="M3 8.5l3 3 7-7" />
+              </svg>
+            </span>
+            <span>
+              Keep it off the home page. <span className="text-ink-soft">Anyone with the link can still join.</span>
+            </span>
+          </Checkbox>
         </div>
       </details>
 

@@ -1,8 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
+import { LayoutGroup } from "motion/react";
 import { useToast } from "@/components/toast";
 import { useShortcut } from "@/keys/keys";
 import { stages, type Note, type Stage } from "@/lib/retro";
 import { useRetroSocket } from "@/lib/socket";
+import { ChangesProvider } from "./changes";
 import { Columns } from "./columns";
 import { BoardContext, noteById, type BoardApi } from "./context";
 import { Discuss } from "./discuss";
@@ -14,7 +16,7 @@ import { NoteEditor } from "./note-editor";
 import { AIPanel } from "./suggestions";
 import { LastTime } from "./facilitation";
 
-export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me: string; gifSearch: boolean; ai: boolean }) {
+export function RetroBoard({ retroId, title, me, gifSearch, ai }: { retroId: string; title: string; me: string; gifSearch: boolean; ai: boolean }) {
   const { board, people, status, send } = useRetroSocket(retroId);
   const toast = useToast();
   const [editing, setEditing] = useState<Note | null>(null);
@@ -65,11 +67,22 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
   useShortcut({ id: "next-stage", keys: "]", label: "Next stage", section: "Retro", run: () => at < 3 && setStageTo(stages[at + 1].id) }, !!board && at < 3);
   useShortcut({ id: "prev-stage", keys: "[", label: "Previous stage", section: "Retro", run: () => at > 0 && setStageTo(stages[at - 1].id) }, !!board && at > 0);
   if (!api || !board) {
-    return <p className="text-lg" role="status">{status === "reconnecting" ? "Can't reach the retro. Trying again…" : "Opening the retro…"}</p>;
+    return (
+      <div className="flex flex-col gap-2">
+        <h1 className="font-display text-2xl leading-tight" style={{ viewTransitionName: `retro-${retroId}` }}>
+          {title}
+        </h1>
+        <p className="text-lg" role="status">
+          {status === "reconnecting" ? "Can't reach the retro. Trying again…" : "Opening the retro…"}
+        </p>
+      </div>
+    );
   }
 
   return (
     <BoardContext.Provider value={api}>
+      <ChangesProvider board={board}>
+      <LayoutGroup>
       <div className="-mt-5 flex flex-col gap-5 pb-28">
         <Bar status={status} onSettings={() => setSettings(true)} onStage={setStageTo} />
         <div className="mx-auto flex w-full max-w-[110rem] flex-col gap-5">
@@ -83,6 +96,8 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
       {moving && <MovePicker note={moving} onClose={() => setMoving(null)} />}
       {stageTo && <StageConfirm to={stageTo} onClose={() => setStageTo(null)} />}
       {settings && <Settings onClose={() => setSettings(false)} />}
+      </LayoutGroup>
+      </ChangesProvider>
     </BoardContext.Provider>
   );
 }

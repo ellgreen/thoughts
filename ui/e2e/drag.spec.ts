@@ -2,16 +2,30 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 test.skip(({ isMobile }) => isMobile, "dragging is a pointer interaction");
 
+// settled waits out a note or pile gliding to its new place.
+async function settled(target: Locator) {
+  let last = "";
+  await expect
+    .poll(async () => {
+      const now = JSON.stringify(await target.boundingBox());
+      const same = now === last;
+      last = now;
+      return same;
+    }, { intervals: [50] })
+    .toBe(true);
+  return (await target.boundingBox())!;
+}
+
 // drag holds the mouse down on from, moves until the board shows its drop
 // zones, then lets go over whatever to finds.
 async function drag(page: Page, from: Locator, to: () => Locator) {
-  const box = (await from.boundingBox())!;
+  const box = await settled(from);
   await page.mouse.move(box.x + 20, box.y + 20);
   await page.mouse.down();
   await page.mouse.move(box.x + 40, box.y + 40, { steps: 5 });
   const target = to();
   await expect(target).toBeVisible();
-  const t = (await target.boundingBox())!;
+  const t = await settled(target);
   await page.mouse.move(t.x + t.width / 2, t.y + t.height / 2, { steps: 10 });
   await page.mouse.up();
 }

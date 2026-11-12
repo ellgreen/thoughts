@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { Button, Checkbox, Input, Label, TextField, ToggleButton } from "react-aria-components";
+import { motion } from "motion/react";
+import { enter, move } from "@/components/motion";
 import { Sheet } from "@/components/dialog";
 import { IconButton } from "@/components/icon-button";
 import { Icon } from "@/components/icons";
 import { button, input } from "@/components/ui";
 import { Kbd, useShortcut } from "@/keys/keys";
 import { formatDueOn, type Action } from "@/lib/retro";
+import { useChanges } from "./changes";
 import { Pile, Stamps } from "./columns";
 import { useBoard } from "./context";
 import { DockSlot } from "./dock";
@@ -63,6 +66,8 @@ export function Discuss() {
   const shown = focus ? ranked.slice(current, current + 1) : ranked;
   const voted = ranked.filter((g) => (g.votes ?? 0) > 0).length;
   const wide = useSyncExternalStore(onWide, () => window.matchMedia(WIDE).matches);
+  const change = useChanges().stage;
+  const [arrived] = useState(() => change?.to === "discuss");
 
   return (
     <div className="flex flex-wrap items-start gap-10">
@@ -109,11 +114,18 @@ export function Discuss() {
             return (
               <li key={g.id} data-spot={g.id} data-column-index={columnIndex.get(g.columnId)} className={`flex flex-col gap-3 ${focus ? "text-lg" : ""}`}>
                 {!focus && !hasVotes && i === voted && voted > 0 && <p className="border-t-[1.5px] border-line pt-4 text-sm font-bold text-ink-soft">No votes</p>}
-                <div className={`${hasVotes ? "grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-3" : ""} ${here ? "-mx-3 bg-blue-tint/50 p-3" : ""}`}>
+                <div className={`relative isolate ${hasVotes ? "grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-3" : ""}`}>
+                  {here && <motion.div layoutId="spot" transition={move} className="absolute -inset-3 -z-10 bg-blue-tint/50" />}
                   {hasVotes && (
-                    <span className="font-display text-5xl leading-none" aria-hidden="true">
+                    <motion.span
+                      initial={arrived ? { opacity: 0, y: 8 } : false}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ ...enter, delay: 0.35 }}
+                      className="font-display text-5xl leading-none"
+                      aria-hidden="true"
+                    >
                       {i + 1}
-                    </span>
+                    </motion.span>
                   )}
                   <div className="flex min-w-0 flex-col gap-2">
                     <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1">
@@ -126,7 +138,7 @@ export function Discuss() {
                           </Button>
                         </span>
                       )}
-                      <Stamps count={g.votes ?? 0} label={`${g.votes ?? 0} ${g.votes === 1 ? "vote" : "votes"}`} size={26} />
+                      <Stamps count={g.votes ?? 0} label={`${g.votes ?? 0} ${g.votes === 1 ? "vote" : "votes"}`} size={26} land={arrived ? 0.3 + Math.min(i, 12) * 0.04 : undefined} />
                       {!here && <IconButton icon="target" label="Bring everyone here" onPress={() => run("spotlight.set", { groupId: g.id })} className={hasVotes ? "" : "ml-auto"} />}
                     </div>
                     <Pile group={g} ink={inkFor(columnIndex.get(g.columnId) ?? 0)} />

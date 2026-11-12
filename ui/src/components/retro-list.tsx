@@ -39,6 +39,7 @@ function Row({ retro: r }: { retro: RetroSummary }) {
       <Link
         to="/retros/$retroId"
         params={{ retroId: r.id }}
+        viewTransition
         className="group flex items-center gap-4 py-4 transition-transform duration-150 hover:translate-x-1 focus-visible:translate-x-1"
       >
         <span className="flex min-w-0 flex-1 flex-col gap-1">
@@ -46,7 +47,9 @@ function Row({ retro: r }: { retro: RetroSummary }) {
             <span aria-hidden="true" className="absolute inset-0 translate-x-[0.045em] translate-y-[0.045em] text-pink opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100">
               {r.title}
             </span>
-            <span className="relative">{r.title}</span>
+            <span className="relative" style={{ viewTransitionName: `retro-${r.id}` }}>
+              {r.title}
+            </span>
           </span>
           <span className="text-sm text-ink-soft">{meta.join(" · ")}</span>
         </span>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MenuItem, MenuTrigger, Popover, type PopoverProps } from "react-aria-components";
 
-export const popover = "border-[1.5px] border-ink bg-paper text-ink";
+export const popover = "border-[1.5px] border-ink bg-paper text-ink data-entering:animate-[fade_120ms_ease-out] data-exiting:animate-[fade_120ms_ease-in_reverse]";
 
 // QuickMenu is non-modal, so pressing another note's menu opens it at once
 // instead of only closing this one. Non-modal popovers don't close on an
