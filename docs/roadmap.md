@@ -82,7 +82,7 @@ Each line is a phase in `ui-plan.md`; read that phase before starting it.
 - [x] Inline composer and in-place editing; `n` to write
 - [x] Pick up and put down to group; stamp slots to vote
 - [x] Discussion: unvoted groups, spotlight icon, one-line actions
-- [ ] Home, team pages, new retro and settings
+- [x] Home, team pages, new retro and settings
 - [ ] Motion: gliding notes, the reveal, the stage band, stamps
 - [ ] Instant sends for notes, votes, ready and reactions (optional)
 - [ ] Screenshots regenerated and a `design.md` entry

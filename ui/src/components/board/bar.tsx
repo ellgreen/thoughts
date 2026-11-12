@@ -3,6 +3,7 @@ import { Button, Menu, MenuItem, MenuTrigger, Popover, Tooltip, TooltipTrigger, 
 import { useSignOut } from "@/components/account-menu";
 import { Mark } from "@/components/brand";
 import { IconButton } from "@/components/icon-button";
+import { Icon } from "@/components/icons";
 import { popover } from "@/components/menu";
 import { button, initials } from "@/components/ui";
 import { Kbd, useShortcuts } from "@/keys/keys";
@@ -130,7 +131,11 @@ function Presence({ status }: { status: Status }) {
             </span>
           ))}
         </span>
-        <span className="text-sm font-semibold whitespace-nowrap">{people.length} here</span>
+        <Icon name="people" className="size-5 sm:hidden" />
+        <span className="text-sm font-semibold whitespace-nowrap">
+          {people.length}
+          <span className="max-sm:hidden"> here</span>
+        </span>
       </Button>
       <Tooltip offset={6} className="flex max-w-xs flex-col gap-1 border-[1.5px] border-ink bg-paper px-3 py-2 text-sm text-ink">
         {!checking || done.length === 0 ? (

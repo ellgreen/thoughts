@@ -10,6 +10,8 @@ import { cleanTag, createRetro, tagsQuery, templates, themedTemplate } from "@/l
 import { meQuery } from "@/lib/session";
 import { TeamPicker } from "./team-picker";
 
+const summary = "min-h-11 cursor-pointer py-2.5 font-bold underline-offset-4 hover:underline";
+
 type Col = { key: number; title: string; description: string };
 
 let nextKey = 0;
@@ -38,6 +40,7 @@ function Form({ close, tag, teamId: initialTeam }: { close: () => void; tag?: st
   const [teamId, setTeamId] = useState(initialTeam ?? "");
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [colsOpen, setColsOpen] = useState(false);
 
   function pick(i: number) {
     setTemplate(i);
@@ -77,22 +80,29 @@ function Form({ close, tag, teamId: initialTeam }: { close: () => void; tag?: st
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-6">
-      <TextField value={title} onChange={setTitle} isRequired className="flex flex-col gap-2">
+      <TextField value={title} onChange={setTitle} isRequired autoFocus className="flex flex-col gap-2">
         <Label className="font-bold">What's this retro for?</Label>
         <Input className={input} placeholder="Sprint 41" />
       </TextField>
 
       <fieldset className="flex flex-col gap-3">
         <legend className="mb-2 font-bold">Start from</legend>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           {templates.map((t, i) => (
             <Button
               key={t.name}
               onPress={() => pick(i)}
               aria-pressed={template === i}
-              className={`min-h-10 border-[2px] border-ink px-3 text-sm font-semibold ${template === i ? "bg-ink text-paper" : "hover:bg-blue-tint"}`}
+              className={`flex flex-col gap-2 border-[1.5px] p-3 text-left ${template === i ? "border-ink bg-blue-tint" : "border-line hover:border-ink-soft"}`}
             >
-              {t.name}
+              <span className="flex gap-1" aria-hidden="true">
+                {t.columns.map((c) => (
+                  <span key={c.title} className="min-w-0 flex-1 truncate border-t-[3px] border-ink pt-1 text-[11px] leading-tight font-semibold">
+                    {c.title}
+                  </span>
+                ))}
+              </span>
+              <span className="text-sm font-bold">{t.name}</span>
             </Button>
           ))}
         </div>
@@ -101,15 +111,18 @@ function Form({ close, tag, teamId: initialTeam }: { close: () => void; tag?: st
             onColumns={(cols) => {
               setTemplate(-1);
               setColumns(cols.map((c) => ({ ...c, key: ++nextKey })));
+              setColsOpen(true);
             }}
           />
         )}
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3">
-        <legend className="mb-2 font-bold">
-          Columns <span className="font-normal text-ink-soft">({columns.length} of 5)</span>
-        </legend>
+      <details open={colsOpen} onToggle={(e) => setColsOpen(e.currentTarget.open)}>
+        <summary className={summary}>
+          Change the columns <span className="font-normal text-ink-soft">({columns.length} of 5)</span>
+        </summary>
+      <fieldset className="mt-3 flex flex-col gap-3">
+        <legend className="sr-only">Columns</legend>
         <ol className="flex flex-col gap-3">
           {columns.map((c, i) => (
             <li key={c.key} className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 bg-blue-tint p-3 sm:grid-cols-[minmax(0,14rem)_minmax(0,1fr)_auto]">
@@ -150,7 +163,11 @@ function Form({ close, tag, teamId: initialTeam }: { close: () => void; tag?: st
           </Button>
         )}
       </fieldset>
+      </details>
 
+      <details>
+        <summary className={summary}>Team, tags and visibility</summary>
+        <div className="mt-3 flex flex-col gap-6">
       <TeamPicker value={teamId} onChange={setTeamId} />
 
       <div className="flex flex-col gap-2">
@@ -196,6 +213,8 @@ function Form({ close, tag, teamId: initialTeam }: { close: () => void; tag?: st
           Keep it off the home page. <span className="text-ink-soft">Anyone with the link can still join.</span>
         </span>
       </Checkbox>
+        </div>
+      </details>
 
       {problem && (
         <p role="alert" className="bg-alert px-3 py-2 font-semibold">

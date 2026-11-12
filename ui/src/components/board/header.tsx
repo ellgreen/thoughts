@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { Button, Checkbox, Input, Label, TextField } from "react-aria-components";
 import { Sheet } from "@/components/dialog";
 import { button, input } from "@/components/ui";
@@ -80,11 +80,15 @@ export function Settings({ onClose }: { onClose: () => void }) {
     <Sheet isOpen onOpenChange={(o) => !o && onClose()} title="Retro settings" wide>
       <form
         className="flex flex-col gap-4"
+        aria-labelledby="settings-retro"
         onSubmit={(e) => {
           e.preventDefault();
           save();
         }}
       >
+        <h3 id="settings-retro" className="text-xl font-bold">
+          This retro
+        </h3>
         <TextField value={title} onChange={setTitle} isRequired className="flex flex-col gap-1">
           <Label className="font-bold">Title</Label>
           <Input className={input} />
@@ -160,20 +164,18 @@ function ColumnRow({ id, title, description, canRemove }: { id: string; title: s
   const { run } = useBoard();
   const [t, setT] = useState(title);
   const [d, setD] = useState(description);
-  const changed = t !== title || d !== description;
+  const save = () => {
+    if (t !== title || d !== description) run("column.update", { id, title: t, description: d });
+  };
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => e.key === "Enter" && e.currentTarget.blur();
   return (
     <li className="flex flex-wrap items-center gap-2 bg-blue-tint p-2">
       <TextField aria-label="Column title" value={t} onChange={setT} className="min-w-0 flex-[1_1_10rem]">
-        <Input className={`${input} min-h-11 text-base`} />
+        <Input onBlur={save} onKeyDown={onKeyDown} className={`${input} min-h-11 text-base`} />
       </TextField>
       <TextField aria-label="Column prompt" value={d} onChange={setD} className="min-w-0 flex-[2_1_14rem]">
-        <Input className={`${input} min-h-11 text-base`} placeholder="Prompt" />
+        <Input onBlur={save} onKeyDown={onKeyDown} className={`${input} min-h-11 text-base`} placeholder="Prompt" />
       </TextField>
-      {changed && (
-        <Button onPress={() => run("column.update", { id, title: t, description: d })} className={button.line}>
-          Save
-        </Button>
-      )}
       {canRemove && (
         <Button onPress={() => run("column.delete", { id })} className={button.quiet}>
           Remove

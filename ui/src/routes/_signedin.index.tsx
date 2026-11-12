@@ -29,7 +29,6 @@ function Home() {
         </Button>
       </div>
       <Teams />
-      <h2 className="text-xl font-bold">Recent retros</h2>
       {retros.length === 0 ? (
         <p className="max-w-[48ch] text-lg">Nothing here yet. Start a retro, then send its link to your team. They sign in and land straight in it.</p>
       ) : (

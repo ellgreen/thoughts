@@ -114,8 +114,17 @@ export function Timer() {
   return (
     <div className="flex items-center" role="group" aria-label="Timer">
       {active && (
-        <span role="timer" aria-live={done ? "assertive" : "off"} className={`font-display leading-none tabular-nums ${done ? "text-lg" : "text-2xl"} ${running ? "" : "opacity-60"}`}>
-          {done ? "Time's up" : format(remaining)}
+        <span role="timer" aria-live={done ? "assertive" : "off"} className={`font-display leading-none tabular-nums ${done ? "text-lg max-sm:text-2xl" : "text-2xl"} ${running ? "" : "opacity-60"}`}>
+          {done ? (
+            <>
+              <span className="max-sm:sr-only">Time's up</span>
+              <span className="sm:hidden" aria-hidden="true">
+                0:00
+              </span>
+            </>
+          ) : (
+            format(remaining)
+          )}
         </span>
       )}
       <MenuTrigger isOpen={menuOpen} onOpenChange={setMenuOpen}>
