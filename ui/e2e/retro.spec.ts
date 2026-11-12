@@ -67,9 +67,11 @@ test("a whole retro, two people", async ({ browser }) => {
   await nextStage(priya, "Discuss");
   await expect(priya.getByRole("img", { name: "5 votes" })).toBeVisible();
   await key(priya, "a");
-  await priya.getByLabel("What's going to happen?").fill("Quarantine flaky tests");
+  await priya.getByRole("textbox", { name: "Add an action" }).fill("Quarantine flaky tests");
+  await key(priya, "Enter");
+  await priya.getByRole("button", { name: "Edit" }).click();
   await priya.getByLabel("Who").fill("Sam");
-  await priya.getByRole("button", { name: "Add it" }).click();
+  await priya.getByRole("button", { name: "Save" }).click();
   await expect(sam.getByText("Quarantine flaky tests")).toBeVisible();
 
   const md = await (await priya.request.get(`/api/retros/${url.split("/").pop()}/export.md`)).text();

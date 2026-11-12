@@ -11,7 +11,7 @@ import { Dock } from "./dock";
 import { Settings, StageConfirm } from "./header";
 import { MovePicker } from "./move";
 import { NoteEditor } from "./note-editor";
-import { AIPanel, RecapBlock } from "./suggestions";
+import { AIPanel } from "./suggestions";
 import { LastTime } from "./facilitation";
 
 export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me: string; gifSearch: boolean; ai: boolean }) {
@@ -75,7 +75,6 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
         <div className="mx-auto flex w-full max-w-[110rem] flex-col gap-5">
           <LastTime />
           {ai ? <AIPanel /> : null}
-          {board.retro.stage === "discuss" && <RecapBlock />}
           {board.retro.stage === "discuss" ? <Discuss /> : <Columns />}
         </div>
       </div>

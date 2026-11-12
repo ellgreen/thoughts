@@ -37,8 +37,9 @@ test("a team's next retro opens with last time's actions", async ({ browser }) =
   for (const stage of ["Group", "Vote", "Discuss"]) await nextStage(priya, stage);
   for (const what of ["Write the payments runbook", "Try a no-meeting Wednesday"]) {
     await priya.keyboard.press("a");
-    await priya.getByLabel("What's going to happen?").fill(what);
-    await priya.getByRole("button", { name: "Add it" }).click();
+    await priya.getByRole("textbox", { name: "Add an action" }).fill(what);
+    await priya.keyboard.press("Enter");
+    await priya.keyboard.press("Escape");
     await expect(priya.getByText(what)).toBeVisible();
   }
 

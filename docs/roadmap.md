@@ -81,7 +81,7 @@ Each line is a phase in `ui-plan.md`; read that phase before starting it.
 - [x] The bar and the dock in place of the stacked board header
 - [x] Inline composer and in-place editing; `n` to write
 - [x] Pick up and put down to group; stamp slots to vote
-- [ ] Discussion: unvoted groups, spotlight icon, one-line actions
+- [x] Discussion: unvoted groups, spotlight icon, one-line actions
 - [ ] Home, team pages, new retro and settings
 - [ ] Motion: gliding notes, the reveal, the stage band, stamps
 - [ ] Instant sends for notes, votes, ready and reactions (optional)

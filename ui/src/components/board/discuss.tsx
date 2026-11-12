@@ -1,5 +1,8 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore, type FormEvent } from "react";
 import { Button, Checkbox, Input, Label, TextField, ToggleButton } from "react-aria-components";
+import { Sheet } from "@/components/dialog";
+import { IconButton } from "@/components/icon-button";
+import { Icon } from "@/components/icons";
 import { button, input } from "@/components/ui";
 import { Kbd, useShortcut } from "@/keys/keys";
 import { formatDueOn, type Action } from "@/lib/retro";
@@ -7,6 +10,16 @@ import { Pile, Stamps } from "./columns";
 import { useBoard } from "./context";
 import { DockSlot } from "./dock";
 import { inkFor } from "./note";
+
+// WIDE is Tailwind's lg breakpoint, where the actions panel sits beside the
+// groups instead of in a sheet.
+const WIDE = "(min-width: 64rem)";
+
+function onWide(fn: () => void) {
+  const m = window.matchMedia(WIDE);
+  m.addEventListener("change", fn);
+  return () => m.removeEventListener("change", fn);
+}
 
 function readFollow() {
   try {
@@ -48,6 +61,8 @@ export function Discuss() {
   useShortcut({ id: "prev-group", keys: "left", label: "Previous group", section: "Discuss", run: () => step(-1) }, focus && current > 0);
   useShortcut({ id: "next-group", keys: "right", label: "Next group", section: "Discuss", run: () => step(1) }, focus && !last);
   const shown = focus ? ranked.slice(current, current + 1) : ranked;
+  const voted = ranked.filter((g) => (g.votes ?? 0) > 0).length;
+  const wide = useSyncExternalStore(onWide, () => window.matchMedia(WIDE).matches);
 
   return (
     <div className="flex flex-wrap items-start gap-10">
@@ -90,102 +105,156 @@ export function Discuss() {
             const i = ranked.indexOf(g);
             const column = board.retro.columns.find((c) => c.id === g.columnId);
             const here = g.id === spot;
+            const hasVotes = (g.votes ?? 0) > 0;
             return (
-              <li
-                key={g.id}
-                data-spot={g.id}
-                data-column-index={columnIndex.get(g.columnId)}
-                className={`grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-3 ${here ? "-mx-3 bg-blue-tint/50 p-3" : ""} ${focus ? "text-lg" : ""}`}
-              >
-                <span className="font-display text-5xl leading-none" aria-hidden="true">
-                  {i + 1}
-                </span>
-                <div className="flex min-w-0 flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                    <span className="text-sm font-bold text-ink-soft">{column?.title}</span>
-                    {here && <span className="bg-ink px-2 py-0.5 text-sm font-bold text-paper">Everyone's here</span>}
-                    <Stamps count={g.votes ?? 0} label={`${g.votes ?? 0} ${g.votes === 1 ? "vote" : "votes"}`} size={26} />
+              <li key={g.id} data-spot={g.id} data-column-index={columnIndex.get(g.columnId)} className={`flex flex-col gap-3 ${focus ? "text-lg" : ""}`}>
+                {!focus && !hasVotes && i === voted && voted > 0 && <p className="border-t-[1.5px] border-line pt-4 text-sm font-bold text-ink-soft">No votes</p>}
+                <div className={`${hasVotes ? "grid grid-cols-[3.5rem_minmax(0,1fr)] gap-x-3" : ""} ${here ? "-mx-3 bg-blue-tint/50 p-3" : ""}`}>
+                  {hasVotes && (
+                    <span className="font-display text-5xl leading-none" aria-hidden="true">
+                      {i + 1}
+                    </span>
+                  )}
+                  <div className="flex min-w-0 flex-col gap-2">
+                    <div className="flex min-h-11 flex-wrap items-center gap-x-3 gap-y-1">
+                      <span className="text-sm font-bold text-ink-soft">{column?.title}</span>
+                      {here && (
+                        <span className="inline-flex items-center bg-ink pl-2 text-sm font-bold text-paper">
+                          Everyone's here
+                          <Button onPress={() => run("spotlight.set", { groupId: "" })} aria-label="Let everyone move on" className="inline-flex size-9 items-center justify-center">
+                            <Icon name="close" className="size-4" />
+                          </Button>
+                        </span>
+                      )}
+                      <Stamps count={g.votes ?? 0} label={`${g.votes ?? 0} ${g.votes === 1 ? "vote" : "votes"}`} size={26} />
+                      {!here && <IconButton icon="target" label="Bring everyone here" onPress={() => run("spotlight.set", { groupId: g.id })} className={hasVotes ? "" : "ml-auto"} />}
+                    </div>
+                    <Pile group={g} ink={inkFor(columnIndex.get(g.columnId) ?? 0)} />
                   </div>
-                  <Pile group={g} ink={inkFor(columnIndex.get(g.columnId) ?? 0)} />
-                  <Button onPress={() => run("spotlight.set", { groupId: here ? "" : g.id })} className={`${button.quiet} self-start px-0`}>
-                    {here ? "Let everyone move on" : "Bring everyone here"}
-                  </Button>
                 </div>
               </li>
             );
           })}
         </ol>
       </div>
-      <Actions />
+      {wide ? <Actions /> : <PhoneActions />}
     </div>
   );
 }
 
-function Actions() {
+function PhoneActions() {
+  const { board } = useBoard();
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <DockSlot>
+        <Button onPress={() => setOpen(true)} className={button.line}>
+          Actions ({board.actions.filter((a) => !a.done).length})
+        </Button>
+      </DockSlot>
+      <Sheet isOpen={open} onOpenChange={setOpen} title="What we'll do">
+        <Actions bare />
+      </Sheet>
+    </>
+  );
+}
+
+function Actions({ bare }: { bare?: boolean }) {
   const { board, run } = useBoard();
-  const [adding, setAdding] = useState(false);
+  const [draft, setDraft] = useState("");
   const [editing, setEditing] = useState<string | null>(null);
-  useShortcut({ id: "add-action", keys: "a", label: "Add an action", section: "Discuss", run: () => setAdding(true) });
+  const add = useRef<HTMLInputElement>(null);
+  useShortcut({ id: "add-action", keys: "a", label: "Add an action", section: "Discuss", run: () => add.current?.focus() });
   const open = board.actions.filter((a) => !a.done);
   const done = board.actions.filter((a) => a.done);
 
+  async function quickAdd(e: FormEvent) {
+    e.preventDefault();
+    const what = draft.trim();
+    if (!what) return;
+    setDraft("");
+    if (!(await run("action.add", { what, who: "", dueOn: "" }))) setDraft((now) => now || what);
+  }
+
+  const row = (a: Action) =>
+    editing === a.id ? (
+      <li key={a.id}>
+        <ActionForm action={a} onDone={() => setEditing(null)} />
+      </li>
+    ) : (
+      <li key={a.id} className="flex items-start gap-3 border-b-[1.5px] border-line py-3">
+        <Checkbox
+          isSelected={a.done}
+          onChange={(checked) => run("action.done", { id: a.id, done: checked })}
+          aria-label={`Done: ${a.what}`}
+          className="group mt-0.5 flex size-11 shrink-0 items-center justify-center"
+        >
+          <span className="flex size-6 items-center justify-center border-[2.5px] border-ink group-data-selected:bg-ink">
+            <svg viewBox="0 0 16 16" className="size-4 fill-none stroke-paper stroke-[2.5] opacity-0 group-data-selected:opacity-100" aria-hidden="true">
+              <path d="M3 8.5l3 3 7-7" />
+            </svg>
+          </span>
+        </Checkbox>
+        <div className={`flex min-w-0 flex-1 flex-col ${a.done ? "line-through opacity-60" : ""}`}>
+          <span className="font-semibold break-words">{a.what}</span>
+          {(a.who || a.dueOn) && <span className="text-sm">{[a.who, a.dueOn && `by ${formatDueOn(a.dueOn)}`].filter(Boolean).join(", ")}</span>}
+        </div>
+        <Button onPress={() => setEditing(a.id)} className="min-h-11 px-2 text-sm font-semibold underline-offset-4 hover:underline">
+          Edit
+        </Button>
+      </li>
+    );
+
+  const content = (
+    <>
+      {board.retro.recap && (
+        <div className="flex flex-col gap-1">
+          <h3 className="text-sm font-bold">Recap</h3>
+          <p className="leading-relaxed">{board.retro.recap}</p>
+        </div>
+      )}
+      <form onSubmit={quickAdd}>
+        <input
+          ref={add}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === "Escape" && e.currentTarget.blur()}
+          aria-label="Add an action"
+          placeholder="Add an action"
+          className={input}
+        />
+      </form>
+      {board.actions.length === 0 && <p>No actions yet. Add one for anything someone's going to do about what you've discussed.</p>}
+      {open.length > 0 && <ul className="flex flex-col">{open.map(row)}</ul>}
+      {done.length > 0 && (
+        <details>
+          <summary className="flex min-h-11 cursor-pointer items-center font-semibold">Done ({done.length})</summary>
+          <ul className="flex flex-col">{done.map(row)}</ul>
+        </details>
+      )}
+    </>
+  );
+
+  if (bare) return <div className="flex flex-col gap-4">{content}</div>;
   return (
-    <aside className="flex min-w-[min(100%,18rem)] flex-[1_1_22rem] flex-col gap-4 bg-pink-tint p-5 lg:sticky lg:top-4" aria-labelledby="actions-heading">
+    <aside className="flex min-w-[min(100%,18rem)] flex-[1_1_22rem] flex-col gap-4 bg-pink-tint p-5 lg:sticky lg:top-20" aria-labelledby="actions-heading">
       <h2 id="actions-heading" className="text-2xl leading-tight font-bold">
         What we'll do
       </h2>
-      {board.actions.length === 0 && !adding && <p>No actions yet. Add one for anything someone's going to do about what you've discussed.</p>}
-      <ul className="flex flex-col">
-        {[...open, ...done].map((a) =>
-          editing === a.id ? (
-            <li key={a.id}>
-              <ActionForm action={a} onDone={() => setEditing(null)} />
-            </li>
-          ) : (
-            <li key={a.id} className="flex items-start gap-3 border-b-[1.5px] border-line py-3">
-              <Checkbox
-                isSelected={a.done}
-                onChange={(checked) => run("action.done", { id: a.id, done: checked })}
-                aria-label={`Done: ${a.what}`}
-                className="group mt-0.5 flex size-11 shrink-0 items-center justify-center"
-              >
-                <span className="flex size-6 items-center justify-center border-[2.5px] border-ink group-data-selected:bg-ink">
-                  <svg viewBox="0 0 16 16" className="size-4 fill-none stroke-paper stroke-[2.5] opacity-0 group-data-selected:opacity-100" aria-hidden="true">
-                    <path d="M3 8.5l3 3 7-7" />
-                  </svg>
-                </span>
-              </Checkbox>
-              <div className={`flex min-w-0 flex-1 flex-col ${a.done ? "line-through opacity-60" : ""}`}>
-                <span className="font-semibold break-words">{a.what}</span>
-                {(a.who || a.dueOn) && <span className="text-sm">{[a.who, a.dueOn && `by ${formatDueOn(a.dueOn)}`].filter(Boolean).join(", ")}</span>}
-              </div>
-              <Button onPress={() => setEditing(a.id)} className="min-h-11 px-2 text-sm font-semibold underline-offset-4 hover:underline">
-                Edit
-              </Button>
-            </li>
-          ),
-        )}
-      </ul>
-      {adding ? (
-        <ActionForm onDone={() => setAdding(false)} />
-      ) : (
-        <Button onPress={() => setAdding(true)} className={`${button.line} self-start`}>
-          Add an action <Kbd keys="a" />
-        </Button>
-      )}
+      {content}
     </aside>
   );
 }
 
-function ActionForm({ action, onDone }: { action?: Action; onDone: () => void }) {
+function ActionForm({ action, onDone }: { action: Action; onDone: () => void }) {
   const { run } = useBoard();
-  const [what, setWhat] = useState(action?.what ?? "");
-  const [who, setWho] = useState(action?.who ?? "");
-  const [dueOn, setDueOn] = useState(action?.dueOn ?? "");
+  const [what, setWhat] = useState(action.what);
+  const [who, setWho] = useState(action.who);
+  const [dueOn, setDueOn] = useState(action.dueOn);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    const ok = await run(action ? "action.update" : "action.add", { id: action?.id, what, who, dueOn });
+    const ok = await run("action.update", { id: action.id, what, who, dueOn });
     if (ok) onDone();
   }
 
@@ -207,18 +276,16 @@ function ActionForm({ action, onDone }: { action?: Action; onDone: () => void })
       </div>
       <div className="flex flex-wrap gap-2">
         <Button type="submit" className={button.solid}>
-          {action ? "Save" : "Add it"}
+          Save
         </Button>
-        {action && (
-          <Button
-            onPress={async () => {
-              if (await run("action.delete", { id: action.id })) onDone();
-            }}
-            className={button.quiet}
-          >
-            Delete
-          </Button>
-        )}
+        <Button
+          onPress={async () => {
+            if (await run("action.delete", { id: action.id })) onDone();
+          }}
+          className={button.quiet}
+        >
+          Delete
+        </Button>
         <Button onPress={onDone} className={button.quiet}>
           Cancel
         </Button>

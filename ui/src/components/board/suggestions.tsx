@@ -133,16 +133,3 @@ function SuggestionCard({ suggestion: s }: { suggestion: Suggestion }) {
     </article>
   );
 }
-
-export function RecapBlock() {
-  const { board } = useBoard();
-  if (!board.retro.recap) return null;
-  return (
-    <section aria-labelledby="recap-heading" className="max-w-[70ch] bg-blue-tint p-5">
-      <h2 id="recap-heading" className="text-xl font-bold">
-        Recap
-      </h2>
-      <p className="mt-2 text-lg leading-relaxed">{board.retro.recap}</p>
-    </section>
-  );
-}
