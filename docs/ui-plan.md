@@ -12,6 +12,15 @@ The zine direction in `design.md` stays. Nothing here changes the inks, the
 typefaces or the overprint rule. What changes is how much of the page is
 chrome, how many things shout at once, and how the board moves.
 
+## Phones are out of scope
+
+Decided 2026-11-12, after phases 1 to 7: Thoughts is a desktop tool and
+phone use does not matter. Every "Phone" paragraph, phone measurement and
+"on a phone" check below is void. Do not build the phone variants that were
+skipped (dock composer, column tabs, stage sheet), do not add touch-only
+behaviour, and do not verify at phone widths. What already exists for
+narrow screens can stay as long as it costs nothing to keep.
+
 ## What is wrong today
 
 Measured, not felt:
