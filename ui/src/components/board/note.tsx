@@ -1,10 +1,10 @@
-import { useRef, useState, type KeyboardEvent } from "react";
+import { useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
 import { Button, Menu, MenuItem, useDrag } from "react-aria-components";
 import { Item, QuickMenu } from "@/components/menu";
 import { reactions, type Note } from "@/lib/retro";
 import { useToast } from "@/components/toast";
 import { field, useGrow } from "./composer";
-import { NOTE_TYPE, noteById, useBoard } from "./context";
+import { CONTROLS, NOTE_TYPE, noteById, useBoard } from "./context";
 
 export type Ink = "pink" | "blue";
 export const inkFor = (columnIndex: number): Ink => (columnIndex % 2 === 0 ? "pink" : "blue");
@@ -40,7 +40,7 @@ type Props = {
 };
 
 export function NoteCard({ note, ink, draggable, showAuthor, canReact, stacked, ungroupTo }: Props) {
-  const { board, editNote, moveNote, run, setDragging } = useBoard();
+  const { board, editNote, moveNote, run, setDragging, picked, setPicked } = useBoard();
   const [editing, setEditing] = useState(false);
   const toast = useToast();
   const ref = useRef<HTMLElement>(null);
@@ -59,6 +59,17 @@ export function NoteCard({ note, ink, draggable, showAuthor, canReact, stacked, 
   const stage = board.retro.stage;
   const editable = note.mine && (stage === "reflect" || stage === "group");
 
+  const isPicked = picked === note.id;
+
+  function pick(e: MouseEvent<HTMLElement>) {
+    if (stage !== "group" || !draggable || editing || (e.target as Element).closest(CONTROLS)) return;
+    if (!picked) return setPicked(note.id);
+    const to = noteById(board, note.id)?.group;
+    const from = noteById(board, picked)?.group;
+    if (to && from && to.id !== from.id) run("note.move", { id: picked, groupId: to.id });
+    setPicked(null);
+  }
+
   async function remove() {
     const columnId = noteById(board, note.id)?.group.columnId;
     if (!(await run("note.delete", { id: note.id }))) return;
@@ -67,12 +78,16 @@ export function NoteCard({ note, ink, draggable, showAuthor, canReact, stacked, 
   }
 
   return (
+    // The press is on the card rather than a button inside it: Firefox won't
+    // start a drag from a button. "Move to…" in the menu is the keyboard way.
+    // oxlint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
     <article
       ref={ref}
       data-note-id={note.id}
       aria-label={`${note.content ?? ""}${showAuthor && note.author ? `, by ${note.author.name}` : ""}`}
       {...pointerDrag}
-      className={`group/note relative flex flex-col gap-2 p-4 text-[17px] leading-snug font-medium outline-offset-2 ${tint[ink]} ${stacked ? "overprint" : ""} ${isDragging ? "opacity-40" : ""} ${draggable ? "cursor-grab" : ""}`}
+      onClick={pick}
+      className={`group/note relative flex flex-col gap-2 p-4 text-[17px] leading-snug font-medium outline-offset-2 ${tint[ink]} ${stacked ? "overprint" : ""} ${isDragging ? "opacity-40" : ""} ${draggable ? "cursor-grab transition-[rotate,translate,box-shadow] duration-150" : ""} ${isPicked ? "z-10 -translate-y-1 rotate-2 shadow-[4px_4px_0_var(--color-pink)]" : ""}`}
     >
       {editing ? (
         <EditField note={note} onDone={() => setEditing(false)} />

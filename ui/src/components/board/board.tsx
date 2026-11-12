@@ -4,7 +4,7 @@ import { useShortcut } from "@/keys/keys";
 import { stages, type Note, type Stage } from "@/lib/retro";
 import { useRetroSocket } from "@/lib/socket";
 import { Columns } from "./columns";
-import { BoardContext, type BoardApi } from "./context";
+import { BoardContext, noteById, type BoardApi } from "./context";
 import { Discuss } from "./discuss";
 import { Bar } from "./bar";
 import { Dock } from "./dock";
@@ -23,6 +23,7 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
   const [settings, setSettings] = useState(false);
   const [dragging, setDragging] = useState<string | null>(null);
   const [dockSlot, setDockSlot] = useState<HTMLElement | null>(null);
+  const [picked, setPicked] = useState<string | null>(null);
 
   const run = useCallback(
     async (name: string, args?: unknown) => {
@@ -52,8 +53,10 @@ export function RetroBoard({ retroId, me, gifSearch, ai }: { retroId: string; me
         dragging,
         setDragging,
         dockSlot,
+        picked: board.retro.stage === "group" && picked && noteById(board, picked) ? picked : null,
+        setPicked,
       },
-    [board, people, me, gifSearch, ai, send, run, dragging, dockSlot],
+    [board, people, me, gifSearch, ai, send, run, dragging, dockSlot, picked],
   );
 
   const stage = board?.retro.stage;
