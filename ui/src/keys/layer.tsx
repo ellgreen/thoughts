@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Autocomplete, Input, ListBox, ListBoxItem, ListBoxSection, Header, SearchField, useFilter } from "react-aria-components";
 import { Sheet } from "@/components/dialog";
 import { retrosQuery } from "@/lib/retro";
+import { setTheme } from "@/lib/theme";
 import { isMac, Kbd, useShortcut, useShortcuts, type Shortcut } from "./keys";
 
 type Command = { id: string; label: string; section: string; keys?: string; run: () => void };
@@ -15,6 +16,9 @@ export function KeyboardLayer() {
   // Ctrl+K on a Mac too: people reach for either, and a miss sends what they
   // type next to the board's single-key shortcuts.
   useShortcut({ id: "palette", keys: isMac ? "mod+k ctrl+k" : "mod+k", label: "Find a command or retro", section: "Anywhere", run: () => setPalette(true) });
+  useShortcut({ id: "theme-light", keys: "", label: "Use the light theme", section: "Anywhere", run: () => setTheme("light") });
+  useShortcut({ id: "theme-dark", keys: "", label: "Use the dark theme", section: "Anywhere", run: () => setTheme("dark") });
+  useShortcut({ id: "theme-system", keys: "", label: "Match the system theme", section: "Anywhere", run: () => setTheme("system") });
 
   return (
     <>
@@ -35,7 +39,7 @@ function ShortcutHelp({ isOpen, onOpenChange }: { isOpen: boolean; onOpenChange:
   return (
     <Sheet isOpen={isOpen} onOpenChange={onOpenChange} title="Keyboard shortcuts" wide>
       <div className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
-        {grouped(list).map(([section, items]) => (
+        {grouped(list.filter((s) => s.keys)).map(([section, items]) => (
           <section key={section}>
             <h3 className="mb-2 font-display text-xl">{section}</h3>
             <dl className="flex flex-col">

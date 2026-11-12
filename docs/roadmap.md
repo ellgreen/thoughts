@@ -72,6 +72,21 @@ green and it has been looked at on a phone and a desktop.
 - [x] axe accessibility check on every screen in light and dark
 - [ ] Merge `v2` into `main`, tag 2.0.0 and publish the release (needs Ellis)
 
+## M8: The calm board
+
+Each line is a phase in `ui-plan.md`; read that phase before starting it.
+
+- [x] Theme switch: system, light, dark
+- [ ] Quieter foundations: rule weights, type budget, icon buttons, account menu
+- [ ] The bar and the dock in place of the stacked board header
+- [ ] Inline composer and in-place editing; `n` to write
+- [ ] Pick up and put down to group; stamp slots to vote
+- [ ] Discussion: unvoted groups, spotlight icon, one-line actions
+- [ ] Home, team pages, new retro and settings
+- [ ] Motion: gliding notes, the reveal, the stage band, stamps
+- [ ] Instant sends for notes, votes, ready and reactions (optional)
+- [ ] Screenshots regenerated and a `design.md` entry
+
 ## Later
 
 - Check-in and check-out moods, with a trend per team

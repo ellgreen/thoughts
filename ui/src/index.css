@@ -103,6 +103,25 @@
   mix-blend-mode: var(--blend);
 }
 
+.theme-wipe::view-transition-old(root),
+.theme-wipe::view-transition-new(root) {
+  mix-blend-mode: normal;
+  animation: none;
+}
+
+.theme-wipe::view-transition-new(root) {
+  animation: roller 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes roller {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
 @keyframes fade {
   from {
     opacity: 0;

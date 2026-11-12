@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useRef, useState, useSyncExternal
 
 export type Shortcut = {
   id: string;
+  // An empty keys is a command with no key: it is only in the palette.
   keys: string;
   label: string;
   section: string;
@@ -80,7 +81,7 @@ export function KeysProvider({ children }: { children: ReactNode }) {
       const list = registry.list();
       for (let i = list.length - 1; i >= 0; i--) {
         const s = list[i];
-        if (typing && !s.keys.includes("mod+")) continue;
+        if (!s.keys || (typing && !s.keys.includes("mod+"))) continue;
         if (s.keys.split(" ").some((combo) => matches(e, combo))) {
           e.preventDefault();
           s.run();

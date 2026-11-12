@@ -2,6 +2,7 @@ import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link, Outlet, redirect, useNavigate } from "@tanstack/react-router";
 import { Button } from "react-aria-components";
 import { Wordmark } from "@/components/brand";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { button } from "@/components/ui";
 import { Kbd } from "@/keys/keys";
 import { KeyboardLayer } from "@/keys/layer";
@@ -37,6 +38,7 @@ function SignedIn() {
           <span className="hidden items-center gap-1.5 text-sm text-ink-soft sm:flex">
             <Kbd keys="?" /> shortcuts
           </span>
+          <ThemeToggle />
           <span className="font-semibold">{me?.user.name}</span>
           <Button onPress={leave} className={button.quiet}>
             Sign out
